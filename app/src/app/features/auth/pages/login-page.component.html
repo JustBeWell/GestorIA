@@ -1,0 +1,46 @@
+<main class="container">
+  <section class="hero-panel" aria-hidden="true">
+    <video
+      #heroVideo
+      [src]="currentHeroVideo"
+      autoplay
+      muted
+      playsinline
+      preload="metadata"
+      (ended)="onHeroVideoEnded(heroVideo)"
+    ></video>
+  </section>
+
+  <section class="login-panel">
+    <div class="card">
+      <h1>GestorIA</h1>
+      <p>Introduce tus credenciales para acceder al portal</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="login()">
+        <label for="usuario">Usuario</label>
+        <input id="usuario" type="text" formControlName="usuario" placeholder="Usuario" />
+        @if (hasError('usuario')) {
+          <small class="field-error">{{ getFieldError('usuario') }}</small>
+        }
+
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" formControlName="password" placeholder="***********" />
+        @if (hasError('password')) {
+          <small class="field-error">{{ getFieldError('password') }}</small>
+        }
+
+        <button type="submit" [disabled]="loading()">
+          {{ loading() ? 'Entrando...' : 'Acceder' }}
+        </button>
+      </form>
+
+      @if (errorMessage()) {
+        <p class="message error" aria-live="polite">{{ errorMessage() }}</p>
+      }
+
+      @if (successMessage()) {
+        <p class="message success" aria-live="polite">{{ successMessage() }}</p>
+      }
+    </div>
+  </section>
+</main>

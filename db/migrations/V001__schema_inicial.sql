@@ -64,7 +64,7 @@ CREATE TYPE accion_auditoria AS ENUM (
 -- ----------------------------------------------------------------------------
 CREATE TABLE usuarios (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email           VARCHAR(255) NOT NULL,
+    usuario           VARCHAR(255) NOT NULL,
     password_hash   VARCHAR(255) NOT NULL,
     rol             rol_usuario  NOT NULL DEFAULT 'empleado',
     activo          BOOLEAN      NOT NULL DEFAULT TRUE,
@@ -72,7 +72,7 @@ CREATE TABLE usuarios (
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
-    CONSTRAINT uq_usuarios_email UNIQUE (email)
+    CONSTRAINT uq_usuarios_usuario UNIQUE (usuario)
 );
 
 COMMENT ON TABLE  usuarios IS 'Identidades de acceso al sistema con rol y estado.';

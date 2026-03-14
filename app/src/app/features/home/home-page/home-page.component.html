@@ -1,0 +1,13 @@
+<header class="home-header">Bienvenido {{ empleado?.nombre ?? '' }}</header>
+
+<section class="empleado-content">
+  <div class="empleado-card">
+    <p class="empleado-info">Nombre: {{ empleado?.nombre ?? 'No disponible' }}</p>
+    <p class="empleado-info">Apellidos: {{ empleado?.apellidos ?? 'No disponible' }}</p>
+    <p class="empleado-info">NIF: {{ empleado?.nif ?? 'No disponible' }}</p>
+    <p class="empleado-info">Teléfono: {{ empleado?.telefono ?? 'No disponible' }}</p>
+    <p class="empleado-info">Rol: {{ empleado?.rol ?? 'No disponible' }}</p>
+    <p class="empleado-info" *ngIf="empleado?.activo">Cuenta Activa</p>
+    <p class="empleado-info" *ngIf="!empleado?.activo">Cuenta Inactiva, se recomienda eliminación</p>
+  </div>
+</section>
