@@ -16,19 +16,19 @@ load_dotenv()
 class ServiceSettings:
 	"""Environment-driven settings for the service."""
 
-	postgres_host: str = os.getenv("POSTGRES_HOST", "localhost")
-	postgres_port: int = int(os.getenv("POSTGRES_PORT", "5432"))
-	postgres_db: str = os.getenv("POSTGRES_DB", "gestoria")
-	postgres_user: str = os.getenv("POSTGRES_USER", "postgres")
-	postgres_password: str = os.getenv("POSTGRES_PASSWORD", "")
-	postgres_sslmode: str = os.getenv("POSTGRES_SSLMODE", "prefer")
+	postgres_host: str = os.getenv("POSTGRES_HOST")
+	postgres_port: int = int(os.getenv("POSTGRES_PORT"))
+	postgres_db: str = os.getenv("POSTGRES_DB")
+	postgres_user: str = os.getenv("POSTGRES_USER")
+	postgres_password: str = os.getenv("POSTGRES_PASSWORD")
+	postgres_sslmode: str = os.getenv("POSTGRES_SSLMODE")
 	database_url: str | None = os.getenv("DATABASE_URL")
 
-	jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
-	jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
-	jwt_expiration_hours: int = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+	jwt_secret_key: str = os.getenv("JWT_SECRET_KEY")
+	jwt_algorithm: str = os.getenv("JWT_ALGORITHM")
+	jwt_expiration_hours: int = int(os.getenv("JWT_EXPIRATION_HOURS"))
 
-	frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:4200")
+	frontend_url: str = os.getenv("FRONTEND_URL")
 
 	@property
 	def effective_database_url(self) -> str:

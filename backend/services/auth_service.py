@@ -68,7 +68,14 @@ def _enrich_user_role(token_data: TokenData) -> TokenData:
     with db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT nombre_usuario, rol::text, activo FROM usuarios WHERE id = %s",
+                """
+                SELECT
+                    COALESCE(to_jsonb(u)->>'nombre_usuario', to_jsonb(u)->>'usuario') AS nombre_usuario,
+                    u.rol::text,
+                    u.activo
+                FROM usuarios u
+                WHERE u.id = %s
+                """,
                 (token_data.user_id,),
             )
             row = cursor.fetchone()
@@ -83,26 +90,35 @@ def _enrich_user_role(token_data: TokenData) -> TokenData:
     return TokenData(user_id=token_data.user_id, nombre_usuario=token_data.nombre_usuario, role=role)
 
 
-def authenticate_user(usuario: str, password: str) -> TokenData:
+def authenticate_user(dni: str, password: str) -> TokenData:
+    normalized_dni = dni.strip().upper()
+
     with db_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT u.id, u.nombre_usuario, u.password_hash, u.rol::text, u.activo
+                SELECT
+                    u.id,
+                    COALESCE(to_jsonb(u)->>'nombre_usuario', to_jsonb(u)->>'usuario') AS nombre_usuario,
+                    u.password_hash,
+                    u.rol::text,
+                    u.activo,
+                    e.activo
                 FROM usuarios u
-                WHERE u.nombre_usuario = %s
+                JOIN empleados e ON e.usuario_id = u.id
+                WHERE UPPER(e.nif) = %s
                 LIMIT 1
                 """,
-                (usuario,),
+                (normalized_dni,),
             )
             row = cursor.fetchone()
 
     if not row:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
-    user_id, nombre_usuario, password_hash, role, active = row
+    user_id, nombre_usuario, password_hash, role, active_user, active_employee = row
 
-    if not active:
+    if not active_user or not active_employee:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo")
 
     if not pwd_context.verify(password, password_hash):

@@ -1,0 +1,19 @@
+<main class="module-layout">
+  <app-intranet-shell-header
+    pageTitle="Gestión de trabajos"
+    pageSubtitle=""
+    [activeRoute]="'/trabajos'"
+    [employeeName]="employeeName"
+    [links]="navigationLinks"
+    (logoutClick)="logout()">
+  </app-intranet-shell-header>
+
+      <section class="module-container">
+        <article class="wip-card">
+          <h2 class="wip-title">Gestión de trabajos</h2>
+          <p class="wip-badge">Work in progress</p>
+          <p class="wip-description">Esta sección está en desarrollo y se activará en la siguiente iteración.</p>
+          <a routerLink="/home">Volver al panel principal</a>
+        </article>
+      </section>
+</main>

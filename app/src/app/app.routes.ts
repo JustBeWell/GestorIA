@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
 	{
@@ -12,7 +13,28 @@ export const routes: Routes = [
 	},
 	{
 		path: 'home',
+		canActivate: [authGuard],
 		loadComponent: () => import('./features/home/home-page/home-page.component').then((m) => m.HomePageComponent),
+	},
+	{
+		path: 'fichaje',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/fichaje/pages/fichaje-page.component').then((m) => m.FichajePageComponent),
+	},
+	{
+		path: 'clientes',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/clientes/pages/clientes-page.component').then((m) => m.ClientesPageComponent),
+	},
+	{
+		path: 'trabajos',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/trabajos/pages/trabajos-page.component').then((m) => m.TrabajosPageComponent),
+	},
+	{
+		path: 'pagos',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/pagos/pages/pagos-page.component').then((m) => m.PagosPageComponent),
 	},
 	{
 		path: '**',

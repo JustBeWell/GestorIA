@@ -5,7 +5,7 @@ export interface AuthUser {
 }
 
 export interface LoginRequest {
-  usuario: string;
+  dni: string;
   password: string;
 }
 

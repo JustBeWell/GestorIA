@@ -1,13 +1,98 @@
-<header class="home-header">Bienvenido {{ empleado?.nombre ?? '' }}</header>
+<main class="home-layout">
+  @if (loading()) {
+    <section class="fullscreen-message loading" role="status" aria-live="polite">
+      <div class="spinner-xl" aria-hidden="true"></div>
+      <h2>Cargando intranet...</h2>
+      <p>Estamos preparando tu panel principal de trabajo.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="fullscreen-message error" role="alert" aria-live="assertive">
+      <h2>No se pudo cargar el Home</h2>
+      <p>{{ errorMessage() }}</p>
+      <div class="state-actions">
+        <button type="button" (click)="reload()">Reintentar</button>
+        <button type="button" class="secondary" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </section>
+  } @else {
+    <app-intranet-shell-header
+      pageTitle="Bienvenido a la plataforma GestorIA"
+      pageSubtitle=""
+      [activeRoute]="'/home'"
+      [employeeName]="empleado?.nombre ?? homeData?.usuario?.nombre_completo ?? 'Usuario'"
+      [links]="navigationLinks"
+      (logoutClick)="logout()">
+    </app-intranet-shell-header>
 
-<section class="empleado-content">
-  <div class="empleado-card">
-    <p class="empleado-info">Nombre: {{ empleado?.nombre ?? 'No disponible' }}</p>
-    <p class="empleado-info">Apellidos: {{ empleado?.apellidos ?? 'No disponible' }}</p>
-    <p class="empleado-info">NIF: {{ empleado?.nif ?? 'No disponible' }}</p>
-    <p class="empleado-info">Teléfono: {{ empleado?.telefono ?? 'No disponible' }}</p>
-    <p class="empleado-info">Rol: {{ empleado?.rol ?? 'No disponible' }}</p>
-    <p class="empleado-info" *ngIf="empleado?.activo">Cuenta Activa</p>
-    <p class="empleado-info" *ngIf="!empleado?.activo">Cuenta Inactiva, se recomienda eliminación</p>
-  </div>
-</section>
+    <section class="content-shell">
+      <section class="card overview-card">
+        <h2>Resumen general del empleado</h2>
+        <div class="overview-grid">
+          <div class="overview-block">
+            <p class="summary-line"><span>Nombre:</span> {{ empleado?.nombre ?? 'No disponible' }} {{ empleado?.apellidos ?? '' }}</p>
+            <p class="summary-line"><span>NIF:</span> {{ empleado?.nif ?? 'No disponible' }}</p>
+            <p class="summary-line"><span>Teléfono:</span> {{ empleado?.telefono ?? 'No disponible' }}</p>
+            <p class="summary-line"><span>Rol:</span> {{ empleado?.rol ?? homeData?.usuario?.rol ?? 'No disponible' }}</p>
+            <p class="summary-line"><span>Estado:</span> {{ empleado?.activo ? 'Activo' : 'Inactivo' }}</p>
+          </div>
+
+          <div class="overview-block">
+            <p class="summary-line"><span>Facturas vencidas:</span> <strong>{{ homeData?.pagos?.facturas_vencidas ?? 0 }}</strong></p>
+            <p class="summary-line"><span>Trabajos bloqueados:</span> <strong>{{ homeData?.trabajos?.bloqueados ?? 0 }}</strong></p>
+            <p class="summary-line"><span>Trabajos finalizados:</span> <strong>{{ homeData?.trabajos?.finalizados ?? 0 }}</strong></p>
+            <p class="summary-line"><span>Trabajos cancelados:</span> <strong>{{ homeData?.trabajos?.cancelados ?? 0 }}</strong></p>
+            <p class="summary-line"><span>Último evento:</span> {{ homeData?.fichaje?.ultimo_evento_tipo ?? 'No disponible' }}</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats-calendar-layout">
+        <article class="card stat-card stat-1">
+          <h3>Fichaje</h3>
+          <p class="stat-number">{{ homeData?.fichaje?.eventos_hoy ?? 0 }}</p>
+          <p class="muted">Turno: {{ homeData?.fichaje?.turno_activo ? 'Activo' : 'Cerrado' }}</p>
+          <p class="muted compact">{{ formatDate(homeData?.fichaje?.ultimo_evento_fecha_hora ?? null) }}</p>
+        </article>
+
+        <article class="card stat-card stat-2">
+          <h3>Clientes</h3>
+          <p class="stat-number">{{ homeData?.clientes?.activos ?? 0 }}</p>
+          <p class="muted">Activos de {{ homeData?.clientes?.total ?? 0 }} totales</p>
+        </article>
+
+        <article class="card stat-card stat-3">
+          <h3>Trabajos</h3>
+          <p class="stat-number">{{ homeData?.trabajos?.en_curso ?? 0 }}</p>
+          <p class="muted">En curso · {{ homeData?.trabajos?.pendientes ?? 0 }} pendientes</p>
+        </article>
+
+        <article class="card stat-card stat-4">
+          <h3>Pagos</h3>
+          <p class="stat-number">{{ formatCurrency(homeData?.pagos?.cobrado_mes) }}</p>
+          <p class="muted">Pendiente: {{ formatCurrency(homeData?.pagos?.pendiente_total) }}</p>
+        </article>
+
+        <article class="card calendar-card">
+          <h2>Calendario de fichajes · {{ monthLabel }}</h2>
+          <p class="muted">Información adicional de apoyo visual.</p>
+
+          <div class="calendar-weekdays">
+            @for (weekday of weekDays; track weekday) {
+              <span>{{ weekday }}</span>
+            }
+          </div>
+
+          <div class="calendar-grid">
+            @for (cell of calendarDays; track $index) {
+              <div class="calendar-cell" [class.empty]="!cell.day" [class.fichado]="hasFichaje(cell)" [class.today]="cell.isToday">
+                @if (cell.day) {
+                  <span>{{ cell.day }}</span>
+                }
+              </div>
+            }
+          </div>
+        </article>
+      </section>
+    </section>
+  }
+</main>

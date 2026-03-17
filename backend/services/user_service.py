@@ -41,7 +41,7 @@ class UserService:
                     SELECT
                         e.id,
                         u.id AS usuario_id,
-                        u.nombre_usuario,
+                        COALESCE(to_jsonb(u)->>'nombre_usuario', to_jsonb(u)->>'usuario') AS nombre_usuario,
                         e.nombre,
                         e.apellidos,
                         e.nif,
@@ -72,7 +72,7 @@ class UserService:
                     SELECT
                         e.id,
                         u.id AS usuario_id,
-                        u.nombre_usuario,
+                        COALESCE(to_jsonb(u)->>'nombre_usuario', to_jsonb(u)->>'usuario') AS nombre_usuario,
                         e.nombre,
                         e.apellidos,
                         e.nif,

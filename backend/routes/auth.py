@@ -12,7 +12,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: LoginRequest):
-    current_user = authenticate_user(payload.usuario, payload.password)
+    current_user = authenticate_user(payload.dni, payload.password)
     token, _ = TokenService.create_access_token(
         user_id=current_user.user_id,
         nombre_usuario=current_user.nombre_usuario,
@@ -26,7 +26,6 @@ async def login(payload: LoginRequest):
             "role": current_user.role,
         },
     )
-
 
 @router.get("/token")
 async def get_token(current_user=Depends(get_current_user)):

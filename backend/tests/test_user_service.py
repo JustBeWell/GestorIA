@@ -35,7 +35,7 @@ class TestAuthLogin:
 	def test_login_success(self, mock_exp, mock_create_token, mock_authenticate):
 		mock_authenticate.return_value = TokenData(
 			user_id="11111111-1111-1111-1111-111111111111",
-			email="admin@gestoria.local",
+			nombre_usuario="admin@gestoria.local",
 			role="administrador",
 		)
 		mock_create_token.return_value = ("jwt-token", None)
@@ -43,7 +43,7 @@ class TestAuthLogin:
 
 		response = client.post(
 			"/auth/login",
-			json={"usuario": "admin", "password": "Password123!"},
+			json={"dni": "12345678A", "password": "Password123!"},
 		)
 
 		assert response.status_code == 200
@@ -56,7 +56,7 @@ class TestAuthLogin:
 	def test_login_validation_error_short_password(self):
 		response = client.post(
 			"/auth/login",
-			json={"usuario": "admin", "password": "123"},
+			json={"dni": "12345678A", "password": "123"},
 		)
 		assert response.status_code == 422
 
@@ -77,7 +77,7 @@ class TestAuthTokenAndLogout:
 	def test_get_token_success(self, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="empleado@gestoria.local",
+			nombre_usuario="empleado@gestoria.local",
 			role="empleado",
 		)
 		response = client.get(
@@ -95,7 +95,7 @@ class TestAuthTokenAndLogout:
 	def test_logout_success(self, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="empleado@gestoria.local",
+			nombre_usuario="empleado@gestoria.local",
 			role="empleado",
 		)
 		response = client.post(
@@ -130,7 +130,7 @@ class TestUsersRoutes:
 	def test_list_users_success(self, mock_list_users, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="admin@gestoria.local",
+			nombre_usuario="admin@gestoria.local",
 			role="administrador",
 		)
 		mock_list_users.return_value = [{"id": "1", "nombre": "Test"}]
@@ -151,7 +151,7 @@ class TestUsersRoutes:
 	def test_get_me_found(self, mock_get, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="empleado@gestoria.local",
+			nombre_usuario="empleado@gestoria.local",
 			role="empleado",
 		)
 		mock_get.return_value = {
@@ -173,9 +173,18 @@ class TestUsersRoutes:
 		assert response.json()["email"] == "empleado@gestoria.local"
 
 	@patch("routes.users.UserService.exists")
-	def test_exists_endpoint(self, mock_exists):
+	@patch("services.auth_service.TokenService.decode_token")
+	def test_exists_endpoint(self, mock_decode, mock_exists):
+		mock_decode.return_value = TokenData(
+			user_id="local-user",
+			nombre_usuario="admin@gestoria.local",
+			role="administrador",
+		)
 		mock_exists.return_value = True
-		response = client.get("/users/11111111-1111-1111-1111-111111111111/exists")
+		response = client.get(
+			"/users/11111111-1111-1111-1111-111111111111/exists",
+			headers={"Authorization": "Bearer valid-token"},
+		)
 		assert response.status_code == 200
 		assert response.json()["exists"] is True
 
@@ -184,13 +193,13 @@ class TestUsersRoutes:
 	def test_create_user_requires_admin(self, mock_create, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="empleado@gestoria.local",
+			nombre_usuario="empleado@gestoria.local",
 			role="empleado",
 		)
 		response = client.post(
 			"/users/",
 			json={
-				"email": "nuevo@gestoria.com",
+				"nombre_usuario": "nuevo@gestoria.com",
 				"password": "Password123!",
 				"rol": "empleado",
 				"nombre": "Nuevo",
@@ -207,14 +216,14 @@ class TestUsersRoutes:
 	def test_create_user_as_admin(self, mock_create, mock_decode):
 		mock_decode.return_value = TokenData(
 			user_id="local-user",
-			email="admin@gestoria.local",
+			nombre_usuario="admin@gestoria.local",
 			role="administrador",
 		)
 		mock_create.return_value = {"id": "emp-1", "email": "nuevo@gestoria.com"}
 		response = client.post(
 			"/users/",
 			json={
-				"email": "nuevo@gestoria.com",
+				"nombre_usuario": "nuevo@gestoria.com",
 				"password": "Password123!",
 				"rol": "empleado",
 				"nombre": "Nuevo",

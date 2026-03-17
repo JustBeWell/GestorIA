@@ -1,0 +1,27 @@
+<header class="banner-full">
+  <div class="banner-content">
+    <p class="eyebrow">GestorIA · Intranet</p>
+    <h1>{{ pageTitle }}</h1>
+    <p class="subtitle">{{ pageSubtitle }}</p>
+  </div>
+</header>
+
+<nav class="main-nav">
+  <div class="nav-links">
+    <a routerLink="/home" class="nav-link" [class.active]="activeRoute === '/home'">Home</a>
+    @for (feature of links; track feature.clave) {
+      <a
+        class="nav-link"
+        [class.active]="isActive(feature.ruta)"
+        [routerLink]="normalizeRoute(feature.ruta)">
+        {{ feature.titulo }}
+      </a>
+    }
+  </div>
+  <div class="nav-right">
+    <strong>{{ appLabel }}</strong>
+    @if (showLogout) {
+      <button type="button" class="secondary" (click)="onLogout()">Cerrar sesión</button>
+    }
+  </div>
+</nav>

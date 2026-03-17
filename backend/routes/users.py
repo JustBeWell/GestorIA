@@ -5,7 +5,7 @@ from models import UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
 from services.auth_service import get_current_user
 from services.user_service import UserService
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/")

@@ -4,14 +4,21 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+:host,
+:host * {
+  box-sizing: border-box;
+}
+
 .container {
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
   display: flex;
   overflow: hidden;
 }
 
 .hero-panel {
-  width: 70%;
+  flex: 1 1 50%;
+  min-width: 0;
   height: 100%;
 }
 
@@ -23,8 +30,9 @@
 }
 
 .login-panel {
-  width: 30%;
+  flex: 0 0 50%;
   min-width: 360px;
+  max-width: 460px;
   height: 100%;
   background: #ffffff;
   display: flex;
@@ -45,6 +53,12 @@
   padding: 28px;
   position: relative;
   z-index: 1;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.16);
 }
 
 .login-panel::before,
@@ -97,6 +111,14 @@ input {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #f8fbff;
 }
 
 .field-error {
@@ -114,6 +136,12 @@ button {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
 }
 
 button:disabled {
@@ -123,7 +151,9 @@ button:disabled {
 
 .message {
   margin-top: 14px;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .error {
@@ -139,4 +169,80 @@ button:disabled {
   height: 100%;
   display: block;
   object-fit: cover;
+}
+
+.fullscreen-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(2px);
+}
+
+.fullscreen-loading h2 {
+  margin: 0;
+  font-size: 32px;
+  color: #f8fafc;
+}
+
+.fullscreen-loading p {
+  margin: 0;
+  font-size: 18px;
+  max-width: 680px;
+  color: #cbd5e1;
+}
+
+.spinner-xl {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 6px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: spin 0.9s linear infinite;
+}
+
+@media (max-width: 1100px) {
+  .hero-panel {
+    flex-basis: 62%;
+  }
+
+  .login-panel {
+    flex-basis: 38%;
+    min-width: 340px;
+  }
+}
+
+@media (max-width: 900px) {
+  .container {
+    height: auto;
+    min-height: 100vh;
+    flex-direction: column;
+  }
+
+  .hero-panel {
+    width: 100%;
+    flex: 0 0 auto;
+    height: 34vh;
+    min-height: 220px;
+  }
+
+  .login-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 auto;
+    padding: 22px;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

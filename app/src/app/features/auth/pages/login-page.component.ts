@@ -29,7 +29,7 @@ export class LoginPageComponent {
   protected readonly currentHeroVideoIndex = signal(0);
 
   protected readonly loginForm = this.fb.nonNullable.group({
-    usuario: ['', [Validators.required, Validators.minLength(3)]],
+    dni: ['', [Validators.required, Validators.minLength(9), Validators.maxLength(9)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
@@ -75,12 +75,12 @@ export class LoginPageComponent {
 
   }
 
-  protected hasError(fieldName: 'usuario' | 'password'): boolean {
+  protected hasError(fieldName: 'dni' | 'password'): boolean {
     const field = this.loginForm.controls[fieldName];
     return field.invalid && (field.touched || this.submitAttempted());
   }
 
-  protected getFieldError(fieldName: 'usuario' | 'password'): string {
+  protected getFieldError(fieldName: 'dni' | 'password'): string {
     const field = this.loginForm.controls[fieldName];
 
     if (field.errors?.['required']) {
@@ -91,7 +91,11 @@ export class LoginPageComponent {
       if (fieldName === 'password') {
         return 'La contraseña debe tener al menos 8 caracteres.';
       }
-      return 'El usuario debe tener al menos 3 caracteres.';
+      return 'El DNI debe tener 9 caracteres (8 números y letra).';
+    }
+
+    if (field.errors?.['maxlength']) {
+      return 'El DNI debe tener exactamente 9 caracteres.';
     }
 
     return 'Valor inválido.';

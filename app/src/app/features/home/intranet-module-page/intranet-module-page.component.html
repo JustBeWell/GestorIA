@@ -1,0 +1,18 @@
+<main class="module-layout">
+  <app-intranet-shell-header
+    [pageTitle]="title"
+    pageSubtitle="Módulo conectado desde el panel estadístico central."
+    [activeRoute]="activeRoute"
+    [employeeName]="employeeName"
+    [links]="navigationLinks"
+    (logoutClick)="logout()">
+  </app-intranet-shell-header>
+
+  <section class="module-container">
+    <section class="module-card">
+      <h2>{{ title }}</h2>
+      <p>Este módulo usa la navegación común y quedará ampliado en siguientes iteraciones.</p>
+      <a routerLink="/home">Volver al panel principal</a>
+    </section>
+  </section>
+</main>
