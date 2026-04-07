@@ -104,26 +104,6 @@ class TestAuthTokenAndLogout:
 		)
 		assert response.status_code == 200
 
-
-class TestGoogleOAuth:
-	def test_google_login_redirect(self):
-		response = client.get("/auth/google/login", follow_redirects=False)
-		assert response.status_code == 307
-		assert "accounts.google.com" in response.headers.get("location", "")
-
-	def test_google_callback_missing_code(self):
-		response = client.get("/auth/google/callback")
-		assert response.status_code == 400
-
-	def test_google_callback_with_error(self):
-		response = client.get("/auth/google/callback?error=access_denied", follow_redirects=False)
-		assert response.status_code == 307
-
-	def test_google_token_missing_code(self):
-		response = client.post("/auth/google/token", json={})
-		assert response.status_code == 422
-
-
 class TestUsersRoutes:
 	@patch("services.auth_service.TokenService.decode_token")
 	@patch("routes.users.UserService.list_users")

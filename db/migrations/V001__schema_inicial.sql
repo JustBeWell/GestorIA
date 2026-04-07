@@ -246,7 +246,7 @@ COMMENT ON TABLE  pagos IS 'Pagos parciales o totales asociados a una factura.';
 -- ============================================================================
 
 -- Usuarios
-CREATE INDEX idx_usuarios_email       ON usuarios (email);
+CREATE INDEX idx_usuarios_usuario     ON usuarios (usuario);
 CREATE INDEX idx_usuarios_activo      ON usuarios (activo) WHERE activo = TRUE;
 
 -- Empleados

@@ -54,3 +54,13 @@ npm run start:web
 ```bash
 npm run build
 ```
+
+## Docker (frontend web)
+
+El contenedor del frontend genera el build de Angular y lo sirve con Nginx.
+
+```bash
+docker-compose up --build frontend-web
+```
+
+Disponible en `http://localhost:4200`.

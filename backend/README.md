@@ -34,6 +34,8 @@ Definidas en `service_config.py`:
 - `JWT_EXPIRATION_HOURS`
 - `FRONTEND_URL`
 
+Para desarrollo local, existe una plantilla en `backend/.env.example`.
+
 ## Ejecución local
 
 Desde `backend/`:
@@ -73,7 +75,7 @@ Todo lo demás (`/auth/token`, `/auth/logout`, `/users/*`, `/intranet/*`).
 ### Auth
 
 - `POST /auth/login`
-  - body: `{ usuario, password }`
+  - body: `{ dni, password }`
   - devuelve token JWT y datos básicos de usuario.
 - `GET /auth/token`
   - renueva token para usuario autenticado.

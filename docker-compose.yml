@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: gestoria-db
+    environment:
+      POSTGRES_DB: POSTGRES_DB
+      POSTGRES_USER: POSTGRES_USER
+      POSTGRES_PASSWORD: POSTGRES_PASSWORD
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations/V001__schema_inicial.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestoria -d GestorIA"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gestoria-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: GestorIA
+      POSTGRES_USER: gestoria
+      POSTGRES_PASSWORD: gestoria
+      POSTGRES_SSLMODE: disable
+      DATABASE_URL: postgresql://gestoria:gestoria@db:5432/GestorIA?sslmode=disable
+      JWT_SECRET_KEY: dev-secret-change-me
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION_HOURS: 8
+      FRONTEND_URL: http://localhost:4200
+    ports:
+      - "8008:8008"
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  frontend-web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: gestoria-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  postgres_data:
