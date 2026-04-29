@@ -40,6 +40,18 @@ export interface PagosResumen {
   facturas_vencidas: number;
 }
 
+export interface QuarterSeriesPoint {
+  label: string;
+  value: number;
+}
+
+export interface QuarterSeriesResponse {
+  start: string;
+  end: string;
+  granularity: string;
+  points: QuarterSeriesPoint[];
+}
+
 export interface IntranetHomeResponse {
   usuario: IntranetUsuarioResumen;
   funcionalidades: IntranetFeatureCard[];
@@ -55,6 +67,21 @@ export interface FichajeEventoItem {
   fecha_hora: string;
   origen: string;
   observaciones: string | null;
+}
+
+export interface FichajeRegistroRequest {
+  tipo_evento?: 'entrada' | 'salida' | 'pausa_inicio' | 'pausa_fin';
+  observaciones?: string | null;
+}
+
+export interface FichajeRegistroResponse {
+  evento: FichajeEventoItem;
+  resumen: FichajeResumen;
+}
+
+export interface FichajeUndoResponse {
+  evento: FichajeEventoItem;
+  resumen: FichajeResumen;
 }
 
 export interface PaginationMeta {

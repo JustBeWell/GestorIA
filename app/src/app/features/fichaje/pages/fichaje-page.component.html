@@ -1,19 +1,238 @@
-<main class="module-layout">
-  <app-intranet-shell-header
-    pageTitle="Fichaje"
-    pageSubtitle=""
-    [activeRoute]="'/fichaje'"
-    [employeeName]="employeeName"
-    [links]="navigationLinks"
-    (logoutClick)="logout()">
-  </app-intranet-shell-header>
+<main class="fichaje-layout">
+  <section class="intranet-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-avatar">G</div>
+        <div>
+          <div class="brand-title">GestorIA</div>
+          <div class="brand-subtitle">Intranet</div>
+        </div>
+      </div>
 
-      <section class="module-container">
-        <article class="wip-card">
-          <h2 class="wip-title">Fichaje</h2>
-          <p class="wip-badge">Work in progress</p>
-          <p class="wip-description">Esta sección está en desarrollo y se activará en la siguiente iteración.</p>
-          <a routerLink="/home">Volver al panel principal</a>
-        </article>
+      <div class="nav-section">
+        <div class="nav-label">Principal</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link" routerLink="/home">
+              <span class="nav-icon">H</span>
+              <span class="nav-text">Home</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link active" routerLink="/fichaje">
+              <span class="nav-icon">F</span>
+              <span class="nav-text">Fichaje</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/clientes">
+              <span class="nav-icon">C</span>
+              <span class="nav-text">Gestion de clientes</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/trabajos">
+              <span class="nav-icon">T</span>
+              <span class="nav-text">Gestion de trabajos</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/pagos">
+              <span class="nav-icon">P</span>
+              <span class="nav-text">Pagos</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Herramientas</div>
+        <div class="tool-list">
+          <a class="tool-item" routerLink="/calendario-fiscal">
+            <span class="tool-icon">CF</span>
+            <span>Calendario fiscal</span>
+          </a>
+          <a class="tool-item" routerLink="/documentos">
+            <span class="tool-icon">D</span>
+            <span>Documentos</span>
+          </a>
+          <a class="tool-item" routerLink="/ajustes">
+            <span class="tool-icon">A</span>
+            <span>Ajustes</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="avatar">{{ employeeInitials }}</div>
+        <div class="meta">
+          <strong>{{ employeeFirstName }}</strong>
+          <span>{{ employeeRole }}</span>
+        </div>
+        <button type="button" class="logout-button" (click)="logout()">
+          Cerrar sesion
+        </button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>Fichaje</strong></div>
+        <div class="topbar-actions">
+          <label class="search-field">
+            <input
+              type="text"
+              placeholder="Buscar dia, estado, hora..."
+              [(ngModel)]="filterQuery" />
+            <span class="search-shortcut">/</span>
+          </label>
+        </div>
+      </header>
+
+      <section class="page-header">
+        <div>
+          <h1 class="page-title">Fichaje</h1>
+          <p class="page-subtitle">Control horario · {{ monthLabel }}</p>
+        </div>
+        <div class="page-header-actions">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="exportHistorial()"
+            [disabled]="exporting() || !filteredHistorialRows.length">
+            Exportar registro
+          </button>
+          <button
+            type="button"
+            class="ghost-button"
+            (click)="togglePause()"
+            [disabled]="saving() || !fichajeData?.resumen?.turno_activo">
+            {{ pauseActive ? 'Finalizar pausa' : 'Iniciar pausa' }}
+          </button>
+          <button
+            type="button"
+            class="ghost-button"
+            (click)="undoLastFichaje()"
+            [disabled]="saving() || !lastUndoLabel">
+            Deshacer ultimo fichaje
+          </button>
+          <button type="button" class="primary-button" (click)="registerFichaje()" [disabled]="saving()">
+            {{ nextActionLabel }}
+          </button>
+        </div>
       </section>
+
+      @if (actionErrorMessage()) {
+        <section class="action-alert" role="status" aria-live="polite">
+          <div>
+            <strong>No se pudo completar la accion</strong>
+            <p>{{ actionErrorMessage() }}</p>
+            @if (lastUndoLabel) {
+              <span class="action-hint">Ultimo fichaje: {{ lastUndoLabel }}</span>
+            }
+          </div>
+          <div class="action-alert-actions">
+            <button type="button" class="ghost-button" (click)="undoLastFichaje()" [disabled]="saving() || !lastUndoLabel">
+              Deshacer ultimo fichaje
+            </button>
+            <button type="button" class="secondary-button" (click)="reload()">Reintentar</button>
+          </div>
+        </section>
+      }
+
+      @if (loading()) {
+        <section class="state-card" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <h2>Cargando fichaje...</h2>
+          <p>Estamos sincronizando tus registros más recientes.</p>
+        </section>
+      } @else if (errorMessage()) {
+        <div class="modal-backdrop" role="alert" aria-live="assertive">
+          <section class="modal-card">
+            <h2>No se pudo cargar el fichaje</h2>
+            <p>{{ errorMessage() }}</p>
+            <div class="state-actions">
+              <button type="button" class="secondary-button" (click)="reload()">Reintentar</button>
+            </div>
+          </section>
+        </div>
+      } @else {
+        <section class="stats-grid">
+          @for (card of statsCards; track card.title) {
+            <article class="panel stat-card">
+              <div class="stat-header">
+                <span class="stat-title">{{ card.title }}</span>
+                <span class="stat-icon"
+                  [class.blue]="card.tone === 'blue'"
+                  [class.green]="card.tone === 'green'"
+                  [class.yellow]="card.tone === 'yellow'"
+                  [class.orange]="card.tone === 'orange'">
+                  {{ card.icon }}
+                </span>
+              </div>
+              <div class="stat-value">
+                {{ card.value }}
+                <span class="stat-unit">{{ card.unit }}</span>
+              </div>
+              @if (card.progressPercent > 0) {
+                <div class="stat-bar">
+                  <span [style.width.%]="card.progressPercent"></span>
+                </div>
+              }
+              <div class="stat-meta">
+                <span>{{ card.helperLeft }}</span>
+                <span>{{ card.helperRight }}</span>
+              </div>
+            </article>
+          }
+        </section>
+
+        <section class="history-panel panel">
+          <div class="history-header">
+            <div>
+              <h3>Historial de fichajes</h3>
+              <p class="muted">{{ monthLabel }}</p>
+            </div>
+            <button type="button" class="ghost-button" (click)="reload()">Actualizar</button>
+          </div>
+
+          <div class="history-table">
+            <div class="history-head">
+              <span>Dia</span>
+              <span>Entrada</span>
+              <span>Salida</span>
+              <span>Horas</span>
+              <span>Distribucion (06:00 - 20:00)</span>
+              <span>Tipo</span>
+            </div>
+
+            @for (row of filteredHistorialRows; track row.dateKey) {
+              <div class="history-row" [class.active-row]="row.statusTone === 'active'">
+                <span class="day-cell">{{ row.dayLabel }}</span>
+                <span>{{ row.entryTime }}</span>
+                <span class="exit-cell" [class.in-progress]="row.statusTone === 'active'">
+                  {{ row.exitTime }}
+                </span>
+                <span class="hours-cell">{{ row.hoursLabel }}</span>
+                <div class="distribution-cell">
+                  <div class="distribution-bar">
+                    <span [style.width.%]="row.distributionPercent"></span>
+                  </div>
+                </div>
+                <span class="status-pill" [class.complete]="row.statusTone === 'complete'"
+                  [class.active]="row.statusTone === 'active'"
+                  [class.absent]="row.statusTone === 'absent'">
+                  {{ row.statusLabel }}
+                </span>
+              </div>
+            }
+
+            @if (!filteredHistorialRows.length) {
+              <p class="empty-state">No hay registros para este filtro.</p>
+            }
+          </div>
+        </section>
+      }
+    </section>
+  </section>
 </main>

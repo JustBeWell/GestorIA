@@ -48,9 +48,6 @@ app.include_router(intranet_router)
 PUBLIC_PATHS = {
     "/",
     "/auth/login",
-    "/auth/google/login",
-    "/auth/google/callback",
-    "/auth/google/token",
     "/health",
     "/health/db",
     "/docs",

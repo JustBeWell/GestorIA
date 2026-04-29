@@ -7,6 +7,8 @@ export class SessionStorageService {
   private readonly tokenKey = 'auth_token';
   private readonly userKey = 'auth_user';
   private readonly empleadoKey = 'empleado_profile';
+  private readonly homeSnapshotKey = 'home_snapshot';
+  private readonly fichajeSnapshotKey = 'fichaje_snapshot';
 
   setSession(token: string, user: AuthUser): void {
     localStorage.setItem(this.tokenKey, token);
@@ -17,6 +19,16 @@ export class SessionStorageService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
     localStorage.removeItem(this.empleadoKey);
+    localStorage.removeItem(this.homeSnapshotKey);
+    localStorage.removeItem(this.fichajeSnapshotKey);
+  }
+
+  clearHomeSnapshot(): void {
+    localStorage.removeItem(this.homeSnapshotKey);
+  }
+
+  clearFichajeSnapshot(): void {
+    localStorage.removeItem(this.fichajeSnapshotKey);
   }
 
   getToken(): string | null {

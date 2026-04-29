@@ -1,9 +1,15 @@
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+
+from fastapi import HTTPException
 from psycopg2.extras import RealDictCursor
 
 from database import db_connection
 
 
 class IntranetService:
+    MADRID_TZ = ZoneInfo("Europe/Madrid")
+    MONTH_ABBR = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
     @staticmethod
     def get_home(user_id: str) -> dict:
         with db_connection() as connection:
@@ -59,8 +65,334 @@ class IntranetService:
         }
 
     @staticmethod
+    def get_fichaje_quarter_series(user_id: str) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+                start_date, end_date, month_windows = IntranetService._get_quarter_months()
+                eventos = IntranetService._get_fichajes_all(
+                    cursor,
+                    empleado_id=empleado_id,
+                    tipo_evento=None,
+                    fecha_desde=start_date.isoformat(),
+                    fecha_hasta=end_date.isoformat(),
+                    order_desc=False,
+                )
+                hours_by_month = IntranetService._build_fichaje_hours_by_month(eventos, start_date, end_date)
+
+        points = [
+            {
+                "label": window["label"],
+                "value": float(hours_by_month.get(window["key"], 0)),
+            }
+            for window in month_windows
+        ]
+        return {
+            "start": start_date,
+            "end": end_date,
+            "granularity": "month",
+            "points": points,
+        }
+
+    @staticmethod
+    def get_clientes_quarter_series(user_id: str) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+                start_date, end_date, month_windows = IntranetService._get_quarter_months()
+                points = []
+                for window in month_windows:
+                    month_end = window["end"]
+                    cursor.execute(
+                        """
+                        WITH clientes_asignados AS (
+                            SELECT DISTINCT t.cliente_id
+                            FROM trabajo_empleado te
+                            JOIN trabajos t ON t.id = te.trabajo_id
+                            WHERE te.empleado_id = %s
+                            AND te.asignado_en::date <= %s
+                            AND (te.desasignado_en IS NULL OR te.desasignado_en::date > %s)
+                        )
+                        SELECT
+                            COUNT(*) FILTER (WHERE activo = TRUE AND created_at::date <= %s) AS activos
+                        FROM clientes
+                        WHERE id IN (SELECT cliente_id FROM clientes_asignados)
+                        """,
+                        (empleado_id, month_end, month_end, month_end),
+                    )
+                    row = cursor.fetchone() or {}
+                    points.append({
+                        "label": window["label"],
+                        "value": float(row.get("activos") or 0),
+                    })
+
+        return {
+            "start": start_date,
+            "end": end_date,
+            "granularity": "month",
+            "points": points,
+        }
+
+    @staticmethod
+    def get_trabajos_quarter_series(user_id: str) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+                start_date, end_date, month_windows = IntranetService._get_quarter_months()
+                points = []
+                for window in month_windows:
+                    month_start = window["start"]
+                    month_end = window["end"]
+                    cursor.execute(
+                        """
+                        SELECT COUNT(DISTINCT t.id) AS total
+                        FROM trabajo_empleado te
+                        JOIN trabajos t ON t.id = te.trabajo_id
+                        WHERE te.empleado_id = %s
+                        AND t.estado = 'finalizado'
+                        AND t.fecha_cierre BETWEEN %s AND %s
+                        AND te.asignado_en::date <= %s
+                        AND (te.desasignado_en IS NULL OR te.desasignado_en::date >= %s)
+                        """,
+                        (empleado_id, month_start, month_end, month_end, month_start),
+                    )
+                    row = cursor.fetchone() or {}
+                    points.append({
+                        "label": window["label"],
+                        "value": float(row.get("total") or 0),
+                    })
+
+        return {
+            "start": start_date,
+            "end": end_date,
+            "granularity": "month",
+            "points": points,
+        }
+
+    @staticmethod
+    def get_pagos_quarter_series(user_id: str) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+                start_date, end_date, month_windows = IntranetService._get_quarter_months()
+                points = []
+                for window in month_windows:
+                    month_start = window["start"]
+                    month_end = window["end"]
+                    cursor.execute(
+                        """
+                        WITH clientes_asignados AS (
+                            SELECT DISTINCT t.cliente_id
+                            FROM trabajo_empleado te
+                            JOIN trabajos t ON t.id = te.trabajo_id
+                            WHERE te.empleado_id = %s
+                            AND te.asignado_en::date <= %s
+                            AND (te.desasignado_en IS NULL OR te.desasignado_en::date > %s)
+                        )
+                        SELECT COALESCE(SUM(f.total), 0) AS total
+                        FROM facturas f
+                        WHERE f.cliente_id IN (SELECT cliente_id FROM clientes_asignados)
+                        AND f.estado <> 'anulada'
+                        AND f.fecha_emision BETWEEN %s AND %s
+                        """,
+                        (empleado_id, month_end, month_end, month_start, month_end),
+                    )
+                    row = cursor.fetchone() or {}
+                    points.append({
+                        "label": window["label"],
+                        "value": float(row.get("total") or 0),
+                    })
+
+        return {
+            "start": start_date,
+            "end": end_date,
+            "granularity": "month",
+            "points": points,
+        }
+
+    @staticmethod
+    def _get_quarter_months() -> tuple[date, date, list[dict]]:
+        today = datetime.now(IntranetService.MADRID_TZ).date()
+        first_month = IntranetService._shift_month(today.replace(day=1), -2)
+        months = []
+
+        for offset in range(3):
+            month_start = IntranetService._shift_month(first_month, offset)
+            month_end = IntranetService._month_end(month_start)
+            month_end = min(month_end, today)
+            key = f"{month_start.year:04d}-{month_start.month:02d}"
+            months.append({
+                "key": key,
+                "label": f"{IntranetService.MONTH_ABBR[month_start.month - 1]} {month_start.year}",
+                "start": month_start,
+                "end": month_end,
+            })
+
+        return first_month, months[-1]["end"], months
+
+    @staticmethod
+    def _shift_month(value: date, delta: int) -> date:
+        total = value.year * 12 + (value.month - 1) + delta
+        year = total // 12
+        month = total % 12 + 1
+        return date(year, month, 1)
+
+    @staticmethod
+    def _month_end(value: date) -> date:
+        next_month = IntranetService._shift_month(value, 1)
+        return next_month - timedelta(days=1)
+
+    @staticmethod
+    def _build_fichaje_hours_by_month(
+        eventos: list[dict],
+        start_date: date,
+        end_date: date,
+    ) -> dict[str, float]:
+        eventos_por_dia: dict[str, list[dict]] = {}
+        for evento in eventos:
+            fecha_hora: datetime = evento["fecha_hora"]
+            local_date = fecha_hora.astimezone(IntranetService.MADRID_TZ).date()
+            if local_date < start_date or local_date > end_date:
+                continue
+            key = local_date.isoformat()
+            eventos_por_dia.setdefault(key, []).append(evento)
+
+        for items in eventos_por_dia.values():
+            items.sort(key=lambda item: item["fecha_hora"])
+
+        hours_by_month: dict[str, float] = {}
+        for key, day_events in eventos_por_dia.items():
+            entry = next((event for event in day_events if event["tipo_evento"] == "entrada"), None)
+            exit_event = next((event for event in day_events if event["tipo_evento"] == "salida"), None)
+            if not entry or not exit_event:
+                continue
+
+            pause_minutes = IntranetService._calculate_pause_minutes(day_events)
+            diff_hours = max(0, (exit_event["fecha_hora"] - entry["fecha_hora"]).total_seconds() / 3600 - (pause_minutes / 60))
+            day_date = date.fromisoformat(key)
+            month_key = f"{day_date.year:04d}-{day_date.month:02d}"
+            hours_by_month[month_key] = hours_by_month.get(month_key, 0) + diff_hours
+
+        return {key: round(value, 1) for key, value in hours_by_month.items()}
+
+    @staticmethod
     def get_fichaje_tab(user_id: str) -> dict:
         return IntranetService.get_fichaje_tab_filtered(user_id)
+
+    @staticmethod
+    def create_fichaje_event(
+        user_id: str,
+        tipo_evento: str | None,
+        observaciones: str | None,
+        origen: str = "web",
+    ) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+
+                estado_hoy = IntranetService._get_fichaje_estado_hoy(cursor, empleado_id)
+                ultimo_evento_hoy = IntranetService._get_ultimo_evento_hoy(cursor, empleado_id)
+
+                if not tipo_evento:
+                    if estado_hoy["entradas"] == 0:
+                        tipo_evento = "entrada"
+                    elif estado_hoy["salidas"] == 0:
+                        if ultimo_evento_hoy == "pausa_inicio":
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Finaliza la pausa antes de registrar la salida.",
+                            )
+                        tipo_evento = "salida"
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Ya existe una entrada y una salida registradas para hoy.",
+                        )
+                else:
+                    if tipo_evento == "entrada" and estado_hoy["entradas"] >= 1:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Ya existe una entrada registrada para hoy.",
+                        )
+                    if tipo_evento == "salida" and estado_hoy["salidas"] >= 1:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Ya existe una salida registrada para hoy.",
+                        )
+                    if tipo_evento == "salida" and estado_hoy["entradas"] == 0:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="No se puede registrar una salida sin una entrada previa hoy.",
+                        )
+                    if tipo_evento == "salida" and ultimo_evento_hoy == "pausa_inicio":
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Finaliza la pausa antes de registrar la salida.",
+                        )
+                    if tipo_evento in {"pausa_inicio", "pausa_fin"}:
+                        if estado_hoy["entradas"] == 0:
+                            raise HTTPException(
+                                status_code=400,
+                                detail="No se puede registrar una pausa sin una entrada previa hoy.",
+                            )
+                        if estado_hoy["salidas"] >= 1:
+                            raise HTTPException(
+                                status_code=400,
+                                detail="No se puede registrar una pausa cuando el turno ya esta cerrado.",
+                            )
+                        if tipo_evento == "pausa_inicio" and ultimo_evento_hoy == "pausa_inicio":
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Ya hay una pausa en curso.",
+                            )
+                        if tipo_evento == "pausa_fin" and ultimo_evento_hoy != "pausa_inicio":
+                            raise HTTPException(
+                                status_code=400,
+                                detail="No hay una pausa en curso para finalizar.",
+                            )
+
+                cursor.execute(
+                    """
+                    INSERT INTO fichajes (empleado_id, tipo_evento, origen, observaciones)
+                    VALUES (%s, %s::tipo_evento_fichaje, %s::origen_fichaje, %s)
+                    RETURNING
+                        id::text AS id,
+                        tipo_evento::text AS tipo_evento,
+                        fecha_hora,
+                        origen::text AS origen,
+                        observaciones
+                    """,
+                    (empleado_id, tipo_evento, origen, observaciones),
+                )
+                evento = cursor.fetchone()
+                resumen = IntranetService._get_fichaje_resumen(cursor, empleado_id)
+
+            connection.commit()
+
+        return {
+            "evento": dict(evento) if evento else {},
+            "resumen": resumen,
+        }
 
     @staticmethod
     def get_fichaje_tab_filtered(
@@ -102,6 +434,84 @@ class IntranetService:
             "resumen": resumen,
             "eventos_recientes": eventos_recientes,
             "paginacion": IntranetService._build_pagination_meta(page, page_size, total),
+        }
+
+    @staticmethod
+    def get_fichaje_export(
+        user_id: str,
+        fecha_desde: str | None = None,
+        fecha_hasta: str | None = None,
+    ) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                start_date, end_date, start_iso, end_iso, label = IntranetService._normalize_export_range(
+                    fecha_desde,
+                    fecha_hasta,
+                )
+                eventos = IntranetService._get_fichajes_all(
+                    cursor,
+                    empleado_id=usuario["empleado_id"],
+                    tipo_evento=None,
+                    fecha_desde=start_iso,
+                    fecha_hasta=end_iso,
+                    order_desc=False,
+                )
+                rows = IntranetService._build_fichaje_export_rows(eventos, start_date, end_date)
+
+        return {
+            "usuario": IntranetService._map_usuario(usuario),
+            "rows": rows,
+            "label": label,
+        }
+
+    @staticmethod
+    def delete_last_fichaje(user_id: str) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = IntranetService._get_usuario(cursor, user_id)
+                if not usuario:
+                    return {}
+
+                empleado_id = usuario["empleado_id"]
+                cursor.execute(
+                    """
+                    SELECT
+                        id::text AS id,
+                        tipo_evento::text AS tipo_evento,
+                        fecha_hora,
+                        origen::text AS origen,
+                        observaciones
+                    FROM fichajes
+                    WHERE empleado_id = %s
+                    ORDER BY fecha_hora DESC
+                    LIMIT 1
+                    """,
+                    (empleado_id,),
+                )
+                evento = cursor.fetchone()
+                if not evento:
+                    raise HTTPException(status_code=404, detail="No hay fichajes para deshacer.")
+
+                evento_fecha = evento["fecha_hora"].astimezone(IntranetService.MADRID_TZ).date()
+                hoy = datetime.now(IntranetService.MADRID_TZ).date()
+                if evento_fecha != hoy:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Solo se puede deshacer el ultimo fichaje del dia actual.",
+                    )
+
+                cursor.execute("DELETE FROM fichajes WHERE id::text = %s", (evento["id"],))
+                resumen = IntranetService._get_fichaje_resumen(cursor, empleado_id)
+
+            connection.commit()
+
+        return {
+            "evento": dict(evento),
+            "resumen": resumen,
         }
 
     @staticmethod
@@ -275,6 +685,14 @@ class IntranetService:
                 COUNT(*) FILTER (
                     WHERE DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
                 ) AS eventos_hoy,
+                COUNT(*) FILTER (
+                    WHERE tipo_evento = 'entrada'
+                    AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
+                ) AS entradas_hoy,
+                COUNT(*) FILTER (
+                    WHERE tipo_evento = 'salida'
+                    AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
+                ) AS salidas_hoy,
                 (ARRAY_AGG(tipo_evento::text ORDER BY fecha_hora DESC))[1] AS ultimo_evento_tipo,
                 MAX(fecha_hora) AS ultimo_evento_fecha_hora
             FROM fichajes
@@ -284,12 +702,73 @@ class IntranetService:
         )
         row = cursor.fetchone() or {}
         ultimo_tipo = row.get("ultimo_evento_tipo")
+        entradas_hoy = int(row.get("entradas_hoy") or 0)
+        salidas_hoy = int(row.get("salidas_hoy") or 0)
         return {
             "eventos_hoy": int(row.get("eventos_hoy") or 0),
             "ultimo_evento_tipo": ultimo_tipo,
             "ultimo_evento_fecha_hora": row.get("ultimo_evento_fecha_hora"),
-            "turno_activo": ultimo_tipo == "entrada",
+            "turno_activo": entradas_hoy > salidas_hoy,
         }
+
+    @staticmethod
+    def _get_fichaje_estado_hoy(cursor: RealDictCursor, empleado_id: str) -> dict:
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE tipo_evento = 'entrada'
+                    AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
+                ) AS entradas_hoy,
+                COUNT(*) FILTER (
+                    WHERE tipo_evento = 'salida'
+                    AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
+                ) AS salidas_hoy
+            FROM fichajes
+            WHERE empleado_id = %s
+            """,
+            (empleado_id,),
+        )
+        row = cursor.fetchone() or {}
+        return {
+            "entradas": int(row.get("entradas_hoy") or 0),
+            "salidas": int(row.get("salidas_hoy") or 0),
+        }
+
+    @staticmethod
+    def _get_ultimo_tipo_evento(cursor: RealDictCursor, empleado_id: str) -> str | None:
+        cursor.execute(
+            """
+            SELECT tipo_evento::text AS tipo_evento
+            FROM fichajes
+            WHERE empleado_id = %s
+            ORDER BY fecha_hora DESC
+            LIMIT 1
+            """,
+            (empleado_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return row.get("tipo_evento")
+
+    @staticmethod
+    def _get_ultimo_evento_hoy(cursor: RealDictCursor, empleado_id: str) -> str | None:
+        cursor.execute(
+            """
+            SELECT tipo_evento::text AS tipo_evento
+            FROM fichajes
+            WHERE empleado_id = %s
+            AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') = CURRENT_DATE
+            ORDER BY fecha_hora DESC
+            LIMIT 1
+            """,
+            (empleado_id,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return row.get("tipo_evento")
 
     @staticmethod
     def _count_fichajes(
@@ -333,6 +812,33 @@ class IntranetService:
         return [dict(row) for row in cursor.fetchall()]
 
     @staticmethod
+    def _get_fichajes_all(
+        cursor: RealDictCursor,
+        empleado_id: str,
+        tipo_evento: str | None,
+        fecha_desde: str | None,
+        fecha_hasta: str | None,
+        order_desc: bool = True,
+    ) -> list[dict]:
+        where, values = IntranetService._build_fichajes_filters(empleado_id, tipo_evento, fecha_desde, fecha_hasta)
+        order = "DESC" if order_desc else "ASC"
+        cursor.execute(
+            f"""
+            SELECT
+                id::text AS id,
+                tipo_evento::text AS tipo_evento,
+                fecha_hora,
+                origen::text AS origen,
+                observaciones
+            FROM fichajes
+            WHERE {where}
+            ORDER BY fecha_hora {order}
+            """,
+            values,
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
     def _build_fichajes_filters(
         empleado_id: str,
         tipo_evento: str | None,
@@ -351,6 +857,110 @@ class IntranetService:
             clauses.append("DATE(fecha_hora) <= %s")
             values.append(fecha_hasta)
         return " AND ".join(clauses), values
+
+    @staticmethod
+    def _normalize_export_range(
+        fecha_desde: str | None,
+        fecha_hasta: str | None,
+    ) -> tuple[date, date, str, str, str]:
+        today = datetime.now(IntranetService.MADRID_TZ).date()
+        if fecha_desde:
+            start_date = date.fromisoformat(fecha_desde)
+        else:
+            start_date = today.replace(day=1)
+
+        if fecha_hasta:
+            end_date = date.fromisoformat(fecha_hasta)
+        else:
+            end_date = today
+
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+
+        label = f"{IntranetService.MONTH_ABBR[start_date.month - 1]} {start_date.year}"
+        return (
+            start_date,
+            end_date,
+            start_date.isoformat(),
+            end_date.isoformat(),
+            label,
+        )
+
+    @staticmethod
+    def _build_fichaje_export_rows(
+        eventos: list[dict],
+        start_date: date,
+        end_date: date,
+    ) -> list[dict]:
+        eventos_por_dia: dict[str, list[dict]] = {}
+        for evento in eventos:
+            fecha_hora: datetime = evento["fecha_hora"]
+            local_date = fecha_hora.astimezone(IntranetService.MADRID_TZ).date()
+            key = local_date.isoformat()
+            eventos_por_dia.setdefault(key, []).append(evento)
+
+        for items in eventos_por_dia.values():
+            items.sort(key=lambda item: item["fecha_hora"])
+
+        rows: list[dict] = []
+        current = end_date
+        while current >= start_date:
+            key = current.isoformat()
+            day_events = eventos_por_dia.get(key, [])
+            entry = next((event for event in day_events if event["tipo_evento"] == "entrada"), None)
+            exit_event = next((event for event in day_events if event["tipo_evento"] == "salida"), None)
+
+            pause_minutes = IntranetService._calculate_pause_minutes(day_events)
+
+            hours_value = None
+            if entry and exit_event:
+                diff_ms = (exit_event["fecha_hora"] - entry["fecha_hora"]).total_seconds()
+                hours_value = max(0, diff_ms / 3600 - (pause_minutes / 60))
+
+            status_label = "Ausencia"
+            exit_label = "--:--"
+            if entry and exit_event:
+                status_label = "Completa"
+                exit_label = IntranetService._format_time(exit_event["fecha_hora"])
+            elif entry:
+                status_label = "En curso"
+                exit_label = "en curso"
+
+            rows.append(
+                {
+                    "day_label": IntranetService._format_day_label(current),
+                    "entry_time": IntranetService._format_time(entry["fecha_hora"]) if entry else "--:--",
+                    "exit_time": exit_label,
+                    "hours_label": f"{hours_value:.1f}h" if hours_value is not None else "--",
+                    "status_label": status_label,
+                }
+            )
+
+            current -= timedelta(days=1)
+
+        return rows
+
+    @staticmethod
+    def _calculate_pause_minutes(eventos: list[dict]) -> int:
+        pause_start: datetime | None = None
+        total_minutes = 0
+        for evento in eventos:
+            if evento["tipo_evento"] == "pausa_inicio":
+                pause_start = evento["fecha_hora"]
+            elif evento["tipo_evento"] == "pausa_fin" and pause_start:
+                diff = evento["fecha_hora"] - pause_start
+                total_minutes += max(0, int(diff.total_seconds() // 60))
+                pause_start = None
+        return total_minutes
+
+    @staticmethod
+    def _format_day_label(value: date) -> str:
+        return f"{value.day:02d} {IntranetService.MONTH_ABBR[value.month - 1]}"
+
+    @staticmethod
+    def _format_time(value: datetime) -> str:
+        local = value.astimezone(IntranetService.MADRID_TZ)
+        return local.strftime("%H:%M")
 
     @staticmethod
     def _get_clientes_resumen(cursor: RealDictCursor, empleado_id: str) -> dict:

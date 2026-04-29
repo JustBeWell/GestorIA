@@ -1,20 +1,27 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { EmpleadoService } from '../../../core/services/empleado.service';
 import { SessionStorageService } from '../../../core/services/session-storage.service';
 
 @Component({
-  selector: 'app-trabajos-page',
+  selector: 'app-calendario-fiscal-page',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  templateUrl: './trabajos-page.component.html',
-  styleUrl: './trabajos-page.component.css',
+  templateUrl: './calendario-fiscal-page.component.html',
+  styleUrl: './calendario-fiscal-page.component.css',
 })
-export class TrabajosPageComponent {
+export class CalendarioFiscalPageComponent {
   private readonly router = inject(Router);
+  private readonly empleadoService = inject(EmpleadoService);
   private readonly sessionStorageService = inject(SessionStorageService);
 
   protected get employeeName(): string {
+    const empleado = this.empleadoService.getCachedEmpleado();
+    if (empleado) {
+      return `${empleado.nombre} ${empleado.apellidos ?? ''}`.trim();
+    }
+
     return this.sessionStorageService.getUser()?.nombre_usuario ?? 'Usuario';
   }
 

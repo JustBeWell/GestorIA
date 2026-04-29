@@ -1,0 +1,193 @@
+<main class="module-layout">
+  <section class="intranet-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-avatar">G</div>
+        <div>
+          <div class="brand-title">GestorIA</div>
+          <div class="brand-subtitle">Intranet</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Principal</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link" routerLink="/home">
+              <span class="nav-icon">H</span>
+              <span class="nav-text">Home</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/fichaje">
+              <span class="nav-icon">F</span>
+              <span class="nav-text">Fichaje</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/clientes">
+              <span class="nav-icon">C</span>
+              <span class="nav-text">Gestion de clientes</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/trabajos">
+              <span class="nav-icon">T</span>
+              <span class="nav-text">Gestion de trabajos</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/pagos">
+              <span class="nav-icon">P</span>
+              <span class="nav-text">Pagos</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Herramientas</div>
+        <div class="tool-list">
+          <a class="tool-item" routerLink="/calendario-fiscal">
+            <span class="tool-icon">CF</span>
+            <span>Calendario fiscal</span>
+          </a>
+          <a class="tool-item" routerLink="/documentos">
+            <span class="tool-icon">D</span>
+            <span>Documentos</span>
+          </a>
+          <a class="tool-item" routerLink="/ajustes">
+            <span class="tool-icon">A</span>
+            <span>Ajustes</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="avatar">{{ employeeInitials }}</div>
+        <div class="meta">
+          <strong>{{ employeeFirstName }}</strong>
+          <span>{{ employeeRole }}</span>
+        </div>
+        <button type="button" class="logout-button" (click)="logout()">
+          Cerrar sesion
+        </button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>Calendario fiscal</strong></div>
+      </header>
+
+      <section class="page-header">
+        <div>
+          <h1 class="page-title">Calendario fiscal</h1>
+          <p class="page-subtitle">Resumen operativo de fechas y obligaciones</p>
+        </div>
+      </section>
+
+      <section class="module-container">
+        <section class="fiscal-hero">
+          <div>
+            <p class="fiscal-kicker">Trimestre actual</p>
+            <h2>Vista cronologica de obligaciones</h2>
+            <p class="fiscal-lead">Seguimiento de IVA, retenciones y modelos informativos con alertas previas.</p>
+          </div>
+          <div class="fiscal-status">
+            <div>
+              <span>Proximo vencimiento</span>
+              <strong>Modelo 303 · 20 mayo</strong>
+            </div>
+            <div>
+              <span>Campana activa</span>
+              <strong>Renta 2025 · En curso</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="fiscal-columns">
+          <div class="fiscal-column">
+            <header>
+              <h3>Linea de vencimientos</h3>
+              <span>Ultimos 45 dias</span>
+            </header>
+            <ol class="timeline">
+              <li>
+                <div>
+                  <strong>Modelo 303</strong>
+                  <span>IVA trimestral · 20 mayo</span>
+                </div>
+                <span class="pill warning">Pendiente</span>
+              </li>
+              <li>
+                <div>
+                  <strong>Modelo 111</strong>
+                  <span>Retenciones · 20 mayo</span>
+                </div>
+                <span class="pill neutral">Preparacion</span>
+              </li>
+              <li>
+                <div>
+                  <strong>Modelo 347</strong>
+                  <span>Informativa anual · 28 febrero</span>
+                </div>
+                <span class="pill success">Cerrado</span>
+              </li>
+            </ol>
+          </div>
+          <div class="fiscal-column">
+            <h3>Campanas activas</h3>
+            <div class="campaign-row">
+              <div>
+                <strong>Renta y Patrimonio</strong>
+                <span>Clientes fisicos · Abril - Junio</span>
+              </div>
+              <span class="pill warning">En curso</span>
+            </div>
+            <div class="campaign-row">
+              <div>
+                <strong>Sociedades</strong>
+                <span>Empresas · Julio</span>
+              </div>
+              <span class="pill neutral">Planificado</span>
+            </div>
+            <div class="campaign-row">
+              <div>
+                <strong>Modelos informativos</strong>
+                <span>Declaraciones informativas</span>
+              </div>
+              <span class="pill neutral">Preparacion</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="fiscal-columns">
+          <div class="fiscal-column">
+            <h3>Checklist previo a envio</h3>
+            <ul>
+              <li>Conciliacion bancaria validada.</li>
+              <li>Facturas emitidas y recibidas revisadas.</li>
+              <li>Retenciones y tipos aplicados verificados.</li>
+              <li>Documentacion de soporte cargada.</li>
+            </ul>
+          </div>
+          <div class="fiscal-column">
+            <h3>Alertas operativas</h3>
+            <p>Recibe avisos 7 dias antes del vencimiento y cuando haya documentos incompletos.</p>
+            <div class="alert-list">
+              <div>
+                <strong>2 obligaciones</strong>
+                <span>requieren revision documental</span>
+              </div>
+              <div>
+                <strong>1 riesgo</strong>
+                <span>por datos pendientes de cliente</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </section>
+</main>

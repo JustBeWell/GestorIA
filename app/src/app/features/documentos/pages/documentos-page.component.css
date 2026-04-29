@@ -1,0 +1,157 @@
+.module-layout {
+  min-height: 100vh;
+}
+
+.module-container {
+  padding: 8px 0 32px;
+}
+
+.docs-hero {
+  background: linear-gradient(130deg, rgba(30, 64, 175, 0.12), rgba(14, 116, 144, 0.1));
+  border: 1px solid #bae6fd;
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.docs-kicker {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #0e7490;
+  font-weight: 600;
+}
+
+.docs-hero h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  color: #0f172a;
+}
+
+.docs-lead {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.docs-stats {
+  display: grid;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.docs-stats span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.docs-stats strong {
+  font-size: 18px;
+  color: #0f172a;
+}
+
+
+.docs-columns {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 18px;
+}
+
+.docs-column {
+  display: grid;
+  gap: 12px;
+}
+
+.docs-column h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.archive-list {
+  display: grid;
+  gap: 12px;
+}
+
+.archive-list span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.docs-column ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 13px;
+  display: grid;
+  gap: 6px;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.review-row:last-child {
+  border-bottom: none;
+}
+
+.review-row span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.chip.warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.chip.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.docs-column p {
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.trace-list {
+  display: grid;
+  gap: 10px;
+}
+
+.trace-list span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  .docs-hero {
+    flex-direction: column;
+  }
+}

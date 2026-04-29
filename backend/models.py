@@ -109,12 +109,39 @@ class PortalIntranetHomeResponse(BaseModel):
 	pagos: PagosResumen
 
 
+class SeriesPoint(BaseModel):
+	label: str
+	value: float
+
+
+class QuarterSeriesResponse(BaseModel):
+	start: date
+	end: date
+	granularity: str
+	points: list[SeriesPoint]
+
+
 class FichajeEventoItem(BaseModel):
 	id: str
 	tipo_evento: str
 	fecha_hora: datetime
 	origen: str
 	observaciones: str | None = None
+
+
+class FichajeRegistroRequest(BaseModel):
+	tipo_evento: Literal["entrada", "salida", "pausa_inicio", "pausa_fin"] | None = None
+	observaciones: str | None = None
+
+
+class FichajeRegistroResponse(BaseModel):
+	evento: FichajeEventoItem
+	resumen: FichajeResumen
+
+
+class FichajeUndoResponse(BaseModel):
+	evento: FichajeEventoItem
+	resumen: FichajeResumen
 
 
 class PaginacionMeta(BaseModel):

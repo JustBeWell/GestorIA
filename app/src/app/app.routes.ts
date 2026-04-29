@@ -37,6 +37,21 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/pagos/pages/pagos-page.component').then((m) => m.PagosPageComponent),
 	},
 	{
+		path: 'documentos',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/documentos/pages/documentos-page.component').then((m) => m.DocumentosPageComponent),
+	},
+	{
+		path: 'ajustes',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/ajustes/pages/ajustes-page.component').then((m) => m.AjustesPageComponent),
+	},
+	{
+		path: 'calendario-fiscal',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/calendario-fiscal/pages/calendario-fiscal-page.component').then((m) => m.CalendarioFiscalPageComponent),
+	},
+	{
 		path: '**',
 		redirectTo: '',
 	}

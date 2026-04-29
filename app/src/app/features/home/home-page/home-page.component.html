@@ -15,83 +15,281 @@
       </div>
     </section>
   } @else {
-    <app-intranet-shell-header
-      pageTitle="Bienvenido a la plataforma GestorIA"
-      pageSubtitle=""
-      [activeRoute]="'/home'"
-      [employeeName]="empleado?.nombre ?? homeData?.usuario?.nombre_completo ?? 'Usuario'"
-      [links]="navigationLinks"
-      (logoutClick)="logout()">
-    </app-intranet-shell-header>
-
-    <section class="content-shell">
-      <section class="card overview-card">
-        <h2>Resumen general del empleado</h2>
-        <div class="overview-grid">
-          <div class="overview-block">
-            <p class="summary-line"><span>Nombre:</span> {{ empleado?.nombre ?? 'No disponible' }} {{ empleado?.apellidos ?? '' }}</p>
-            <p class="summary-line"><span>NIF:</span> {{ empleado?.nif ?? 'No disponible' }}</p>
-            <p class="summary-line"><span>Teléfono:</span> {{ empleado?.telefono ?? 'No disponible' }}</p>
-            <p class="summary-line"><span>Rol:</span> {{ empleado?.rol ?? homeData?.usuario?.rol ?? 'No disponible' }}</p>
-            <p class="summary-line"><span>Estado:</span> {{ empleado?.activo ? 'Activo' : 'Inactivo' }}</p>
-          </div>
-
-          <div class="overview-block">
-            <p class="summary-line"><span>Facturas vencidas:</span> <strong>{{ homeData?.pagos?.facturas_vencidas ?? 0 }}</strong></p>
-            <p class="summary-line"><span>Trabajos bloqueados:</span> <strong>{{ homeData?.trabajos?.bloqueados ?? 0 }}</strong></p>
-            <p class="summary-line"><span>Trabajos finalizados:</span> <strong>{{ homeData?.trabajos?.finalizados ?? 0 }}</strong></p>
-            <p class="summary-line"><span>Trabajos cancelados:</span> <strong>{{ homeData?.trabajos?.cancelados ?? 0 }}</strong></p>
-            <p class="summary-line"><span>Último evento:</span> {{ homeData?.fichaje?.ultimo_evento_tipo ?? 'No disponible' }}</p>
+    <section class="intranet-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-avatar">G</div>
+          <div>
+            <div class="brand-title">GestorIA</div>
+            <div class="brand-subtitle">Intranet</div>
           </div>
         </div>
-      </section>
 
-      <section class="stats-calendar-layout">
-        <article class="card stat-card stat-1">
-          <h3>Fichaje</h3>
-          <p class="stat-number">{{ homeData?.fichaje?.eventos_hoy ?? 0 }}</p>
-          <p class="muted">Turno: {{ homeData?.fichaje?.turno_activo ? 'Activo' : 'Cerrado' }}</p>
-          <p class="muted compact">{{ formatDate(homeData?.fichaje?.ultimo_evento_fecha_hora ?? null) }}</p>
-        </article>
+        <div class="nav-section">
+          <div class="nav-label">Principal</div>
+          <ul class="nav-list">
+            <li>
+              <a class="nav-link active" routerLink="/home">
+                <span class="nav-icon">H</span>
+                <span class="nav-text">Home</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/fichaje">
+                <span class="nav-icon">F</span>
+                <span class="nav-text">Fichaje</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/clientes">
+                <span class="nav-icon">C</span>
+                <span class="nav-text">Gestion de clientes</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/trabajos">
+                <span class="nav-icon">T</span>
+                <span class="nav-text">Gestion de trabajos</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/pagos">
+                <span class="nav-icon">P</span>
+                <span class="nav-text">Pagos</span>
+              </a>
+            </li>
+          </ul>
+        </div>
 
-        <article class="card stat-card stat-2">
-          <h3>Clientes</h3>
-          <p class="stat-number">{{ homeData?.clientes?.activos ?? 0 }}</p>
-          <p class="muted">Activos de {{ homeData?.clientes?.total ?? 0 }} totales</p>
-        </article>
-
-        <article class="card stat-card stat-3">
-          <h3>Trabajos</h3>
-          <p class="stat-number">{{ homeData?.trabajos?.en_curso ?? 0 }}</p>
-          <p class="muted">En curso · {{ homeData?.trabajos?.pendientes ?? 0 }} pendientes</p>
-        </article>
-
-        <article class="card stat-card stat-4">
-          <h3>Pagos</h3>
-          <p class="stat-number">{{ formatCurrency(homeData?.pagos?.cobrado_mes) }}</p>
-          <p class="muted">Pendiente: {{ formatCurrency(homeData?.pagos?.pendiente_total) }}</p>
-        </article>
-
-        <article class="card calendar-card">
-          <h2>Calendario de fichajes · {{ monthLabel }}</h2>
-          <p class="muted">Información adicional de apoyo visual.</p>
-
-          <div class="calendar-weekdays">
-            @for (weekday of weekDays; track weekday) {
-              <span>{{ weekday }}</span>
-            }
+        <div class="nav-section">
+          <div class="nav-label">Herramientas</div>
+          <div class="tool-list">
+            <a class="tool-item" routerLink="/calendario-fiscal">
+              <span class="tool-icon">CF</span>
+              <span>Calendario fiscal</span>
+            </a>
+            <a class="tool-item" routerLink="/documentos">
+              <span class="tool-icon">D</span>
+              <span>Documentos</span>
+            </a>
+            <a class="tool-item" routerLink="/ajustes">
+              <span class="tool-icon">A</span>
+              <span>Ajustes</span>
+            </a>
           </div>
+        </div>
 
-          <div class="calendar-grid">
-            @for (cell of calendarDays; track $index) {
-              <div class="calendar-cell" [class.empty]="!cell.day" [class.fichado]="hasFichaje(cell)" [class.today]="cell.isToday">
-                @if (cell.day) {
-                  <span>{{ cell.day }}</span>
+        <div class="sidebar-footer">
+          <div class="avatar">{{ employeeInitials }}</div>
+          <div class="meta">
+            <strong>{{ employeeFirstName }}</strong>
+              <span>{{ profileRole }}</span>
+          </div>
+            <button type="button" class="logout-button" (click)="logout()">
+              Cerrar sesion
+            </button>
+        </div>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div class="breadcrumbs">Inicio / <strong>Home</strong></div>
+        </header>
+
+        <section class="page-header">
+          <div>
+            <h1 class="page-title">Bienvenido, {{ empleado?.nombre ?? homeData?.usuario?.nombre_completo ?? 'NA' }}</h1>
+            <p class="page-subtitle">Resumen de tu actividad · {{ todayLabel }}</p>
+          </div>
+        </section>
+
+        <section class="home-grid">
+          <section class="hero-grid">
+            <article class="panel profile-card">
+              <p class="panel-title">Buenas tardes</p>
+              <div class="profile-header">
+                <div class="avatar-lg">{{ employeeInitials }}</div>
+                <div class="profile-meta">
+                  <h3>{{ profileFullName }}</h3>
+                  <p>Rol Empleado · {{ profileRole }}</p>
+                </div>
+              </div>
+              <div class="profile-details">
+                <div>
+                  NIF
+                  <span>{{ profileNif }}</span>
+                </div>
+                <div>
+                  Tel.
+                  <span>{{ profilePhone }}</span>
+                </div>
+                <div>
+                  Estado
+                  <span>{{ profileStatusLabel }}</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel summary-card">
+              <p class="panel-title">Resumen operativo</p>
+              <div class="summary-row">
+                <span>Facturas vencidas</span>
+                <strong>{{ homeData?.pagos?.facturas_vencidas ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos bloqueados</span>
+                <strong>{{ homeData?.trabajos?.bloqueados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos finalizados</span>
+                <strong>{{ homeData?.trabajos?.finalizados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos cancelados</span>
+                <strong>{{ homeData?.trabajos?.cancelados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Ultimo evento</span>
+                <strong>{{ ultimoEventoLabel }}</strong>
+              </div>
+            </article>
+
+            <article class="panel shift-card">
+              <div class="summary-row">
+                <span>Turno actual</span>
+                <span class="badge" [class.success]="homeData?.fichaje?.turno_activo">{{ homeData?.fichaje?.turno_activo ? 'En marcha' : 'Cerrado' }}</span>
+              </div>
+              <div class="shift-timer">{{ shiftDurationLabel }}</div>
+              <div class="shift-grid">
+                <div>
+                  Entrada
+                  <span>{{ shiftStartLabel }}</span>
+                </div>
+                <div>
+                  Objetivo
+                  <span>{{ shiftObjectiveLabel }}</span>
+                </div>
+              </div>
+              <div class="shift-action">
+                <button type="button" class="primary-button" routerLink="/fichaje">Fichar salida</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="stat-grid">
+            <article class="panel stat-card">
+              <p class="panel-title">Fichaje · horas por dia</p>
+              <div class="stat-value stat-value-lg">{{ fichajeDayHoursLabel }}</div>
+              <div class="stat-meta">
+                <span class="stat-subtitle">Total mes</span>
+                <strong>{{ fichajeMonthTotalHoursLabel }}</strong>
+              </div>
+              <span class="stat-trend" [class.negative]="fichajeDayDeltaPercent < 0">{{ fichajeDayDeltaLabel }}</span>
+              <div class="mini-chart">
+                <svg class="mini-spark green" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="fichajeSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Clientes activos</p>
+              <div class="stat-value">{{ homeData?.clientes?.activos ?? 0 }}</div>
+              @if ((homeData?.clientes?.activos ?? 0) > 0) {
+                <span class="stat-trend">+5</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="clientesSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Trabajos · en curso</p>
+              <div class="stat-value">{{ homeData?.trabajos?.en_curso ?? 0 }}</div>
+              @if ((homeData?.trabajos?.en_curso ?? 0) > 0) {
+                <span class="stat-trend" style="color: #ef4444">-2 atrasados</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark orange" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="trabajosSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Pagos · facturado mes</p>
+              <div class="stat-value">{{ formatCurrency(homeData?.pagos?.cobrado_mes) }}</div>
+              @if ((homeData?.pagos?.cobrado_mes ?? 0) > 0) {
+                <span class="stat-trend">+12,4%</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark amber" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="pagosSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+          </section>
+
+          <section class="lower-grid">
+            <article class="panel calendar-panel">
+              <div class="summary-row">
+                <strong>Calendario de fichajes</strong>
+                <span>{{ monthLabel }}</span>
+              </div>
+              <div class="calendar-grid">
+                @for (cell of calendarDays; track $index) {
+                  <div
+                    class="calendar-cell"
+                    [class.active]="cell.day"
+                    [class.is-today]="cell.isToday"
+                    (click)="selectDay(cell.day)">
+                    @if (cell.day) {
+                      <span class="day-number">{{ cell.day }}</span>
+                      @if (cell.hoursLabel) {
+                        <span class="hours">{{ cell.hoursLabel }}</span>
+                      }
+                      <span class="day-summary">{{ cell.summaryLabel }}</span>
+                      <div class="bar-track">
+                        <span class="bar" [style.width.%]="cell.progressPercent"></span>
+                      </div>
+                    }
+                  </div>
                 }
               </div>
-            }
-          </div>
-        </article>
+              <div class="day-detail">
+                <div class="day-detail-header">
+                  <strong>{{ selectedDayLabel }}</strong>
+                  <span class="day-detail-status">{{ selectedDayData?.statusLabel || 'Sin registro' }}</span>
+                </div>
+                <div class="day-detail-row">
+                  <span>{{ selectedDayData?.entryLabel || '--:--' }}</span>
+                  <div class="day-detail-bar">
+                    <span [style.width.%]="selectedDayData?.progressPercent || 0"></span>
+                  </div>
+                  <span>{{ selectedDayData?.exitLabel || '--:--' }}</span>
+                </div>
+                <div class="day-detail-summary">{{ selectedDayData?.summaryLabel || 'Sin registro' }}</div>
+              </div>
+            </article>
+
+            <article class="panel activity-panel">
+              <div class="summary-row">
+                <strong>Actividad reciente</strong>
+              </div>
+              <div class="activity-list">
+                @for (item of activityItems; track item.title) {
+                  <div class="activity-item">
+                    <div class="activity-tag">{{ item.tag }}</div>
+                    <div class="activity-meta">
+                      <strong>{{ item.title }}</strong>
+                      <span>{{ item.subtitle }}</span>
+                    </div>
+                    <span class="activity-time">{{ item.time }}</span>
+                  </div>
+                }
+              </div>
+            </article>
+          </section>
+        </section>
       </section>
     </section>
   }

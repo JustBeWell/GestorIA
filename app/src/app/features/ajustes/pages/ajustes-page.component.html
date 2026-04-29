@@ -1,0 +1,186 @@
+<main class="module-layout">
+  <section class="intranet-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-avatar">G</div>
+        <div>
+          <div class="brand-title">GestorIA</div>
+          <div class="brand-subtitle">Intranet</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Principal</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link" routerLink="/home">
+              <span class="nav-icon">H</span>
+              <span class="nav-text">Home</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/fichaje">
+              <span class="nav-icon">F</span>
+              <span class="nav-text">Fichaje</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/clientes">
+              <span class="nav-icon">C</span>
+              <span class="nav-text">Gestion de clientes</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/trabajos">
+              <span class="nav-icon">T</span>
+              <span class="nav-text">Gestion de trabajos</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" routerLink="/pagos">
+              <span class="nav-icon">P</span>
+              <span class="nav-text">Pagos</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Herramientas</div>
+        <div class="tool-list">
+          <a class="tool-item" routerLink="/calendario-fiscal">
+            <span class="tool-icon">CF</span>
+            <span>Calendario fiscal</span>
+          </a>
+          <a class="tool-item" routerLink="/documentos">
+            <span class="tool-icon">D</span>
+            <span>Documentos</span>
+          </a>
+          <a class="tool-item" routerLink="/ajustes">
+            <span class="tool-icon">A</span>
+            <span>Ajustes</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="avatar">{{ employeeInitials }}</div>
+        <div class="meta">
+          <strong>{{ employeeFirstName }}</strong>
+          <span>{{ employeeRole }}</span>
+        </div>
+        <button type="button" class="logout-button" (click)="logout()">
+          Cerrar sesion
+        </button>
+      </div>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>Ajustes</strong></div>
+      </header>
+
+      <section class="page-header">
+        <div>
+          <h1 class="page-title">Ajustes</h1>
+          <p class="page-subtitle">Parametros y preferencias de la intranet</p>
+        </div>
+      </section>
+
+      <section class="module-container">
+        <section class="settings-hero">
+          <div>
+            <p class="settings-kicker">Control central</p>
+            <h2>Preferencias, seguridad y permisos</h2>
+            <p class="settings-lead">Gestiona accesos, alertas y reglas internas de operativa.</p>
+          </div>
+          <div class="settings-badge">
+            <span>Perfil activo</span>
+            <strong>Empleado · Equipo fiscal</strong>
+          </div>
+        </section>
+
+        <section class="settings-columns">
+          <div class="settings-column">
+            <h3>Perfil y seguridad</h3>
+            <div class="settings-row">
+              <div>
+                <strong>Datos personales</strong>
+                <span>Nombre, rol y contacto principal.</span>
+              </div>
+              <span class="status-pill">Actual</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <strong>Contrasena</strong>
+                <span>Actualizacion cada 90 dias.</span>
+              </div>
+              <span class="status-pill warning">Pendiente</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <strong>Sesiones activas</strong>
+                <span>Ultimo acceso hoy 08:42.</span>
+              </div>
+              <span class="status-pill">1 abierta</span>
+            </div>
+          </div>
+          <div class="settings-column">
+            <h3>Preferencias de fichaje</h3>
+            <ul class="settings-list">
+              <li>Horario objetivo diario configurado.</li>
+              <li>Politicas de pausa con alertas al reingreso.</li>
+              <li>Recordatorios si hay turno abierto.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="settings-columns">
+          <div class="settings-column">
+            <h3>Notificaciones</h3>
+            <div class="settings-row">
+              <div>
+                <strong>Facturas vencidas</strong>
+                <span>Alertas diarias al responsable.</span>
+              </div>
+              <span class="status-pill success">Activo</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <strong>Tareas pendientes</strong>
+                <span>Resumen semanal cada lunes.</span>
+              </div>
+              <span class="status-pill">Activo</span>
+            </div>
+            <div class="settings-row">
+              <div>
+                <strong>Actividad critica</strong>
+                <span>Notificacion inmediata por email.</span>
+              </div>
+              <span class="status-pill danger">Prioritario</span>
+            </div>
+          </div>
+          <div class="settings-column">
+            <h3>Integraciones y permisos</h3>
+            <p class="settings-note">Conexion con herramientas contables y perfiles de acceso.</p>
+            <div class="settings-tags">
+              <span>Contabilidad</span>
+              <span>Firmas digitales</span>
+              <span>Correo corporativo</span>
+            </div>
+            <div class="settings-meta">
+              <div>
+                <strong>Permisos por modulo</strong>
+                <span>Fiscal, Laboral, Mercantil</span>
+              </div>
+              <div>
+                <strong>Auditoria</strong>
+                <span>Registro completo de cambios</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </section>
+</main>
