@@ -1,7 +1,25 @@
 from datetime import date, datetime
 from typing import Literal
+import re
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+
+_NIF_CIF_RE = re.compile(
+    r'^[0-9]{8}[A-Za-z]$'       # DNI/NIF  e.g. 12345678A
+    r'|^[XYZxyz][0-9]{7}[A-Za-z]$'  # NIE  e.g. X1234567A
+    r'|^[ABCDEFGHJNPQRSUVWabcdefghjnpqrsuvw][0-9]{7}[0-9A-Ja-j]$'  # CIF
+)
+
+
+def _validate_nif_cif(value: str) -> str:
+    v = value.strip().upper()
+    if not _NIF_CIF_RE.match(v):
+        raise ValueError(
+            "Formato de NIF/CIF inválido. "
+            "Debe ser un DNI (12345678A), NIE (X1234567A) o CIF (B12345678)."
+        )
+    return v
 
 
 class TokenData(BaseModel):
@@ -19,6 +37,11 @@ class UserCreateRequest(BaseModel):
 	nif: str = Field(min_length=5, max_length=20)
 	telefono: str | None = Field(default=None, max_length=20)
 	fecha_alta: date | None = None
+
+	@field_validator("nif")
+	@classmethod
+	def validate_nif(cls, v: str) -> str:
+		return _validate_nif_cif(v)
 
 
 class UserPublic(BaseModel):
