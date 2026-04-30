@@ -118,10 +118,9 @@ function createSplashWindow() {
 }
 
 /** Push a progress update to the splash window */
-function splashUpdate(splash, pct, text, stepId) {
+function splashUpdate(splash, pct, text) {
   if (splash.isDestroyed()) return;
-  const call = `updateProgress(${pct}, ${JSON.stringify(text)}, ${JSON.stringify(stepId || null)})`;
-  splash.webContents.executeJavaScript(call).catch(() => {});
+  splash.webContents.executeJavaScript(`updateProgress(${pct}, ${JSON.stringify(text)})`).catch(() => {});
 }
 
 /** Spawn a child process and resolve/reject on exit */
@@ -171,21 +170,19 @@ async function runLauncher() {
 
   try {
     // Step 1 — db
-    splashUpdate(splash, 5,  'Preparando los datos…',            'step-db');
+    splashUpdate(splash, 5,  'Preparando los datos…');
     await spawnAsync('docker-compose', ['build', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 18, 'Conectando con la base de datos…', 'step-db');
+    splashUpdate(splash, 18, 'Conectando con la base de datos…');
     await spawnAsync('docker-compose', ['up', '-d', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 30, 'Base de datos lista',              'step-db');
+    splashUpdate(splash, 30, 'Base de datos lista');
 
-    // Step 2 — backend
-    splashUpdate(splash, 33, 'Cargando los servicios…',   'step-api');
+    splashUpdate(splash, 33, 'Cargando los servicios…');
     await spawnAsync('docker-compose', ['build', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 48, 'Iniciando los servicios…',  'step-api');
+    splashUpdate(splash, 48, 'Iniciando los servicios…');
     await spawnAsync('docker-compose', ['up', '-d', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 55, 'Servicios listos',           'step-api');
+    splashUpdate(splash, 55, 'Servicios listos');
 
-    // Step 3 — Angular build (ng es un script JS, necesita node)
-    splashUpdate(splash, 58, 'Preparando la interfaz…', 'step-ui');
+    splashUpdate(splash, 58, 'Preparando la interfaz…');
     const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
     // Buscar node en PATH
     const nodeExec = (() => {
@@ -196,10 +193,9 @@ async function runLauncher() {
       return 'node'; // fallback
     })();
     await spawnAsync(nodeExec, [ng, 'build'], APP_DIR);
-    splashUpdate(splash, 85, 'Interfaz preparada', 'step-ui');
+    splashUpdate(splash, 85, 'Interfaz preparada');
 
-    // Step 4 — launch
-    splashUpdate(splash, 90, 'Abriendo GestorIA…', 'step-launch');
+    splashUpdate(splash, 90, 'Abriendo GestorIA…');
     await new Promise((r) => setTimeout(r, 600));
 
     if (!splash.isDestroyed()) {
