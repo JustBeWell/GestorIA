@@ -4,8 +4,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 APP_DIR="$PROJECT_ROOT/app"
 
-# Quitar quarantine de todo el proyecto (necesario la primera vez tras git clone)
-xattr -cr "$APP_DIR" 2>/dev/null || true
+# Quitar quarantine del Electron.app en node_modules y del código fuente
+# (macOS bloquea lectura de ficheros a procesos con quarantine activo)
+xattr -cr "$APP_DIR/node_modules/electron/dist/Electron.app" 2>/dev/null || true
+xattr -cr "$APP_DIR/electron" 2>/dev/null || true
 
 # Binario nativo de Electron (no necesita Node en PATH)
 ELECTRON_BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
