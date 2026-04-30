@@ -192,6 +192,9 @@ class ClientesTabResponse(BaseModel):
 	usuario: dict
 	resumen: ClientesResumen
 	clientes: list[ClienteTabItem]
+	total: int
+	page: int
+	page_size: int
 
 
 class TrabajoTabItem(BaseModel):

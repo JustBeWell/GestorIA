@@ -9,6 +9,7 @@ import {
   AdminCorreccionResponse,
   AdminFichajesResponse,
   AdminResumenResponse,
+  ClientesTabResponse,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
   FichajeTabResponse,
@@ -29,6 +30,16 @@ export class IntranetService {
 
   getFichajeQuarterSeries(): Observable<QuarterSeriesResponse> {
     return this.http.get<QuarterSeriesResponse>(`${this.apiUrl}/intranet/series/fichaje`);
+  }
+
+  getClientesTab(params: { page?: number; page_size?: number } = {}): Observable<ClientesTabResponse> {
+    const sp = new URLSearchParams();
+    if (params.page)      sp.set('page', String(params.page));
+    if (params.page_size) sp.set('page_size', String(params.page_size));
+    const q = sp.toString();
+    return this.http.get<ClientesTabResponse>(
+      `${this.apiUrl}/intranet/clientes${q ? '?' + q : ''}`
+    );
   }
 
   getClientesQuarterSeries(): Observable<QuarterSeriesResponse> {

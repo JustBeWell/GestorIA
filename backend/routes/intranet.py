@@ -327,8 +327,12 @@ def _pdf_today() -> str:
 
 
 @router.get("/clientes", response_model=ClientesTabResponse)
-async def intranet_clientes(current_user=Depends(get_current_user)):
-    data = ClientesService.get_clientes_tab(current_user.user_id)
+async def intranet_clientes(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    current_user=Depends(get_current_user),
+):
+    data = ClientesService.get_clientes_tab(current_user.user_id, page, page_size)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data

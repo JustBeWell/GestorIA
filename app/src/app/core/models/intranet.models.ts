@@ -206,3 +206,21 @@ export interface AdminCorreccionResponse {
   origen: string;
   observaciones: string | null;
 }
+
+export interface ClienteTabItem {
+  cliente_id: string;
+  nombre_fiscal: string;
+  cif_nif: string;
+  activo: boolean;
+  trabajos_abiertos: number;
+  pendiente_total: number;
+}
+
+export interface ClientesTabResponse {
+  usuario: IntranetUsuarioResumen;
+  resumen: ClientesResumen;
+  clientes: ClienteTabItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}

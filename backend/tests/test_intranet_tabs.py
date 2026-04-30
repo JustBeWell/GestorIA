@@ -23,7 +23,7 @@ def _token_data() -> TokenData:
 
 class TestIntranetTabs:
     @patch("services.auth_service.TokenService.decode_token")
-    @patch("routes.intranet.IntranetService.get_fichaje_tab_filtered")
+    @patch("routes.intranet.FichajeService.get_fichaje_tab_filtered")
     def test_fichaje_tab(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()
         mock_service.return_value = {
@@ -69,7 +69,7 @@ class TestIntranetTabs:
         assert body["paginacion"]["total"] == 1
 
     @patch("services.auth_service.TokenService.decode_token")
-    @patch("routes.intranet.IntranetService.get_clientes_tab")
+    @patch("routes.intranet.ClientesService.get_clientes_tab")
     def test_clientes_tab(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()
         mock_service.return_value = {
@@ -91,6 +91,9 @@ class TestIntranetTabs:
                     "pendiente_total": 300.0,
                 }
             ],
+            "total": 1,
+            "page": 1,
+            "page_size": 20,
         }
 
         response = client.get("/intranet/clientes", headers=_auth_headers())
@@ -101,7 +104,7 @@ class TestIntranetTabs:
         assert body["clientes"][0]["trabajos_abiertos"] == 2
 
     @patch("services.auth_service.TokenService.decode_token")
-    @patch("routes.intranet.IntranetService.get_trabajos_tab_filtered")
+    @patch("routes.intranet.TrabajosService.get_trabajos_tab_filtered")
     def test_trabajos_tab(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()
         mock_service.return_value = {
@@ -153,7 +156,7 @@ class TestIntranetTabs:
         assert body["paginacion"]["page"] == 1
 
     @patch("services.auth_service.TokenService.decode_token")
-    @patch("routes.intranet.IntranetService.get_pagos_tab_filtered")
+    @patch("routes.intranet.PagosService.get_pagos_tab_filtered")
     def test_pagos_tab(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()
         mock_service.return_value = {
@@ -221,7 +224,7 @@ class TestIntranetTabs:
         assert body["paginacion_facturas"]["total_pages"] == 1
 
     @patch("services.auth_service.TokenService.decode_token")
-    @patch("routes.intranet.IntranetService.get_pagos_tab_filtered")
+    @patch("routes.intranet.PagosService.get_pagos_tab_filtered")
     def test_tab_returns_404_when_user_not_found(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()
         mock_service.return_value = {}
