@@ -52,6 +52,11 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/calendario-fiscal/pages/calendario-fiscal-page.component').then((m) => m.CalendarioFiscalPageComponent),
 	},
 	{
+		path: 'admin',
+		canActivate: [authGuard],
+		loadComponent: () => import('./features/admin/pages/admin-page.component').then((m) => m.AdminPageComponent),
+	},
+	{
 		path: '**',
 		redirectTo: '',
 	}

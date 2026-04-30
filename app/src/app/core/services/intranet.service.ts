@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  AdminResumenResponse,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
   FichajeTabResponse,
@@ -97,5 +98,9 @@ export class IntranetService {
 
   deleteLastFichaje(): Observable<FichajeUndoResponse> {
     return this.http.post<FichajeUndoResponse>(`${this.apiUrl}/intranet/fichaje/ultimo/eliminar`, {});
+  }
+
+  getAdminResumen(): Observable<AdminResumenResponse> {
+    return this.http.get<AdminResumenResponse>(`${this.apiUrl}/intranet/admin/resumen`);
   }
 }

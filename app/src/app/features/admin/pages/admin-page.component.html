@@ -1,0 +1,250 @@
+<main class="module-layout">
+  <section class="intranet-shell">
+    <app-intranet-sidebar />
+
+    <section class="content admin-content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>Panel gerente</strong></div>
+      </header>
+
+      @if (loading()) {
+        <section class="fullscreen-message loading" role="status" aria-live="polite">
+          <div class="spinner-xl" aria-hidden="true"></div>
+          <h2>Cargando panel...</h2>
+        </section>
+      } @else if (errorMessage()) {
+        <section class="fullscreen-message error" role="alert">
+          <h2>Error al cargar</h2>
+          <p>{{ errorMessage() }}</p>
+        </section>
+      } @else if (data) {
+
+        <div class="admin-layout">
+
+          <!-- ─── KPI CAROUSEL ───────────────────────────────────── -->
+          <div class="kpi-carousel">
+            <button class="kpi-nav kpi-nav--prev" (click)="scrollCarousel('prev')" aria-label="Anterior">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <div class="kpi-track" #kpiTrack>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Empleados activos</span>
+                <strong class="kpi-value">{{ empleadosActivos.length }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--blue">
+                <span class="kpi-label">Fichando hoy</span>
+                <strong class="kpi-value">{{ empleadosFichandoHoy }}</strong>
+              </div>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Clientes activos</span>
+                <strong class="kpi-value">{{ data.clientes.activos }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--indigo">
+                <span class="kpi-label">Trabajos en curso</span>
+                <strong class="kpi-value">{{ data.trabajos.en_curso }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--warn">
+                <span class="kpi-label">Bloqueados</span>
+                <strong class="kpi-value">{{ data.trabajos.bloqueados }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--warn">
+                <span class="kpi-label">Facturas vencidas</span>
+                <strong class="kpi-value">{{ data.facturacion.facturas_vencidas }}</strong>
+              </div>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Pendiente cobro</span>
+                <strong class="kpi-value kpi-value--sm">{{ formatCurrency(data.facturacion.pendiente_total) }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--green">
+                <span class="kpi-label">Cobrado total</span>
+                <strong class="kpi-value kpi-value--sm">{{ formatCurrency(data.facturacion.cobrado_total) }}</strong>
+              </div>
+
+            </div>
+
+            <button class="kpi-nav kpi-nav--next" (click)="scrollCarousel('next')" aria-label="Siguiente">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <!-- ─── FILA: TRABAJOS GRAFICA + FACTURACION ───────────── -->
+          <div class="admin-mid-row">
+
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title">Trabajos</h2>
+                <span class="admin-card-badge">{{ data.trabajos.total }} total</span>
+              </div>
+              <div class="admin-card-body">
+                <div class="trab-chart">
+
+                  <div class="trab-row">
+                    <span class="trab-dot"></span>
+                    <span class="trab-name">Pendientes</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.pendientes / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.pendientes }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--indigo"></span>
+                    <span class="trab-name">En curso</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--indigo" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.en_curso / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.en_curso }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--warn"></span>
+                    <span class="trab-name">Bloqueados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--warn" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.bloqueados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.bloqueados }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--green"></span>
+                    <span class="trab-name">Finalizados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--green" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.finalizados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.finalizados }}</span>
+                  </div>
+
+                  <div class="trab-row trab-row--muted">
+                    <span class="trab-dot trab-dot--muted"></span>
+                    <span class="trab-name">Cancelados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--muted" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.cancelados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.cancelados }}</span>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title">Facturacion</h2>
+              </div>
+              <div class="admin-card-body">
+                <div class="fact-list">
+                  <div class="fact-row">
+                    <span class="fact-label">Cobrado total</span>
+                    <strong class="fact-value fact-value--green">{{ formatCurrency(data.facturacion.cobrado_total) }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Pendiente de cobro</span>
+                    <strong class="fact-value">{{ formatCurrency(data.facturacion.pendiente_total) }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Facturas vencidas</span>
+                    <strong class="fact-value fact-value--warn">{{ data.facturacion.facturas_vencidas }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Clientes con facturas</span>
+                    <strong class="fact-value">{{ data.facturacion.clientes_con_facturas }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ─── EQUIPO ──────────────────────────────────────────── -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h2 class="admin-card-title">Equipo activo</h2>
+              <span class="admin-card-badge">{{ empleadosActivos.length }} empleados</span>
+            </div>
+            <div class="emp-list">
+              @for (emp of empleadosActivos; track emp.empleado_id) {
+                <div class="emp-row">
+
+                  <div class="emp-identity">
+                    <div class="emp-avatar">{{ emp.nombre_completo.charAt(0) }}</div>
+                    <div class="emp-info">
+                      <span class="emp-name">{{ emp.nombre_completo }}</span>
+                      <span class="pill" [class.pill--admin]="emp.rol === 'administrador'">{{ emp.rol }}</span>
+                    </div>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Estado</span>
+                    @if (emp.turno_activo) {
+                      <span class="pill pill--green">Fichado</span>
+                    } @else {
+                      <span class="pill pill--neutral">Fuera</span>
+                    }
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Horas mes</span>
+                    <span class="emp-stat-value">{{ formatHours(emp.horas_mes) }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">En curso</span>
+                    <span class="emp-stat-value">{{ emp.trabajos_en_curso }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Pendientes</span>
+                    <span class="emp-stat-value">{{ emp.trabajos_pendientes }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Bloqueados</span>
+                    @if (emp.trabajos_bloqueados > 0) {
+                      <span class="pill pill--warn">{{ emp.trabajos_bloqueados }}</span>
+                    } @else {
+                      <span class="emp-stat-value muted-text">—</span>
+                    }
+                  </div>
+
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ─── INACTIVOS ─────────────────────────────────────────── -->
+          @if (empleadosInactivos.length > 0) {
+            <div class="admin-card admin-card--muted">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title admin-card-title--muted">Empleados inactivos</h2>
+                <span class="admin-card-badge">{{ empleadosInactivos.length }}</span>
+              </div>
+              <div class="emp-list">
+                @for (emp of empleadosInactivos; track emp.empleado_id) {
+                  <div class="emp-row emp-row--inactive">
+                    <div class="emp-identity">
+                      <div class="emp-avatar emp-avatar--muted">{{ emp.nombre_completo.charAt(0) }}</div>
+                      <div class="emp-info">
+                        <span class="emp-name muted-text">{{ emp.nombre_completo }}</span>
+                        <span class="pill pill--neutral">{{ emp.rol }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+        </div>
+      }
+    </section>
+  </section>
+</main>

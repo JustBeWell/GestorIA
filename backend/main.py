@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import check_database_connection
-from routes import auth_router, intranet_router, users_router
+from routes import auth_router, intranet_router, users_router, ai_router
 from services.auth_service import get_current_user
 from service_config import settings
 
@@ -43,6 +43,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(intranet_router)
+app.include_router(ai_router)
 
 
 PUBLIC_PATHS = {

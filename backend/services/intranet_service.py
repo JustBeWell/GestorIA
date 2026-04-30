@@ -1464,3 +1464,141 @@ class IntranetService:
             "nombre_completo": f"{usuario['nombre']} {usuario['apellidos']}".strip(),
             "rol": usuario["rol"],
         }
+
+    @staticmethod
+    def get_admin_resumen() -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Todos los empleados con sus horas del mes actual
+                today = datetime.now(IntranetService.MADRID_TZ).date()
+                mes_inicio = today.replace(day=1)
+                mes_fin = today
+
+                cursor.execute(
+                    """
+                    SELECT
+                        e.id::text AS empleado_id,
+                        e.nombre,
+                        e.apellidos,
+                        u.rol::text AS rol,
+                        e.activo
+                    FROM empleados e
+                    JOIN usuarios u ON u.id = e.usuario_id
+                    ORDER BY e.apellidos, e.nombre
+                    """,
+                )
+                empleados_rows = cursor.fetchall()
+
+                empleados = []
+                for emp in empleados_rows:
+                    emp_id = emp["empleado_id"]
+                    # Horas del mes
+                    cursor.execute(
+                        """
+                        SELECT
+                            tipo_evento::text AS tipo_evento,
+                            fecha_hora
+                        FROM fichajes
+                        WHERE empleado_id = %s
+                        AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') BETWEEN %s AND %s
+                        ORDER BY fecha_hora ASC
+                        """,
+                        (emp_id, mes_inicio.isoformat(), mes_fin.isoformat()),
+                    )
+                    eventos = cursor.fetchall()
+                    horas_mes = IntranetService._build_fichaje_hours_by_month(
+                        [dict(ev) for ev in eventos], mes_inicio, mes_fin
+                    )
+                    total_horas = sum(horas_mes.values())
+
+                    # Fichaje hoy
+                    fichaje = IntranetService._get_fichaje_resumen(cursor, emp_id)
+
+                    # Trabajos asignados activos
+                    cursor.execute(
+                        """
+                        SELECT
+                            COUNT(*) FILTER (WHERE t.estado = 'en_curso') AS en_curso,
+                            COUNT(*) FILTER (WHERE t.estado = 'pendiente') AS pendientes,
+                            COUNT(*) FILTER (WHERE t.estado = 'bloqueado') AS bloqueados
+                        FROM trabajo_empleado te
+                        JOIN trabajos t ON t.id = te.trabajo_id
+                        WHERE te.empleado_id = %s
+                        AND te.desasignado_en IS NULL
+                        AND t.estado NOT IN ('finalizado', 'cancelado')
+                        """,
+                        (emp_id,),
+                    )
+                    trabajos_row = cursor.fetchone() or {}
+
+                    empleados.append({
+                        "empleado_id": emp_id,
+                        "nombre_completo": f"{emp['nombre']} {emp['apellidos']}".strip(),
+                        "rol": emp["rol"],
+                        "activo": emp["activo"],
+                        "horas_mes": round(total_horas, 1),
+                        "turno_activo": fichaje["turno_activo"],
+                        "trabajos_en_curso": int(trabajos_row.get("en_curso") or 0),
+                        "trabajos_pendientes": int(trabajos_row.get("pendientes") or 0),
+                        "trabajos_bloqueados": int(trabajos_row.get("bloqueados") or 0),
+                    })
+
+                # Resumen global de trabajos
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS total,
+                        COUNT(*) FILTER (WHERE estado = 'en_curso') AS en_curso,
+                        COUNT(*) FILTER (WHERE estado = 'pendiente') AS pendientes,
+                        COUNT(*) FILTER (WHERE estado = 'bloqueado') AS bloqueados,
+                        COUNT(*) FILTER (WHERE estado = 'finalizado') AS finalizados,
+                        COUNT(*) FILTER (WHERE estado = 'cancelado') AS cancelados
+                    FROM trabajos
+                    """,
+                )
+                trabajos_global = cursor.fetchone() or {}
+
+                # Resumen global de facturación
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) FILTER (
+                            WHERE estado IN ('emitida', 'pagada_parcial')
+                            AND fecha_vencimiento < CURRENT_DATE
+                        ) AS facturas_vencidas,
+                        COALESCE(SUM(total) FILTER (WHERE estado = 'pagada'), 0) AS cobrado_total,
+                        COALESCE(SUM(total) FILTER (
+                            WHERE estado IN ('emitida', 'pagada_parcial')
+                        ), 0) AS pendiente_total,
+                        COUNT(DISTINCT cliente_id) AS clientes_con_facturas
+                    FROM facturas
+                    """,
+                )
+                facturacion = cursor.fetchone() or {}
+
+                # Clientes globales
+                cursor.execute("SELECT COUNT(*) FILTER (WHERE activo) AS activos, COUNT(*) AS total FROM clientes")
+                clientes_global = cursor.fetchone() or {}
+
+        return {
+            "empleados": empleados,
+            "trabajos": {
+                "total": int(trabajos_global.get("total") or 0),
+                "en_curso": int(trabajos_global.get("en_curso") or 0),
+                "pendientes": int(trabajos_global.get("pendientes") or 0),
+                "bloqueados": int(trabajos_global.get("bloqueados") or 0),
+                "finalizados": int(trabajos_global.get("finalizados") or 0),
+                "cancelados": int(trabajos_global.get("cancelados") or 0),
+            },
+            "facturacion": {
+                "facturas_vencidas": int(facturacion.get("facturas_vencidas") or 0),
+                "cobrado_total": float(facturacion.get("cobrado_total") or 0),
+                "pendiente_total": float(facturacion.get("pendiente_total") or 0),
+                "clientes_con_facturas": int(facturacion.get("clientes_con_facturas") or 0),
+            },
+            "clientes": {
+                "total": int(clientes_global.get("total") or 0),
+                "activos": int(clientes_global.get("activos") or 0),
+            },
+        }
+

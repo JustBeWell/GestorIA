@@ -13,6 +13,7 @@ import {
 } from '../../../core/models/intranet.models';
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { IntranetService } from '../../../core/services/intranet.service';
+import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { SessionStorageService } from '../../../core/services/session-storage.service';
 import { formatEventLabel } from '../../../shared/utils/event-label';
 
@@ -56,7 +57,7 @@ interface HomeSnapshot {
 
 @Component({
   selector: 'app-home-page',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, IntranetSidebarComponent],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.css',
 })
@@ -265,7 +266,7 @@ export class HomePageComponent implements OnInit {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     }).format(delta);
-    return `${prefix}${formatted}% vs media`;
+    return `${prefix}${formatted}%`;
   }
 
   protected get fichajeDayDeltaPercent(): number {

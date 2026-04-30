@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from psycopg2 import Error as PsycopgError
 
 from models import (
+    AdminResumenResponse,
     ClientesTabResponse,
     FichajeRegistroRequest,
     FichajeRegistroResponse,
@@ -212,3 +213,10 @@ async def intranet_pagos(
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.get("/admin/resumen", response_model=AdminResumenResponse)
+async def intranet_admin_resumen(current_user=Depends(get_current_user)):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return IntranetService.get_admin_resumen()

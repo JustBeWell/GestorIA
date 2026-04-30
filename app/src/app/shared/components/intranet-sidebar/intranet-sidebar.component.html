@@ -1,0 +1,88 @@
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-avatar">G</div>
+    <div>
+      <div class="brand-title">GestorIA</div>
+      <div class="brand-subtitle">Intranet</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <ul class="nav-list">
+      <li>
+        <a class="nav-link" routerLink="/home" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          <span class="nav-icon">H</span>
+          <span class="nav-text">Home</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/fichaje" routerLinkActive="active">
+          <span class="nav-icon">F</span>
+          <span class="nav-text">Fichaje</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/clientes" routerLinkActive="active">
+          <span class="nav-icon">C</span>
+          <span class="nav-text">Gestion de clientes</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/trabajos" routerLinkActive="active">
+          <span class="nav-icon">T</span>
+          <span class="nav-text">Gestion de trabajos</span>
+        </a>
+      </li>
+      <li>
+        <a class="nav-link" routerLink="/pagos" routerLinkActive="active">
+          <span class="nav-icon">P</span>
+          <span class="nav-text">Pagos</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Herramientas</div>
+    <div class="tool-list">
+      <a class="tool-item" routerLink="/calendario-fiscal" routerLinkActive="active">
+        <span class="tool-icon">CF</span>
+        <span>Calendario fiscal</span>
+      </a>
+      <a class="tool-item" routerLink="/documentos" routerLinkActive="active">
+        <span class="tool-icon">D</span>
+        <span>Documentos</span>
+      </a>
+      <a class="tool-item" routerLink="/ajustes" routerLinkActive="active">
+        <span class="tool-icon">A</span>
+        <span>Ajustes</span>
+      </a>
+    </div>
+  </div>
+
+  @if (isAdmin) {
+    <div class="nav-section">
+      <div class="nav-label">Administracion</div>
+      <ul class="nav-list">
+        <li>
+          <a class="nav-link" routerLink="/admin" routerLinkActive="active">
+            <span class="nav-icon">Ad</span>
+            <span class="nav-text">Panel gerente</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  }
+
+  <div class="sidebar-footer">
+    <div class="avatar">{{ employeeInitials }}</div>
+    <div class="meta">
+      <strong>{{ employeeFirstName }}</strong>
+      <span>{{ employeeRole }}</span>
+    </div>
+    <button type="button" class="logout-button" (click)="logout()">
+      Cerrar sesion
+    </button>
+  </div>
+</aside>

@@ -2,12 +2,13 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { FichajeEventoItem, FichajeTabResponse } from '../../../core/models/intranet.models';
 import { IntranetService } from '../../../core/services/intranet.service';
+import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { SessionStorageService } from '../../../core/services/session-storage.service';
 import { formatEventLabel } from '../../../shared/utils/event-label';
 
@@ -59,7 +60,7 @@ interface FichajeSnapshot {
 @Component({
   selector: 'app-fichaje-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, IntranetSidebarComponent],
   templateUrl: './fichaje-page.component.html',
   styleUrl: './fichaje-page.component.css',
 })
@@ -97,43 +98,6 @@ export class FichajePageComponent implements OnInit {
     this.loadFichaje();
   }
 
-  protected get employeeName(): string {
-    const fichaName = this.fichajeData?.usuario?.nombre_completo;
-    if (fichaName) {
-      return fichaName;
-    }
-
-    return this.sessionStorageService.getUser()?.nombre_usuario ?? 'Usuario';
-  }
-
-  protected get employeeRole(): string {
-    const fichaRole = this.fichajeData?.usuario?.rol;
-    if (fichaRole) {
-      return fichaRole;
-    }
-
-    return this.sessionStorageService.getUser()?.role ?? 'Empleado';
-  }
-
-  protected get employeeFirstName(): string {
-    const name = this.employeeName.trim();
-    if (!name) {
-      return 'Usuario';
-    }
-
-    return name.split(' ').filter(Boolean)[0] ?? 'Usuario';
-  }
-
-  protected get employeeInitials(): string {
-    const source = this.employeeName.trim();
-    if (!source) {
-      return 'UI';
-    }
-
-    const parts = source.split(' ').filter(Boolean);
-    const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '');
-    return initials.join('') || 'UI';
-  }
 
   protected get nextTipoEvento(): 'entrada' | 'salida' {
     return this.fichajeData?.resumen?.turno_activo ? 'salida' : 'entrada';

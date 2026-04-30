@@ -167,8 +167,9 @@
 .sidebar-footer {
   margin-top: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   padding: 10px 10px 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
@@ -191,6 +192,8 @@
 .sidebar-footer .meta {
   display: grid;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .sidebar-footer .meta span {
@@ -200,6 +203,14 @@
 
 .sidebar-footer .meta strong {
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-footer .logout-button {
+  width: 100%;
+  justify-content: center;
 }
 
 .content {

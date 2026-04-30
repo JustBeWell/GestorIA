@@ -37,6 +37,7 @@ services:
       JWT_ALGORITHM: HS256
       JWT_EXPIRATION_HOURS: 8
       FRONTEND_URL: http://localhost:4200
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - "8008:8008"
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8008"]

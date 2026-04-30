@@ -28,7 +28,8 @@ class ServiceSettings:
 	jwt_algorithm: str = os.getenv("JWT_ALGORITHM")
 	jwt_expiration_hours: int = int(os.getenv("JWT_EXPIRATION_HOURS"))
 
-	frontend_url: str = os.getenv("FRONTEND_URL")
+	openai_api_key: str | None = os.getenv("OPENAI_API_KEY", None)
+	frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:4200")
 
 	@property
 	def effective_database_url(self) -> str:

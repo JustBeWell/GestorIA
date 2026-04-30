@@ -222,3 +222,44 @@ class PagosTabResponse(BaseModel):
 	pagos_recientes: list[PagoRecienteTabItem]
 	paginacion_facturas: PaginacionMeta
 	paginacion_pagos: PaginacionMeta
+
+
+class AdminEmpleadoResumen(BaseModel):
+	empleado_id: str
+	nombre_completo: str
+	rol: str
+	activo: bool
+	horas_mes: float
+	turno_activo: bool
+	trabajos_en_curso: int
+	trabajos_pendientes: int
+	trabajos_bloqueados: int
+
+
+class AdminTrabajosGlobal(BaseModel):
+	total: int
+	en_curso: int
+	pendientes: int
+	bloqueados: int
+	finalizados: int
+	cancelados: int
+
+
+class AdminFacturacionGlobal(BaseModel):
+	facturas_vencidas: int
+	cobrado_total: float
+	pendiente_total: float
+	clientes_con_facturas: int
+
+
+class AdminClientesGlobal(BaseModel):
+	total: int
+	activos: int
+
+
+class AdminResumenResponse(BaseModel):
+	empleados: list[AdminEmpleadoResumen]
+	trabajos: AdminTrabajosGlobal
+	facturacion: AdminFacturacionGlobal
+	clientes: AdminClientesGlobal
+

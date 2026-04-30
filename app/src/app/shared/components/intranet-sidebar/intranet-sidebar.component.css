@@ -1,0 +1,5 @@
+/* Sidebar styles are inherited from intranet-pro-shell.css via host context */
+
+:host {
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}

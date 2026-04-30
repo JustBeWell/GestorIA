@@ -97,3 +97,37 @@ export interface FichajeTabResponse {
   eventos_recientes: FichajeEventoItem[];
   paginacion: PaginationMeta;
 }
+
+export interface AdminEmpleadoResumen {
+  empleado_id: string;
+  nombre_completo: string;
+  rol: string;
+  activo: boolean;
+  horas_mes: number;
+  turno_activo: boolean;
+  trabajos_en_curso: number;
+  trabajos_pendientes: number;
+  trabajos_bloqueados: number;
+}
+
+export interface AdminResumenResponse {
+  empleados: AdminEmpleadoResumen[];
+  trabajos: {
+    total: number;
+    en_curso: number;
+    pendientes: number;
+    bloqueados: number;
+    finalizados: number;
+    cancelados: number;
+  };
+  facturacion: {
+    facturas_vencidas: number;
+    cobrado_total: number;
+    pendiente_total: number;
+    clientes_con_facturas: number;
+  };
+  clientes: {
+    total: number;
+    activos: number;
+  };
+}
