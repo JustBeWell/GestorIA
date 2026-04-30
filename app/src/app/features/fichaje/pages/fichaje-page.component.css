@@ -66,15 +66,15 @@
 }
 
 .stat-icon {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 10px;
   background: #f1f5f9;
   color: #0f172a;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .stat-icon.blue {

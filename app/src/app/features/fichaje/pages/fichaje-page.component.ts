@@ -523,7 +523,7 @@ export class FichajePageComponent implements OnInit {
         helperLeft: 'Meta mensual',
         helperRight: `${horasPercent}%`,
         progressPercent: horasPercent,
-        icon: 'H',
+        icon: 'clock',
         tone: 'blue',
       },
       {
@@ -533,7 +533,7 @@ export class FichajePageComponent implements OnInit {
         helperLeft: `Sobre ${businessDays} laborables`,
         helperRight: `${jornadasPercent}%`,
         progressPercent: jornadasPercent,
-        icon: 'J',
+        icon: 'calendar-check',
         tone: 'green',
       },
       {
@@ -543,7 +543,7 @@ export class FichajePageComponent implements OnInit {
         helperLeft: `Pico: ${maxHours ? maxHours.toFixed(1) : '--'} h`,
         helperRight: `Minimo: ${minHours ? minHours.toFixed(1) : '--'} h`,
         progressPercent: 0,
-        icon: 'P',
+        icon: 'trending-up',
         tone: 'yellow',
       },
       {
@@ -553,7 +553,7 @@ export class FichajePageComponent implements OnInit {
         helperLeft: `Promedio ${pauseAverage} min`,
         helperRight: `${pauseHours.toFixed(1)} h totales`,
         progressPercent: 0,
-        icon: 'S',
+        icon: 'pause',
         tone: 'orange',
       },
     ];
