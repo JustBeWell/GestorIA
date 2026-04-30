@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from database import db_connection
+from limiter import limiter
 from models import LoginRequest, LoginResponse, OtpVerifyRequest, TokenResponse
 from service_config import settings
 from services.auth_service import TokenService, TwoFactorService, authenticate_user, get_current_user
@@ -9,7 +10,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(payload: LoginRequest):
+@limiter.limit("10/minute")
+async def login(request: Request, payload: LoginRequest):
     current_user = authenticate_user(payload.dni, payload.password)
 
     # Si Twilio está configurado, comprobar si el usuario tiene 2FA activo y teléfono
@@ -59,7 +61,8 @@ async def login(payload: LoginRequest):
 
 
 @router.post("/otp/verify", response_model=LoginResponse)
-async def verify_otp(payload: OtpVerifyRequest):
+@limiter.limit("10/minute")
+async def verify_otp(request: Request, payload: OtpVerifyRequest):
     """Valida el código OTP y devuelve el JWT completo si es correcto."""
     user_id = TwoFactorService.verify_otp(payload.session_id, payload.code)
 
