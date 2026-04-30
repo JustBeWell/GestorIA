@@ -171,21 +171,21 @@ async function runLauncher() {
 
   try {
     // Step 1 — db
-    splashUpdate(splash, 5, 'Construyendo base de datos…', 'step-db');
+    splashUpdate(splash, 5,  'Preparando los datos…',            'step-db');
     await spawnAsync('docker-compose', ['build', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 18, 'Iniciando base de datos…', 'step-db');
+    splashUpdate(splash, 18, 'Conectando con la base de datos…', 'step-db');
     await spawnAsync('docker-compose', ['up', '-d', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 30, 'Base de datos lista', 'step-db');
+    splashUpdate(splash, 30, 'Base de datos lista',              'step-db');
 
     // Step 2 — backend
-    splashUpdate(splash, 33, 'Construyendo backend API…', 'step-api');
+    splashUpdate(splash, 33, 'Cargando los servicios…',   'step-api');
     await spawnAsync('docker-compose', ['build', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 48, 'Iniciando backend API…', 'step-api');
+    splashUpdate(splash, 48, 'Iniciando los servicios…',  'step-api');
     await spawnAsync('docker-compose', ['up', '-d', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 55, 'Backend API listo', 'step-api');
+    splashUpdate(splash, 55, 'Servicios listos',           'step-api');
 
     // Step 3 — Angular build (ng es un script JS, necesita node)
-    splashUpdate(splash, 58, 'Compilando interfaz…', 'step-ui');
+    splashUpdate(splash, 58, 'Preparando la interfaz…', 'step-ui');
     const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
     // Buscar node en PATH
     const nodeExec = (() => {
@@ -196,10 +196,10 @@ async function runLauncher() {
       return 'node'; // fallback
     })();
     await spawnAsync(nodeExec, [ng, 'build'], APP_DIR);
-    splashUpdate(splash, 85, 'Interfaz compilada', 'step-ui');
+    splashUpdate(splash, 85, 'Interfaz preparada', 'step-ui');
 
     // Step 4 — launch
-    splashUpdate(splash, 90, 'Iniciando aplicación…', 'step-launch');
+    splashUpdate(splash, 90, 'Abriendo GestorIA…', 'step-launch');
     await new Promise((r) => setTimeout(r, 600));
 
     if (!splash.isDestroyed()) {
