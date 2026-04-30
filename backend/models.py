@@ -298,3 +298,24 @@ class AdminChartsResponse(BaseModel):
 	clientes: list[ClientesMensualesPoint]
 	horas: list[HorasMensualesPoint]
 
+
+class AdminFichajeItem(BaseModel):
+	fichaje_id: str
+	empleado_id: str
+	nombre_completo: str
+	tipo_evento: str
+	fecha_hora: datetime
+	origen: str
+	observaciones: str | None = None
+
+
+class AdminFichajesEmpleadoOption(BaseModel):
+	empleado_id: str
+	nombre_completo: str
+
+
+class AdminFichajesResponse(BaseModel):
+	fichajes: list[AdminFichajeItem]
+	empleados: list[AdminFichajesEmpleadoOption]
+	paginacion: PaginacionMeta
+

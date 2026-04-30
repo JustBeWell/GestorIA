@@ -3,7 +3,7 @@ from datetime import datetime
 from psycopg2.extras import RealDictCursor
 
 from database import db_connection
-from services._shared import MADRID_TZ, MONTH_ABBR
+from services._shared import MADRID_TZ, MONTH_ABBR, normalize_pagination, build_pagination_meta
 from services.fichaje_service import FichajeService
 
 MONTH_ABBR_ES = MONTH_ABBR
@@ -42,7 +42,7 @@ class AdminService:
                     cursor.execute(
                         """
                         SELECT tipo_evento, fecha_hora
-                        FROM fichaje_eventos
+                        FROM fichajes
                         WHERE empleado_id = %s
                         AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') BETWEEN %s AND %s
                         ORDER BY fecha_hora ASC
@@ -291,6 +291,79 @@ class AdminService:
                 }
                 for r in horas_rows
             ],
+        }
+
+    @staticmethod
+    def get_admin_fichajes(
+        page: int = 1,
+        page_size: int = 30,
+        empleado_id: str | None = None,
+        fecha_desde: str | None = None,
+        fecha_hasta: str | None = None,
+        tipo_evento: str | None = None,
+    ) -> dict:
+        page, page_size, offset = normalize_pagination(page, page_size)
+
+        conditions: list[str] = []
+        values: list = []
+
+        if empleado_id:
+            conditions.append("f.empleado_id::text = %s")
+            values.append(empleado_id)
+        if tipo_evento:
+            conditions.append("f.tipo_evento::text = %s")
+            values.append(tipo_evento)
+        if fecha_desde:
+            conditions.append("DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid') >= %s")
+            values.append(fecha_desde)
+        if fecha_hasta:
+            conditions.append("DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid') <= %s")
+            values.append(fecha_hasta)
+
+        where = " AND ".join(conditions) if conditions else "TRUE"
+
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(
+                    f"SELECT COUNT(*) AS total FROM fichajes f WHERE {where}",
+                    values,
+                )
+                total = int((cursor.fetchone() or {}).get("total") or 0)
+
+                cursor.execute(
+                    f"""
+                    SELECT
+                        f.id::text AS fichaje_id,
+                        e.id::text AS empleado_id,
+                        e.nombre || ' ' || e.apellidos AS nombre_completo,
+                        f.tipo_evento::text AS tipo_evento,
+                        f.fecha_hora,
+                        f.origen::text AS origen,
+                        f.observaciones
+                    FROM fichajes f
+                    JOIN empleados e ON e.id = f.empleado_id
+                    WHERE {where}
+                    ORDER BY f.fecha_hora DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    values + [page_size, offset],
+                )
+                fichajes = [dict(row) for row in cursor.fetchall()]
+
+                cursor.execute(
+                    """
+                    SELECT e.id::text AS empleado_id,
+                           e.nombre || ' ' || e.apellidos AS nombre_completo
+                    FROM empleados e
+                    ORDER BY e.apellidos, e.nombre
+                    """,
+                )
+                empleados = [dict(row) for row in cursor.fetchall()]
+
+        return {
+            "fichajes": fichajes,
+            "empleados": empleados,
+            "paginacion": build_pagination_meta(page, page_size, total),
         }
 
     @staticmethod

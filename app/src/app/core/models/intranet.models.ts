@@ -167,3 +167,24 @@ export interface AdminChartsResponse {
   clientes: ClientesMensualesPoint[];
   horas: HorasMensualesPoint[];
 }
+
+export interface AdminFichajeItem {
+  fichaje_id: string;
+  empleado_id: string;
+  nombre_completo: string;
+  tipo_evento: string;
+  fecha_hora: string;
+  origen: string;
+  observaciones: string | null;
+}
+
+export interface AdminFichajesEmpleadoOption {
+  empleado_id: string;
+  nombre_completo: string;
+}
+
+export interface AdminFichajesResponse {
+  fichajes: AdminFichajeItem[];
+  empleados: AdminFichajesEmpleadoOption[];
+  paginacion: PaginationMeta;
+}

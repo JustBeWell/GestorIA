@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AdminChartsResponse,
+  AdminFichajesResponse,
   AdminResumenResponse,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
@@ -108,6 +109,27 @@ export class IntranetService {
 
   getAdminCharts(months = 12): Observable<AdminChartsResponse> {
     return this.http.get<AdminChartsResponse>(`${this.apiUrl}/intranet/admin/charts?months=${months}`);
+  }
+
+  getAdminFichajes(params: {
+    page?: number;
+    page_size?: number;
+    empleado_id?: string;
+    fecha_desde?: string;
+    fecha_hasta?: string;
+    tipo_evento?: string;
+  }): Observable<AdminFichajesResponse> {
+    const sp = new URLSearchParams();
+    if (params.page)        sp.set('page', String(params.page));
+    if (params.page_size)   sp.set('page_size', String(params.page_size));
+    if (params.empleado_id) sp.set('empleado_id', params.empleado_id);
+    if (params.fecha_desde) sp.set('fecha_desde', params.fecha_desde);
+    if (params.fecha_hasta) sp.set('fecha_hasta', params.fecha_hasta);
+    if (params.tipo_evento) sp.set('tipo_evento', params.tipo_evento);
+    const q = sp.toString();
+    return this.http.get<AdminFichajesResponse>(
+      `${this.apiUrl}/intranet/admin/fichajes${q ? '?' + q : ''}`
+    );
   }
 
   createEmpleado(payload: UserCreatePayload): Observable<unknown> {

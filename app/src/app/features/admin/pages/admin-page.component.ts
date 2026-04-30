@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import {
   AdminChartsResponse,
   AdminEmpleadoResumen,
+  AdminFichajesResponse,
   AdminResumenResponse,
   FacturacionMensualPoint,
   HorasMensualesPoint,
@@ -21,7 +22,7 @@ import { SessionStorageService } from '../../../core/services/session-storage.se
 @Component({
   selector: 'app-admin-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, IntranetSidebarComponent],
+  imports: [CommonModule, DatePipe, FormsModule, IntranetSidebarComponent],
   templateUrl: './admin-page.component.html',
   styleUrl: './admin-page.component.css',
 })
@@ -36,6 +37,21 @@ export class AdminPageComponent implements OnInit {
   protected readonly modalSaving = signal(false);
   protected data: AdminResumenResponse | null = null;
   protected charts: AdminChartsResponse | null = null;
+
+  // ─── Tabs ──────────────────────────────────────────────────────────────────
+  protected readonly activeTab = signal<'resumen' | 'fichajes'>('resumen');
+
+  // ─── Tab fichajes ─────────────────────────────────────────────────────────
+  protected readonly fichajesLoading = signal(false);
+  protected fichajes: AdminFichajesResponse | null = null;
+  protected fichajesFilter = {
+    empleado_id: '',
+    fecha_desde: '',
+    fecha_hasta: '',
+    tipo_evento: '',
+    page: 1,
+    page_size: 30,
+  };
 
   // ─── Modal crear empleado ──────────────────────────────────────────────────
   protected showCreateModal = false;
@@ -152,6 +168,51 @@ export class AdminPageComponent implements OnInit {
         this.modalError.set(typeof detail === 'string' ? detail : 'Error al actualizar el empleado.');
       },
     });
+  }
+
+  // ─── Tab navigation ───────────────────────────────────────────────────────
+  protected switchTab(tab: 'resumen' | 'fichajes'): void {
+    this.activeTab.set(tab);
+    if (tab === 'fichajes' && !this.fichajes) {
+      this.loadFichajes();
+    }
+  }
+
+  // ─── Fichajes tab ─────────────────────────────────────────────────────────
+  protected loadFichajes(): void {
+    this.fichajesLoading.set(true);
+    const f = this.fichajesFilter;
+    this.intranetService.getAdminFichajes({
+      page: f.page,
+      page_size: f.page_size,
+      empleado_id: f.empleado_id || undefined,
+      fecha_desde: f.fecha_desde || undefined,
+      fecha_hasta: f.fecha_hasta || undefined,
+      tipo_evento: f.tipo_evento || undefined,
+    }).subscribe({
+      next: (res) => { this.fichajes = res; this.fichajesLoading.set(false); },
+      error: () => { this.fichajesLoading.set(false); },
+    });
+  }
+
+  protected applyFichajesFilter(): void {
+    this.fichajesFilter.page = 1;
+    this.loadFichajes();
+  }
+
+  protected fichajesGoToPage(p: number): void {
+    this.fichajesFilter.page = p;
+    this.loadFichajes();
+  }
+
+  protected tipoEventoLabel(tipo: string): string {
+    const map: Record<string, string> = {
+      entrada: 'Entrada',
+      salida: 'Salida',
+      pausa_inicio: 'Pausa inicio',
+      pausa_fin: 'Pausa fin',
+    };
+    return map[tipo] ?? tipo;
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -19,6 +19,16 @@
         </section>
       } @else if (data) {
 
+        <!-- ─── TAB BAR ──────────────────────────────────────────── -->
+        <nav class="admin-tabs">
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'resumen'"
+                  (click)="switchTab('resumen')">Resumen</button>
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'fichajes'"
+                  (click)="switchTab('fichajes')">Fichajes</button>
+        </nav>
+
+        <!-- ─── TAB: RESUMEN ─────────────────────────────────────── -->
+        @if (activeTab() === 'resumen') {
         <div class="admin-layout">
 
           <!-- ─── KPI CAROUSEL ───────────────────────────────────── -->
@@ -389,6 +399,90 @@
           }
 
         </div>
+        } <!-- /tab resumen -->
+
+        <!-- ─── TAB: FICHAJES ────────────────────────────────────── -->
+        @if (activeTab() === 'fichajes') {
+        <div class="admin-layout">
+
+          <!-- Filtros -->
+          <div class="fichajes-filters">
+            <select [(ngModel)]="fichajesFilter.empleado_id">
+              <option value="">Todos los empleados</option>
+              @for (emp of (fichajes?.empleados ?? []); track emp.empleado_id) {
+                <option [value]="emp.empleado_id">{{ emp.nombre_completo }}</option>
+              }
+            </select>
+            <select [(ngModel)]="fichajesFilter.tipo_evento">
+              <option value="">Todos los tipos</option>
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+              <option value="pausa_inicio">Pausa inicio</option>
+              <option value="pausa_fin">Pausa fin</option>
+            </select>
+            <input type="date" [(ngModel)]="fichajesFilter.fecha_desde" placeholder="Desde"/>
+            <input type="date" [(ngModel)]="fichajesFilter.fecha_hasta" placeholder="Hasta"/>
+            <button class="btn-primary btn-sm" (click)="applyFichajesFilter()">Filtrar</button>
+          </div>
+
+          <!-- Tabla -->
+          @if (fichajesLoading()) {
+            <section class="fullscreen-message loading" role="status">
+              <div class="spinner-xl"></div>
+              <h2>Cargando fichajes...</h2>
+            </section>
+          } @else if (fichajes) {
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3 class="admin-card-title">Fichajes</h3>
+                <span class="admin-badge">{{ fichajes.paginacion.total }}</span>
+              </div>
+              <div class="table-wrap">
+                <table class="fichajes-table">
+                  <thead>
+                    <tr>
+                      <th>Empleado</th>
+                      <th>Tipo</th>
+                      <th>Fecha y hora</th>
+                      <th>Origen</th>
+                      <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (f of fichajes.fichajes; track f.fichaje_id) {
+                      <tr>
+                        <td>{{ f.nombre_completo }}</td>
+                        <td><span class="tipo-badge tipo-badge--{{ f.tipo_evento }}">{{ tipoEventoLabel(f.tipo_evento) }}</span></td>
+                        <td class="fecha-cell">{{ f.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td class="origen-cell">{{ f.origen }}</td>
+                        <td class="obs-cell">{{ f.observaciones ?? '—' }}</td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="5" class="empty-row">No hay fichajes para los filtros aplicados.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <!-- Paginación -->
+              @if (fichajes.paginacion.total_pages > 1) {
+                <div class="fichajes-pagination">
+                  <button class="btn-secondary btn-sm"
+                          [disabled]="fichajesFilter.page <= 1"
+                          (click)="fichajesGoToPage(fichajesFilter.page - 1)">‹ Anterior</button>
+                  <span class="pagination-info">
+                    Pág. {{ fichajes.paginacion.page }} / {{ fichajes.paginacion.total_pages }}
+                  </span>
+                  <button class="btn-secondary btn-sm"
+                          [disabled]="fichajesFilter.page >= fichajes.paginacion.total_pages"
+                          (click)="fichajesGoToPage(fichajesFilter.page + 1)">Siguiente ›</button>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+        } <!-- /tab fichajes -->
+
       }
     </section>
   </section>

@@ -9,6 +9,7 @@ from psycopg2 import Error as PsycopgError
 from models import (
     AdminResumenResponse,
     AdminChartsResponse,
+    AdminFichajesResponse,
     ClientesTabResponse,
     FichajeRegistroRequest,
     FichajeRegistroResponse,
@@ -237,3 +238,25 @@ async def intranet_admin_charts(
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
     return AdminService.get_admin_charts(months=months)
+
+
+@router.get("/admin/fichajes", response_model=AdminFichajesResponse)
+async def intranet_admin_fichajes(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=30, ge=1, le=100),
+    empleado_id: str | None = Query(default=None),
+    fecha_desde: date | None = Query(default=None),
+    fecha_hasta: date | None = Query(default=None),
+    tipo_evento: str | None = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return AdminService.get_admin_fichajes(
+        page=page,
+        page_size=page_size,
+        empleado_id=empleado_id,
+        fecha_desde=fecha_desde.isoformat() if fecha_desde else None,
+        fecha_hasta=fecha_hasta.isoformat() if fecha_hasta else None,
+        tipo_evento=tipo_evento,
+    )
