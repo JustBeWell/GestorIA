@@ -153,16 +153,16 @@ async function runLauncher() {
   try {
     // Step 1 — db
     splashUpdate(splash, 5, 'Construyendo base de datos…', 'step-db');
-    await spawnAsync('docker', ['compose', 'build', 'db'], PROJECT_ROOT);
+    await spawnAsync('docker-compose', ['build', 'db'], PROJECT_ROOT);
     splashUpdate(splash, 18, 'Iniciando base de datos…', 'step-db');
-    await spawnAsync('docker', ['compose', 'up', '-d', 'db'], PROJECT_ROOT);
+    await spawnAsync('docker-compose', ['up', '-d', 'db'], PROJECT_ROOT);
     splashUpdate(splash, 30, 'Base de datos lista', 'step-db');
 
     // Step 2 — backend
     splashUpdate(splash, 33, 'Construyendo backend API…', 'step-api');
-    await spawnAsync('docker', ['compose', 'build', 'backend'], PROJECT_ROOT);
+    await spawnAsync('docker-compose', ['build', 'backend'], PROJECT_ROOT);
     splashUpdate(splash, 48, 'Iniciando backend API…', 'step-api');
-    await spawnAsync('docker', ['compose', 'up', '-d', 'backend'], PROJECT_ROOT);
+    await spawnAsync('docker-compose', ['up', '-d', 'backend'], PROJECT_ROOT);
     splashUpdate(splash, 55, 'Backend API listo', 'step-api');
 
     // Step 3 — Angular build (ng es un script JS, necesita node)
