@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  AdminChartsResponse,
   AdminResumenResponse,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
@@ -102,5 +103,9 @@ export class IntranetService {
 
   getAdminResumen(): Observable<AdminResumenResponse> {
     return this.http.get<AdminResumenResponse>(`${this.apiUrl}/intranet/admin/resumen`);
+  }
+
+  getAdminCharts(months = 12): Observable<AdminChartsResponse> {
+    return this.http.get<AdminChartsResponse>(`${this.apiUrl}/intranet/admin/charts?months=${months}`);
   }
 }

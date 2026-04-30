@@ -1,0 +1,300 @@
+from datetime import datetime
+
+from psycopg2.extras import RealDictCursor
+
+from database import db_connection
+from services._shared import MADRID_TZ, MONTH_ABBR
+from services.fichaje_service import FichajeService
+
+MONTH_ABBR_ES = MONTH_ABBR
+
+
+class AdminService:
+
+    @staticmethod
+    def get_admin_resumen() -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                today = datetime.now(MADRID_TZ).date()
+                mes_inicio = today.replace(day=1)
+                mes_fin = today
+
+                cursor.execute(
+                    """
+                    SELECT
+                        e.id::text AS empleado_id,
+                        e.nombre,
+                        e.apellidos,
+                        u.rol::text AS rol,
+                        e.activo
+                    FROM empleados e
+                    JOIN usuarios u ON u.id = e.usuario_id
+                    ORDER BY e.apellidos, e.nombre
+                    """,
+                )
+                empleados_rows = cursor.fetchall()
+
+                empleados = []
+                for emp in empleados_rows:
+                    emp_id = emp["empleado_id"]
+
+                    cursor.execute(
+                        """
+                        SELECT tipo_evento::text AS tipo_evento, fecha_hora
+                        FROM fichajes
+                        WHERE empleado_id = %s
+                        AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') BETWEEN %s AND %s
+                        ORDER BY fecha_hora ASC
+                        """,
+                        (emp_id, mes_inicio.isoformat(), mes_fin.isoformat()),
+                    )
+                    eventos = cursor.fetchall()
+                    horas_mes = FichajeService.build_fichaje_hours_by_month(
+                        [dict(ev) for ev in eventos], mes_inicio, mes_fin
+                    )
+                    total_horas = sum(horas_mes.values())
+
+                    fichaje = FichajeService.get_fichaje_resumen(cursor, emp_id)
+
+                    cursor.execute(
+                        """
+                        SELECT
+                            COUNT(*) FILTER (WHERE t.estado = 'en_curso') AS en_curso,
+                            COUNT(*) FILTER (WHERE t.estado = 'pendiente') AS pendientes,
+                            COUNT(*) FILTER (WHERE t.estado = 'bloqueado') AS bloqueados
+                        FROM trabajo_empleado te
+                        JOIN trabajos t ON t.id = te.trabajo_id
+                        WHERE te.empleado_id = %s
+                        AND te.desasignado_en IS NULL
+                        AND t.estado NOT IN ('finalizado', 'cancelado')
+                        """,
+                        (emp_id,),
+                    )
+                    trabajos_row = cursor.fetchone() or {}
+
+                    empleados.append({
+                        "empleado_id": emp_id,
+                        "nombre_completo": f"{emp['nombre']} {emp['apellidos']}".strip(),
+                        "rol": emp["rol"],
+                        "activo": emp["activo"],
+                        "horas_mes": round(total_horas, 1),
+                        "turno_activo": fichaje["turno_activo"],
+                        "trabajos_en_curso": int(trabajos_row.get("en_curso") or 0),
+                        "trabajos_pendientes": int(trabajos_row.get("pendientes") or 0),
+                        "trabajos_bloqueados": int(trabajos_row.get("bloqueados") or 0),
+                    })
+
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS total,
+                        COUNT(*) FILTER (WHERE estado = 'en_curso') AS en_curso,
+                        COUNT(*) FILTER (WHERE estado = 'pendiente') AS pendientes,
+                        COUNT(*) FILTER (WHERE estado = 'bloqueado') AS bloqueados,
+                        COUNT(*) FILTER (WHERE estado = 'finalizado') AS finalizados,
+                        COUNT(*) FILTER (WHERE estado = 'cancelado') AS cancelados
+                    FROM trabajos
+                    """,
+                )
+                trabajos_global = cursor.fetchone() or {}
+
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) FILTER (
+                            WHERE estado IN ('emitida', 'pagada_parcial')
+                            AND fecha_vencimiento < CURRENT_DATE
+                        ) AS facturas_vencidas,
+                        COALESCE(SUM(total) FILTER (WHERE estado = 'pagada'), 0) AS cobrado_total,
+                        COALESCE(SUM(total) FILTER (
+                            WHERE estado IN ('emitida', 'pagada_parcial')
+                        ), 0) AS pendiente_total,
+                        COUNT(DISTINCT cliente_id) AS clientes_con_facturas
+                    FROM facturas
+                    """,
+                )
+                facturacion = cursor.fetchone() or {}
+
+                cursor.execute(
+                    "SELECT COUNT(*) FILTER (WHERE activo) AS activos, COUNT(*) AS total FROM clientes"
+                )
+                clientes_global = cursor.fetchone() or {}
+
+        return {
+            "empleados": empleados,
+            "trabajos": {
+                "total": int(trabajos_global.get("total") or 0),
+                "en_curso": int(trabajos_global.get("en_curso") or 0),
+                "pendientes": int(trabajos_global.get("pendientes") or 0),
+                "bloqueados": int(trabajos_global.get("bloqueados") or 0),
+                "finalizados": int(trabajos_global.get("finalizados") or 0),
+                "cancelados": int(trabajos_global.get("cancelados") or 0),
+            },
+            "facturacion": {
+                "facturas_vencidas": int(facturacion.get("facturas_vencidas") or 0),
+                "cobrado_total": float(facturacion.get("cobrado_total") or 0),
+                "pendiente_total": float(facturacion.get("pendiente_total") or 0),
+                "clientes_con_facturas": int(facturacion.get("clientes_con_facturas") or 0),
+            },
+            "clientes": {
+                "total": int(clientes_global.get("total") or 0),
+                "activos": int(clientes_global.get("activos") or 0),
+            },
+        }
+
+    @staticmethod
+    def get_admin_charts(months: int = 12) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+
+                cursor.execute(
+                    """
+                    WITH meses AS (
+                        SELECT generate_series(
+                            DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month' * (%s - 1)),
+                            DATE_TRUNC('month', CURRENT_DATE),
+                            '1 month'
+                        )::date AS mes
+                    ),
+                    fac AS (SELECT * FROM v_facturacion_mensual),
+                    cob AS (SELECT * FROM v_cobros_mensuales)
+                    SELECT
+                        TO_CHAR(m.mes, 'YYYY-MM')               AS mes,
+                        COALESCE(fac.facturado_total, 0)         AS facturado_total,
+                        COALESCE(cob.cobrado_total, 0)           AS cobrado_total,
+                        COALESCE(fac.facturas_emitidas::int, 0)  AS facturas_emitidas,
+                        COALESCE(fac.facturas_vencidas::int, 0)  AS facturas_vencidas
+                    FROM meses m
+                    LEFT JOIN fac ON fac.mes = m.mes
+                    LEFT JOIN cob ON cob.mes = m.mes
+                    ORDER BY m.mes
+                    """,
+                    (months,),
+                )
+                facturacion_rows = cursor.fetchall()
+
+                cursor.execute(
+                    """
+                    WITH meses AS (
+                        SELECT generate_series(
+                            DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month' * (%s - 1)),
+                            DATE_TRUNC('month', CURRENT_DATE),
+                            '1 month'
+                        )::date AS mes
+                    )
+                    SELECT
+                        TO_CHAR(m.mes, 'YYYY-MM')                   AS mes,
+                        COALESCE(v.trabajos_creados::int, 0)         AS trabajos_creados,
+                        COALESCE(v.finalizados::int, 0)              AS finalizados,
+                        COALESCE(v.cancelados::int, 0)               AS cancelados,
+                        COALESCE(v.bloqueados::int, 0)               AS bloqueados
+                    FROM meses m
+                    LEFT JOIN v_trabajos_mensuales v ON v.mes = m.mes
+                    ORDER BY m.mes
+                    """,
+                    (months,),
+                )
+                trabajos_rows = cursor.fetchall()
+
+                cursor.execute(
+                    """
+                    WITH meses AS (
+                        SELECT generate_series(
+                            DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month' * (%s - 1)),
+                            DATE_TRUNC('month', CURRENT_DATE),
+                            '1 month'
+                        )::date AS mes
+                    )
+                    SELECT
+                        TO_CHAR(m.mes, 'YYYY-MM')               AS mes,
+                        COALESCE(v.clientes_nuevos::int, 0)      AS clientes_nuevos
+                    FROM meses m
+                    LEFT JOIN v_clientes_mensuales v ON v.mes = m.mes
+                    ORDER BY m.mes
+                    """,
+                    (months,),
+                )
+                clientes_rows = cursor.fetchall()
+
+                cursor.execute(
+                    """
+                    WITH meses AS (
+                        SELECT generate_series(
+                            DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month' * (%s - 1)),
+                            DATE_TRUNC('month', CURRENT_DATE),
+                            '1 month'
+                        )::date AS mes
+                    )
+                    SELECT
+                        TO_CHAR(m.mes, 'YYYY-MM')               AS mes,
+                        COALESCE(v.horas_totales, 0)             AS horas_totales
+                    FROM meses m
+                    LEFT JOIN v_horas_mensuales v ON v.mes = m.mes
+                    ORDER BY m.mes
+                    """,
+                    (months,),
+                )
+                horas_rows = cursor.fetchall()
+
+        def label(r: dict) -> str:
+            return AdminService._mes_label(r["mes"])
+
+        return {
+            "facturacion": [
+                {
+                    "mes": r["mes"],
+                    "label": label(r),
+                    "facturado_total": float(r["facturado_total"]),
+                    "cobrado_total": float(r["cobrado_total"]),
+                    "facturas_emitidas": int(r["facturas_emitidas"]),
+                    "facturas_vencidas": int(r["facturas_vencidas"]),
+                }
+                for r in facturacion_rows
+            ],
+            "cobros": [
+                {
+                    "mes": r["mes"],
+                    "label": label(r),
+                    "facturado_total": 0.0,
+                    "cobrado_total": float(r["cobrado_total"]),
+                    "facturas_emitidas": 0,
+                    "facturas_vencidas": 0,
+                }
+                for r in facturacion_rows
+            ],
+            "trabajos": [
+                {
+                    "mes": r["mes"],
+                    "label": label(r),
+                    "trabajos_creados": int(r["trabajos_creados"]),
+                    "finalizados": int(r["finalizados"]),
+                    "cancelados": int(r["cancelados"]),
+                    "bloqueados": int(r["bloqueados"]),
+                }
+                for r in trabajos_rows
+            ],
+            "clientes": [
+                {
+                    "mes": r["mes"],
+                    "label": label(r),
+                    "clientes_nuevos": int(r["clientes_nuevos"]),
+                }
+                for r in clientes_rows
+            ],
+            "horas": [
+                {
+                    "mes": r["mes"],
+                    "label": label(r),
+                    "horas_totales": float(r["horas_totales"]),
+                }
+                for r in horas_rows
+            ],
+        }
+
+    @staticmethod
+    def _mes_label(mes_str: str) -> str:
+        try:
+            year, month = mes_str.split("-")
+            return f"{MONTH_ABBR_ES[int(month) - 1].capitalize()} {year}"
+        except Exception:
+            return mes_str

@@ -131,3 +131,38 @@ export interface AdminResumenResponse {
     activos: number;
   };
 }
+
+export interface AdminChartPointBase {
+  mes: string;
+  label: string;
+}
+
+export interface FacturacionMensualPoint extends AdminChartPointBase {
+  facturado_total: number;
+  cobrado_total: number;
+  facturas_emitidas: number;
+  facturas_vencidas: number;
+}
+
+export interface TrabajosMensualesPoint extends AdminChartPointBase {
+  trabajos_creados: number;
+  finalizados: number;
+  cancelados: number;
+  bloqueados: number;
+}
+
+export interface ClientesMensualesPoint extends AdminChartPointBase {
+  clientes_nuevos: number;
+}
+
+export interface HorasMensualesPoint extends AdminChartPointBase {
+  horas_totales: number;
+}
+
+export interface AdminChartsResponse {
+  facturacion: FacturacionMensualPoint[];
+  cobros: FacturacionMensualPoint[];
+  trabajos: TrabajosMensualesPoint[];
+  clientes: ClientesMensualesPoint[];
+  horas: HorasMensualesPoint[];
+}

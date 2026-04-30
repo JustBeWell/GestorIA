@@ -8,6 +8,7 @@ from psycopg2 import Error as PsycopgError
 
 from models import (
     AdminResumenResponse,
+    AdminChartsResponse,
     ClientesTabResponse,
     FichajeRegistroRequest,
     FichajeRegistroResponse,
@@ -18,15 +19,21 @@ from models import (
     QuarterSeriesResponse,
     TrabajosTabResponse,
 )
+from services.admin_service import AdminService
 from services.auth_service import get_current_user
-from services.intranet_service import IntranetService
+from services.clientes_service import ClientesService
+from services.fichaje_service import FichajeService
+from services.home_service import HomeService
+from services.pagos_service import PagosService
+from services.series_service import SeriesService
+from services.trabajos_service import TrabajosService
 
 router = APIRouter(prefix="/intranet", tags=["intranet"])
 
 
 @router.get("/home", response_model=PortalIntranetHomeResponse)
 async def intranet_home(current_user=Depends(get_current_user)):
-    data = IntranetService.get_home(current_user.user_id)
+    data = HomeService.get_home(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -34,7 +41,7 @@ async def intranet_home(current_user=Depends(get_current_user)):
 
 @router.get("/series/fichaje", response_model=QuarterSeriesResponse)
 async def intranet_series_fichaje(current_user=Depends(get_current_user)):
-    data = IntranetService.get_fichaje_quarter_series(current_user.user_id)
+    data = SeriesService.get_fichaje_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -42,7 +49,7 @@ async def intranet_series_fichaje(current_user=Depends(get_current_user)):
 
 @router.get("/series/clientes", response_model=QuarterSeriesResponse)
 async def intranet_series_clientes(current_user=Depends(get_current_user)):
-    data = IntranetService.get_clientes_quarter_series(current_user.user_id)
+    data = SeriesService.get_clientes_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -50,7 +57,7 @@ async def intranet_series_clientes(current_user=Depends(get_current_user)):
 
 @router.get("/series/trabajos", response_model=QuarterSeriesResponse)
 async def intranet_series_trabajos(current_user=Depends(get_current_user)):
-    data = IntranetService.get_trabajos_quarter_series(current_user.user_id)
+    data = SeriesService.get_trabajos_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -58,7 +65,7 @@ async def intranet_series_trabajos(current_user=Depends(get_current_user)):
 
 @router.get("/series/pagos", response_model=QuarterSeriesResponse)
 async def intranet_series_pagos(current_user=Depends(get_current_user)):
-    data = IntranetService.get_pagos_quarter_series(current_user.user_id)
+    data = SeriesService.get_pagos_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -73,7 +80,7 @@ async def intranet_fichaje(
     fecha_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
 ):
-    data = IntranetService.get_fichaje_tab_filtered(
+    data = FichajeService.get_fichaje_tab_filtered(
         current_user.user_id,
         page=page,
         page_size=page_size,
@@ -92,7 +99,7 @@ async def intranet_fichaje_registrar(
     current_user=Depends(get_current_user),
 ):
     try:
-        data = IntranetService.create_fichaje_event(
+        data = FichajeService.create_fichaje_event(
             current_user.user_id,
             tipo_evento=payload.tipo_evento,
             observaciones=payload.observaciones,
@@ -108,7 +115,7 @@ async def intranet_fichaje_registrar(
 @router.post("/fichaje/ultimo/eliminar", response_model=FichajeUndoResponse)
 async def intranet_fichaje_eliminar_ultimo(current_user=Depends(get_current_user)):
     try:
-        data = IntranetService.delete_last_fichaje(current_user.user_id)
+        data = FichajeService.delete_last_fichaje(current_user.user_id)
     except PsycopgError as exc:
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
 
@@ -123,7 +130,7 @@ async def intranet_fichaje_export(
     fecha_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
 ):
-    data = IntranetService.get_fichaje_export(
+    data = FichajeService.get_fichaje_export(
         current_user.user_id,
         fecha_desde.isoformat() if fecha_desde else None,
         fecha_hasta.isoformat() if fecha_hasta else None,
@@ -153,7 +160,7 @@ async def intranet_fichaje_export(
 
 @router.get("/clientes", response_model=ClientesTabResponse)
 async def intranet_clientes(current_user=Depends(get_current_user)):
-    data = IntranetService.get_clientes_tab(current_user.user_id)
+    data = ClientesService.get_clientes_tab(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
@@ -170,7 +177,7 @@ async def intranet_trabajos(
     fecha_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
 ):
-    data = IntranetService.get_trabajos_tab_filtered(
+    data = TrabajosService.get_trabajos_tab_filtered(
         current_user.user_id,
         page=page,
         page_size=page_size,
@@ -198,7 +205,7 @@ async def intranet_pagos(
     fecha_pago_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
 ):
-    data = IntranetService.get_pagos_tab_filtered(
+    data = PagosService.get_pagos_tab_filtered(
         current_user.user_id,
         page_facturas=page_facturas,
         page_size_facturas=page_size_facturas,
@@ -219,4 +226,14 @@ async def intranet_pagos(
 async def intranet_admin_resumen(current_user=Depends(get_current_user)):
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
-    return IntranetService.get_admin_resumen()
+    return AdminService.get_admin_resumen()
+
+
+@router.get("/admin/charts", response_model=AdminChartsResponse)
+async def intranet_admin_charts(
+    months: int = Query(default=12, ge=3, le=24),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return AdminService.get_admin_charts(months=months)

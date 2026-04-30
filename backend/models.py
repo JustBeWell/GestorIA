@@ -263,3 +263,38 @@ class AdminResumenResponse(BaseModel):
 	facturacion: AdminFacturacionGlobal
 	clientes: AdminClientesGlobal
 
+
+class AdminChartPoint(BaseModel):
+	mes: str        # YYYY-MM
+	label: str      # e.g. "Abr 2026"
+
+
+class FacturacionMensualPoint(AdminChartPoint):
+	facturado_total: float
+	cobrado_total: float
+	facturas_emitidas: int
+	facturas_vencidas: int
+
+
+class TrabajosMensualesPoint(AdminChartPoint):
+	trabajos_creados: int
+	finalizados: int
+	cancelados: int
+	bloqueados: int
+
+
+class ClientesMensualesPoint(AdminChartPoint):
+	clientes_nuevos: int
+
+
+class HorasMensualesPoint(AdminChartPoint):
+	horas_totales: float
+
+
+class AdminChartsResponse(BaseModel):
+	facturacion: list[FacturacionMensualPoint]
+	cobros: list[FacturacionMensualPoint]
+	trabajos: list[TrabajosMensualesPoint]
+	clientes: list[ClientesMensualesPoint]
+	horas: list[HorasMensualesPoint]
+
