@@ -12,3 +12,28 @@
 - Error de fichaje presentado como modal (sin sugerir cerrar sesion).
 - Accion para deshacer el ultimo fichaje del dia.
 - Corregido page_size en fichaje (max 100).
+
+## 2026-04-30
+
+### Caché de empleado obsoleta al cambiar de usuario
+- `AuthApiService.logout()` ahora llama a `empleadoService.clearCachedEmpleado()` antes de limpiar la sesión, cubriendo todos los puntos de logout (manual, automático, expiración de token).
+- `completeLogin()` en `login-page.component.ts` limpia el caché del empleado anterior antes de establecer la nueva sesión, evitando que componentes ya montados muestren datos del usuario anterior.
+- Eliminada la llamada redundante a `clearCachedEmpleado()` en el sidebar (ahora centralizada en `AuthApiService`).
+
+### CORS para Electron (`app://localhost`)
+- Eliminado `ElectronCORSMiddleware` personalizado (enfoque con `BaseHTTPMiddleware` fallaba por conflictos de orden en la pila de Starlette).
+- Solución definitiva: añadido `"app://localhost"` y `"app://."` directamente a `allow_origins` del `CORSMiddleware` estándar de Starlette, que hace comparación de string sin validar el esquema.
+- Añadida `/auth/otp/verify` a `PUBLIC_PATHS` en `main.py` — el `require_token_middleware` bloqueaba el endpoint con 401 antes de que el route handler ejecutase, ya que durante el flujo 2FA no existe JWT todavía.
+- Rebuild backend con `docker-compose restart backend`.
+
+### Redirección tras logout
+- Corregida ruta de navegación en `AuthApiService.logout()`: `'/login'` → `'/auth'` (la ruta registrada en `app.routes.ts`).
+
+### Video de fondo en login se cortaba
+- `onHeroVideoEnded()` ahora asigna `videoElement.src` directamente antes de `load()`, evitando que Angular no propagase el cambio de señal al DOM antes de la llamada.
+- Chunk de video en `electron/main.cjs` eliminado: el rango ahora va de `start` hasta `stat.size - 1` en lugar de limitarse a 1 MB, permitiendo que Chromium prebuffere el video completo en una sola request.
+
+### Gráficas del panel de administración no cargaban sin refrescar
+- `charts` convertida de propiedad plana a `signal<AdminChartsResponse | null>(null)` en `admin-page.component.ts`.
+- El template actualizado para usar `charts()` en el bloque `@if` y en todos los helpers (`facturacionValues`, `trabajosValues`, `chartLabels`, `horasValues`, `clientesValues`).
+- Con signal, Angular detecta el cambio cuando `getAdminCharts()` responde y renderiza las gráficas automáticamente sin necesidad de refrescar.

@@ -5,9 +5,13 @@ FastAPI application for user management and authentication.
 Handles OAuth authentication (Google) and user CRUD operations.
 """
 
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+logging.basicConfig(level=logging.WARNING)
 
 from database import check_database_connection
 from routes import auth_router, intranet_router, users_router, ai_router
@@ -22,11 +26,12 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# CORS configuration
 allowed_origins = {
     settings.frontend_url.rstrip("/"),
     "http://localhost:4200",
     "http://127.0.0.1:4200",
+    "app://localhost",      # Electron
+    "app://.",              # Electron (variante)
 }
 
 app.add_middleware(
@@ -49,6 +54,7 @@ app.include_router(ai_router)
 PUBLIC_PATHS = {
     "/",
     "/auth/login",
+    "/auth/otp/verify",
     "/health",
     "/health/db",
     "/docs",

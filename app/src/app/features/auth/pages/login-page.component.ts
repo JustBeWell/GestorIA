@@ -82,6 +82,10 @@ export class LoginPageComponent {
   protected submitOtp(): void {
     this.otpSubmitAttempted.set(true);
 
+    // Limpiar espacios que puedan venir al copiar del SMS
+    const rawCode = this.otpForm.controls.code.value.trim().replace(/\s/g, '');
+    this.otpForm.controls.code.setValue(rawCode, { emitEvent: false });
+
     if (this.otpForm.invalid) {
       this.otpForm.markAllAsTouched();
       this.errorMessage.set('Introduce un código de 6 dígitos.');
@@ -115,6 +119,8 @@ export class LoginPageComponent {
   }
 
   private completeLogin(token: string, user: { id: string; nombre_usuario: string; role: string }): void {
+    // Limpiar datos del empleado anterior antes de establecer la nueva sesión
+    this.empleadoService.clearCachedEmpleado();
     this.sessionStorageService.setSession(token, user);
     this.successMessage.set(`Accediendo al sistema como ${user.role}...`);
 
@@ -164,6 +170,7 @@ export class LoginPageComponent {
   protected onHeroVideoEnded(videoElement: HTMLVideoElement): void {
     const nextIndex = (this.currentHeroVideoIndex() + 1) % this.heroVideos.length;
     this.currentHeroVideoIndex.set(nextIndex);
+    videoElement.src = this.heroVideos[nextIndex];
     videoElement.load();
     void videoElement.play().catch(() => undefined);
   }

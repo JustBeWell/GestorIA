@@ -28,7 +28,18 @@ async def login(payload: LoginRequest):
                 row = cur.fetchone()
         if row and row[0] and row[1]:
             session_id, code = TwoFactorService.generate_and_store_otp(current_user.user_id)
-            TwoFactorService.send_sms(row[1], code)
+            try:
+                TwoFactorService.send_sms(row[1], code)
+            except Exception as exc:
+                # Limpiar el OTP generado ya que no se pudo entregar
+                with db_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("DELETE FROM otp_codes WHERE id = %s", (session_id,))
+                        conn.commit()
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"No se pudo enviar el SMS de verificación: {exc}",
+                ) from exc
             return LoginResponse(requires_2fa=True, session_id=session_id)
 
     token, _ = TokenService.create_access_token(

@@ -36,7 +36,7 @@ export class AdminPageComponent implements OnInit {
   protected readonly modalError = signal('');
   protected readonly modalSaving = signal(false);
   protected data: AdminResumenResponse | null = null;
-  protected charts: AdminChartsResponse | null = null;
+  protected readonly charts = signal<AdminChartsResponse | null>(null);
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────
   protected readonly activeTab = signal<'resumen' | 'fichajes'>('resumen');
@@ -105,7 +105,7 @@ export class AdminPageComponent implements OnInit {
     });
 
     this.intranetService.getAdminCharts().subscribe({
-      next: (res) => { this.charts = res; },
+      next: (res) => { this.charts.set(res); },
       error: () => { /* charts are optional, fail silently */ },
     });
   }
@@ -319,23 +319,23 @@ export class AdminPageComponent implements OnInit {
   }
 
   protected facturacionValues(key: 'facturado_total' | 'cobrado_total'): number[] {
-    return (this.charts?.facturacion ?? []).map((p) => p[key]);
+    return (this.charts()?.facturacion ?? []).map((p) => p[key]);
   }
 
   protected trabajosValues(key: 'trabajos_creados' | 'finalizados'): number[] {
-    return (this.charts?.trabajos ?? []).map((p) => p[key]);
+    return (this.charts()?.trabajos ?? []).map((p) => p[key]);
   }
 
   protected chartLabels(source: 'facturacion' | 'trabajos' | 'clientes' | 'horas'): string[] {
-    return (this.charts?.[source] ?? []).map((p) => p.label);
+    return (this.charts()?.[source] ?? []).map((p) => p.label);
   }
 
   protected horasValues(): number[] {
-    return (this.charts?.horas ?? []).map((p) => (p as HorasMensualesPoint).horas_totales);
+    return (this.charts()?.horas ?? []).map((p) => (p as HorasMensualesPoint).horas_totales);
   }
 
   protected clientesValues(): number[] {
-    return (this.charts?.clientes ?? []).map((p) => (p as ClientesMensualesPoint).clientes_nuevos);
+    return (this.charts()?.clientes ?? []).map((p) => (p as ClientesMensualesPoint).clientes_nuevos);
   }
 
   protected maxVal(values: number[]): number {

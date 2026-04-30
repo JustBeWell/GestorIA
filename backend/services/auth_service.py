@@ -161,7 +161,7 @@ BLOQUEO_MINUTOS = 15
 class TwoFactorService:
     """Servicio para autenticación de dos factores vía SMS (Twilio)."""
 
-    OTP_EXPIRE_MINUTES = 5
+    OTP_EXPIRE_MINUTES = 10
 
     @staticmethod
     def is_configured() -> bool:
@@ -191,25 +191,47 @@ class TwoFactorService:
         return session_id, code
 
     @staticmethod
+    def _normalize_phone(phone: str) -> str:
+        """Convierte número español sin prefijo a formato E.164 (+34XXXXXXXXX)."""
+        cleaned = phone.strip().replace(" ", "").replace("-", "")
+        if cleaned.startswith("+"):
+            return cleaned
+        if cleaned.startswith("0034"):
+            return "+" + cleaned[2:]
+        # Número español sin prefijo (6xx, 7xx, 9xx)
+        return "+34" + cleaned
+
+    @staticmethod
     def send_sms(phone: str, code: str) -> None:
-        """Envía el OTP por SMS. Silencia fallos de importación si twilio no está instalado."""
+        """Envía el OTP por SMS. Lanza excepción si falla para que el llamador la maneje."""
         try:
             from twilio.rest import Client  # type: ignore[import]
         except ImportError:
             return
+        normalized = TwoFactorService._normalize_phone(phone)
         client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
         client.messages.create(
             body=f"Tu código de verificación GestorIA: {code}. Válido {TwoFactorService.OTP_EXPIRE_MINUTES} minutos.",
             from_=settings.twilio_from_number,
-            to=phone,
+            to=normalized,
         )
 
     @staticmethod
     def verify_otp(session_id: str, code: str) -> str:
         """Valida el OTP y devuelve user_id. Lanza HTTP 401 si es inválido o expirado."""
-        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        import sys
+        # Limpiar espacios que puedan venir del SMS o del formulario
+        clean_code = code.strip().replace(" ", "").replace("\u00a0", "")
+        code_hash = hashlib.sha256(clean_code.encode()).hexdigest()
         with db_connection() as conn:
             with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id::text, code_hash, expires_at, used, expires_at > NOW() AS valid FROM otp_codes WHERE id = %s",
+                    (session_id,),
+                )
+                debug_row = cur.fetchone()
+                print(f"[OTP DEBUG] session_id={session_id} clean_code='{clean_code}' input_hash={code_hash} db_row={debug_row}", file=sys.stderr, flush=True)
+
                 cur.execute(
                     """
                     SELECT user_id::text FROM otp_codes

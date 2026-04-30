@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { IntranetFeatureCard } from '../../../core/models/intranet.models';
@@ -40,7 +40,18 @@ export class IntranetModulePageComponent {
     return this.sessionStorageService.getUser()?.nombre_usuario ?? 'Usuario';
   }
 
-  protected logout(): void {
+  protected readonly showLogoutModal = signal(false);
+
+  protected openLogoutModal(): void {
+    this.showLogoutModal.set(true);
+  }
+
+  protected cancelLogout(): void {
+    this.showLogoutModal.set(false);
+  }
+
+  protected confirmLogout(): void {
+    this.showLogoutModal.set(false);
     this.authApiService.logout();
   }
 }

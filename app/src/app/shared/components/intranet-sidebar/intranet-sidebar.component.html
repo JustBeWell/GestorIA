@@ -81,8 +81,21 @@
       <strong>{{ employeeFirstName }}</strong>
       <span>{{ employeeRole }}</span>
     </div>
-    <button type="button" class="logout-button" (click)="logout()">
+    <button type="button" class="logout-button" (click)="openLogoutModal()">
       Cerrar sesion
     </button>
   </div>
 </aside>
+
+@if (showLogoutModal()) {
+  <div class="logout-modal-backdrop" (click)="cancelLogout()" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+    <div class="logout-modal" (click)="$event.stopPropagation()">
+      <h3 id="logout-title">¿Cerrar sesión?</h3>
+      <p>¿Estás seguro de que quieres cerrar sesión? Se perderá la sesión activa.</p>
+      <div class="logout-modal-actions">
+        <button type="button" class="btn-cancel" (click)="cancelLogout()">Cancelar</button>
+        <button type="button" class="btn-confirm" (click)="confirmLogout()">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+}

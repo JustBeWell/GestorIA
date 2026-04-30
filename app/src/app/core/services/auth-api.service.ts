@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { LoginRequest, LoginResponse, OtpVerifyRequest } from '../models/auth.models';
+import { EmpleadoService } from './empleado.service';
 import { SessionStorageService } from './session-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -12,6 +13,7 @@ export class AuthApiService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly session = inject(SessionStorageService);
+  private readonly empleadoService = inject(EmpleadoService);
 
   login(payload: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, payload);
@@ -31,8 +33,9 @@ export class AuthApiService {
         })
         .subscribe({ error: () => {} });
     }
+    this.empleadoService.clearCachedEmpleado();
     this.session.clearSession();
-    void this.router.navigateByUrl('/login');
+    void this.router.navigateByUrl('/auth');
   }
 
   redirectToDashboard(): void {

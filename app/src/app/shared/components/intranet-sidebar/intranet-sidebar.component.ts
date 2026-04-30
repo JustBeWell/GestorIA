@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthApiService } from '../../../core/services/auth-api.service';
@@ -18,6 +18,8 @@ export class IntranetSidebarComponent {
   private readonly authApiService = inject(AuthApiService);
   private readonly empleadoService = inject(EmpleadoService);
   private readonly sessionStorageService = inject(SessionStorageService);
+
+  protected readonly showLogoutModal = signal(false);
 
   protected get employeeName(): string {
     const empleado = this.empleadoService.getCachedEmpleado();
@@ -61,8 +63,16 @@ export class IntranetSidebarComponent {
     return this.employeeRole === 'administrador';
   }
 
-  protected logout(): void {
-    this.empleadoService.clearCachedEmpleado();
+  protected openLogoutModal(): void {
+    this.showLogoutModal.set(true);
+  }
+
+  protected cancelLogout(): void {
+    this.showLogoutModal.set(false);
+  }
+
+  protected confirmLogout(): void {
+    this.showLogoutModal.set(false);
     this.authApiService.logout();
   }
 }

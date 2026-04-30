@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-04-29
+Ultima revision: 2026-04-30
 
 ---
 
@@ -15,23 +15,29 @@ Ultima revision: 2026-04-29
 - [x] Guard de ruta en frontend (`auth.guard.ts`)
 - [x] Interceptor de token en peticiones (`auth.interceptor.ts`)
 - [x] Endpoint `/auth/login` y `/auth/me`
-- [x] Bloqueo por intentos fallidos (columnas preparadas en BD, logica no implementada)
-- [x] Logout con invalidacion de token en servidor (actualmente solo se borra en cliente)
-- [ ] 2FA (fuera de MVP, preparar para v1)
+- [x] Bloqueo por intentos fallidos (columnas en BD + logica backend)
+- [x] Logout con invalidacion de token en servidor (blacklist con TTL)
+- [x] Logout con confirmacion modal en sidebar y en modulo-page
+- [x] Limpieza de cache de empleado en logout y en nuevo login (evita datos obsoletos entre usuarios)
+- [x] 2FA por SMS via Twilio (OTP 6 digitos, expiracion 10 min, hash SHA-256 en BD)
+- [x] Normalizacion de telefono a formato E.164 (+34 para numeros espanoles)
+- [x] CORS configurado para origen `app://localhost` (Electron) en `allow_origins` de Starlette
 
 ---
 
-### M2 · Gestion de empleados — PARCIAL (backend OK, UI pendiente)
+### M2 · Gestion de empleados — COMPLETO
 - [x] Modelo `empleados` en BD con relacion 1:1 a `usuarios`
 - [x] Endpoint `GET /users/me` — datos propios
 - [x] Endpoint `PUT /users/me` — edicion de nombre/apellidos/telefono
 - [x] Endpoint `POST /users/` — crear usuario+empleado (solo admin)
-- [x] Endpoint `PUT /users/{id}/admin` — cambiar rol/activo (solo admin)
+- [x] Endpoint `PUT /users/{id}/admin` — cambiar rol/activo/mfa (solo admin)
 - [x] Endpoint `DELETE /users/{id}` — baja logica
-- [x] **UI: pantalla de gestion de empleados** (actualmente solo existe en backend; no hay pagina de administracion en el frontend)
+- [x] UI: pantalla de gestion de empleados en panel admin
 - [x] Vista de resumen de fichajes por empleado (solo admin)
 - [x] Listado de empleados con filtros para el gerente
 - [x] Activacion/desactivacion desde UI
+- [x] Modal de alta de empleado desde UI
+- [x] Modal de edicion de empleado desde UI (rol, activo, mfa)
 
 ---
 
@@ -44,9 +50,9 @@ Ultima revision: 2026-04-29
 - [x] Exportacion CSV por rango de fechas
 - [x] UI completa con calendario, detalle de dia y modal de error
 - [x] Filtros por tipo evento y rango de fechas
-- [x] Correccion manual por gerente desde UI (endpoint no expuesto en frontend)
-- [x] Exportacion PDF (solo CSV implementado)
+- [x] Correccion manual por gerente desde UI
 - [x] Vista de fichajes de todos los empleados (solo admin)
+- [ ] Exportacion PDF (solo CSV implementado)
 
 ---
 
@@ -101,8 +107,9 @@ Ultima revision: 2026-04-29
 - [x] Card de fichaje con horas del dia, total mensual y diferencial vs media
 - [x] Series trimestrales para todas las metricas del dashboard
 - [x] Calendario visual de fichajes del mes con detalle por dia
+- [x] Panel de administracion con KPIs, graficas historicas 12 meses y gestion de empleados y fichajes
+- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)
 - [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
-- [ ] Panel exclusivo para gerente con vision de todos los empleados
 
 ---
 
@@ -133,8 +140,6 @@ Ultima revision: 2026-04-29
 ## Deuda tecnica y mejoras transversales
 
 ### Frontend
-- [ ] Refactorizar sidebar duplicada en cada modulo — actualmente cada pagina replica el HTML de la sidebar; deberia ser un componente compartido (`IntranetShellComponent`)
-- [ ] Componente shell compartido para todos los modulos (evitar duplicacion de sidebar, topbar y estructura)
 - [ ] Estado global de usuario (actualmente cada pagina lee de `sessionStorage` directamente)
 - [ ] Manejo de errores HTTP centralizado (el interceptor de auth existe pero no cubre errores de negocio)
 - [ ] Feedback de carga en modulos de clientes/trabajos/pagos
@@ -159,16 +164,14 @@ Ultima revision: 2026-04-29
 
 ## Proximos pasos recomendados (orden de prioridad)
 
-1. **Refactorizar sidebar a componente compartido** — elimina duplicacion en 6 paginas y facilita mantenimiento
-2. **UI de gestion de clientes** — modulo mas urgente segun MVP; backend ya esta listo
-3. **UI de gestion de trabajos** — segundo modulo con backend listo
-4. **Endpoints de escritura de clientes y trabajos** — alta, edicion y baja
-5. **UI y endpoints de facturacion/pagos**
-6. **Migracion V003** — triggers y vistas de BD
-7. **Auditoria** — conectar eventos de escritura con la tabla de auditoria
-8. **Panel de administracion de empleados** — UI para el gerente
-9. **Exportacion PDF de fichaje**
-10. **Calendario fiscal y Documentos** — definir modelo de datos y backend
+1. **UI de gestion de clientes** — modulo mas urgente segun MVP; backend ya esta listo
+2. **UI de gestion de trabajos** — segundo modulo con backend listo
+3. **Endpoints de escritura de clientes y trabajos** — alta, edicion y baja
+4. **UI y endpoints de facturacion/pagos**
+5. **Migracion V003** — triggers y vistas de BD
+6. **Auditoria** — conectar eventos de escritura con la tabla de auditoria
+7. **Exportacion PDF de fichaje**
+8. **Calendario fiscal y Documentos** — definir modelo de datos y backend
 
 ---
 
@@ -177,7 +180,7 @@ Ultima revision: 2026-04-29
 - Portal cliente externo
 - IA para generacion de documentos y deteccion de anomalias
 - Notificaciones automaticas por email
-- 2FA obligatoria
+- 2FA obligatoria para todos los usuarios (actualmente es opcional por usuario)
 - Integraciones externas (banca, firma electronica)
 - Multiempresa
-- Analítica historica avanzada
+- Analitica historica avanzada
