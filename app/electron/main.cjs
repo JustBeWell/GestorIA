@@ -222,6 +222,14 @@ async function runLauncher() {
 
 // ════════════════════════════════════════════════════════════
 app.whenReady().then(async () => {
+  // Icono cuadrado 1024×1024 — macOS aplica squircle mask sobre PNG sólido sin alpha
+  if (process.platform === 'darwin') {
+    const { nativeImage } = require('electron');
+    const iconPath = path.join(APP_DIR, 'public', 'dock-icon.png');
+    if (fs.existsSync(iconPath)) {
+      app.dock.setIcon(nativeImage.createFromPath(iconPath));
+    }
+  }
   protocol.handle('app', (request) => {
     const url = new URL(request.url);
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
