@@ -56,7 +56,7 @@ export class IntranetSidebarComponent {
       return empleado.rol;
     }
 
-    return this.sessionStorageService.getUser()?.role ?? 'Empleado';
+    return this.authState.currentUser()?.role ?? 'Empleado';
   }
 
   protected get isAdmin(): boolean {
