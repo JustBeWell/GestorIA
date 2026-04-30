@@ -188,3 +188,20 @@ export interface AdminFichajesResponse {
   empleados: AdminFichajesEmpleadoOption[];
   paginacion: PaginationMeta;
 }
+
+export interface AdminCorreccionRequest {
+  empleado_id: string;
+  tipo_evento: 'entrada' | 'salida' | 'pausa_inicio' | 'pausa_fin';
+  fecha_hora: string; // ISO 8601 datetime
+  observaciones?: string | null;
+}
+
+export interface AdminCorreccionResponse {
+  fichaje_id: string;
+  empleado_id: string;
+  nombre_completo: string;
+  tipo_evento: string;
+  fecha_hora: string;
+  origen: string;
+  observaciones: string | null;
+}

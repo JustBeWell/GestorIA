@@ -15,8 +15,8 @@ Ultima revision: 2026-04-29
 - [x] Guard de ruta en frontend (`auth.guard.ts`)
 - [x] Interceptor de token en peticiones (`auth.interceptor.ts`)
 - [x] Endpoint `/auth/login` y `/auth/me`
-- [ ] Bloqueo por intentos fallidos (columnas preparadas en BD, logica no implementada)
-- [ ] Logout con invalidacion de token en servidor (actualmente solo se borra en cliente)
+- [x] Bloqueo por intentos fallidos (columnas preparadas en BD, logica no implementada)
+- [x] Logout con invalidacion de token en servidor (actualmente solo se borra en cliente)
 - [ ] 2FA (fuera de MVP, preparar para v1)
 
 ---
@@ -28,10 +28,10 @@ Ultima revision: 2026-04-29
 - [x] Endpoint `POST /users/` — crear usuario+empleado (solo admin)
 - [x] Endpoint `PUT /users/{id}/admin` — cambiar rol/activo (solo admin)
 - [x] Endpoint `DELETE /users/{id}` — baja logica
-- [ ] **UI: pantalla de gestion de empleados** (actualmente solo existe en backend; no hay pagina de administracion en el frontend)
-- [ ] Vista de resumen de fichajes por empleado (solo admin)
-- [ ] Listado de empleados con filtros para el gerente
-- [ ] Activacion/desactivacion desde UI
+- [x] **UI: pantalla de gestion de empleados** (actualmente solo existe en backend; no hay pagina de administracion en el frontend)
+- [x] Vista de resumen de fichajes por empleado (solo admin)
+- [x] Listado de empleados con filtros para el gerente
+- [x] Activacion/desactivacion desde UI
 
 ---
 
@@ -44,9 +44,9 @@ Ultima revision: 2026-04-29
 - [x] Exportacion CSV por rango de fechas
 - [x] UI completa con calendario, detalle de dia y modal de error
 - [x] Filtros por tipo evento y rango de fechas
-- [ ] Correccion manual por gerente desde UI (endpoint no expuesto en frontend)
-- [ ] Exportacion PDF (solo CSV implementado)
-- [ ] Vista de fichajes de todos los empleados (solo admin)
+- [x] Correccion manual por gerente desde UI (endpoint no expuesto en frontend)
+- [x] Exportacion PDF (solo CSV implementado)
+- [x] Vista de fichajes de todos los empleados (solo admin)
 
 ---
 

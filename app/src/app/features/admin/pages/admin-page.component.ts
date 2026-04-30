@@ -70,6 +70,16 @@ export class AdminPageComponent implements OnInit {
   protected editTarget: AdminEmpleadoResumen | null = null;
   protected editForm: UserAdminUpdatePayload & { usuario_id?: string } = {};
 
+  // ─── Modal corrección fichaje ──────────────────────────────────────────────
+  protected showCorreccionModal = false;
+  protected correccionForm: {
+    empleado_id: string;
+    tipo_evento: 'entrada' | 'salida' | 'pausa_inicio' | 'pausa_fin';
+    fecha: string;
+    hora: string;
+    observaciones: string;
+  } = { empleado_id: '', tipo_evento: 'entrada', fecha: '', hora: '', observaciones: '' };
+
   @ViewChild('kpiTrack') kpiTrack!: ElementRef<HTMLElement>;
 
   ngOnInit(): void {
@@ -213,6 +223,48 @@ export class AdminPageComponent implements OnInit {
       pausa_fin: 'Pausa fin',
     };
     return map[tipo] ?? tipo;
+  }
+
+  // ─── Modal corrección ─────────────────────────────────────────────────────
+  protected openCorreccionModal(): void {
+    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date().toTimeString().slice(0, 5);
+    this.correccionForm = { empleado_id: '', tipo_evento: 'entrada', fecha: today, hora: now, observaciones: '' };
+    this.modalError.set('');
+    this.showCorreccionModal = true;
+  }
+
+  protected closeCorreccionModal(): void {
+    this.showCorreccionModal = false;
+    this.modalError.set('');
+  }
+
+  protected submitCorreccion(): void {
+    const f = this.correccionForm;
+    if (!f.empleado_id || !f.fecha || !f.hora) {
+      this.modalError.set('Empleado, fecha y hora son obligatorios.');
+      return;
+    }
+    this.modalSaving.set(true);
+    this.modalError.set('');
+    const fechaHora = `${f.fecha}T${f.hora}:00`;
+    this.intranetService.createCorreccionFichaje({
+      empleado_id: f.empleado_id,
+      tipo_evento: f.tipo_evento,
+      fecha_hora: fechaHora,
+      observaciones: f.observaciones || null,
+    }).subscribe({
+      next: () => {
+        this.modalSaving.set(false);
+        this.showCorreccionModal = false;
+        this.loadFichajes();
+      },
+      error: (err) => {
+        this.modalSaving.set(false);
+        const detail = err?.error?.detail;
+        this.modalError.set(typeof detail === 'string' ? detail : 'Error al registrar la corrección.');
+      },
+    });
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -319,3 +319,20 @@ class AdminFichajesResponse(BaseModel):
 	empleados: list[AdminFichajesEmpleadoOption]
 	paginacion: PaginacionMeta
 
+
+class AdminCorreccionRequest(BaseModel):
+	empleado_id: str
+	tipo_evento: Literal['entrada', 'salida', 'pausa_inicio', 'pausa_fin']
+	fecha_hora: datetime
+	observaciones: str | None = None
+
+
+class AdminCorreccionResponse(BaseModel):
+	fichaje_id: str
+	empleado_id: str
+	nombre_completo: str
+	tipo_evento: str
+	fecha_hora: datetime
+	origen: str
+	observaciones: str | None = None
+

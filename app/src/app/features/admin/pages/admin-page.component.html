@@ -423,6 +423,7 @@
             <input type="date" [(ngModel)]="fichajesFilter.fecha_desde" placeholder="Desde"/>
             <input type="date" [(ngModel)]="fichajesFilter.fecha_hasta" placeholder="Hasta"/>
             <button class="btn-primary btn-sm" (click)="applyFichajesFilter()">Filtrar</button>
+            <button class="btn-secondary btn-sm fichajes-filters__add" (click)="openCorreccionModal()">+ Corrección</button>
           </div>
 
           <!-- Tabla -->
@@ -578,6 +579,61 @@
         <button class="btn-secondary" (click)="closeEditModal()">Cancelar</button>
         <button class="btn-primary" (click)="submitEditEmpleado()" [disabled]="modalSaving()">
           {{ modalSaving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL CORRECCIÓN FICHAJE ──────────────────────────────────────────── -->
+@if (showCorreccionModal) {
+  <div class="modal-backdrop" (click)="closeCorreccionModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Añadir corrección de fichaje</h3>
+        <button class="modal-close" (click)="closeCorreccionModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>Empleado *</label>
+            <select [(ngModel)]="correccionForm.empleado_id">
+              <option value="">Selecciona un empleado</option>
+              @for (emp of (fichajes?.empleados ?? []); track emp.empleado_id) {
+                <option [value]="emp.empleado_id">{{ emp.nombre_completo }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Tipo de evento *</label>
+            <select [(ngModel)]="correccionForm.tipo_evento">
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+              <option value="pausa_inicio">Pausa inicio</option>
+              <option value="pausa_fin">Pausa fin</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Fecha *</label>
+            <input type="date" [(ngModel)]="correccionForm.fecha"/>
+          </div>
+          <div class="form-field">
+            <label>Hora *</label>
+            <input type="time" [(ngModel)]="correccionForm.hora"/>
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>Observaciones</label>
+            <input type="text" [(ngModel)]="correccionForm.observaciones" placeholder="Motivo de la corrección (opcional)"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCorreccionModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitCorreccion()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Registrar corrección' }}
         </button>
       </div>
     </div>

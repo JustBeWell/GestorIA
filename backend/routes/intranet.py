@@ -9,6 +9,8 @@ from psycopg2 import Error as PsycopgError
 from models import (
     AdminResumenResponse,
     AdminChartsResponse,
+    AdminCorreccionRequest,
+    AdminCorreccionResponse,
     AdminFichajesResponse,
     ClientesTabResponse,
     FichajeRegistroRequest,
@@ -260,3 +262,21 @@ async def intranet_admin_fichajes(
         fecha_hasta=fecha_hasta.isoformat() if fecha_hasta else None,
         tipo_evento=tipo_evento,
     )
+
+
+@router.post("/admin/fichajes/correccion", response_model=AdminCorreccionResponse, status_code=status.HTTP_201_CREATED)
+async def intranet_admin_fichajes_correccion(
+    payload: AdminCorreccionRequest,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    try:
+        return AdminService.create_correccion(
+            empleado_id=payload.empleado_id,
+            tipo_evento=payload.tipo_evento,
+            fecha_hora=payload.fecha_hora,
+            observaciones=payload.observaciones,
+        )
+    except PsycopgError as exc:
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc

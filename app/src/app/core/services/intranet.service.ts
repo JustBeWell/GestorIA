@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AdminChartsResponse,
+  AdminCorreccionRequest,
+  AdminCorreccionResponse,
   AdminFichajesResponse,
   AdminResumenResponse,
   FichajeRegistroRequest,
@@ -138,5 +140,9 @@ export class IntranetService {
 
   adminUpdateEmpleado(userId: string, payload: UserAdminUpdatePayload): Observable<unknown> {
     return this.http.put(`${this.apiUrl}/users/${userId}/admin`, payload);
+  }
+
+  createCorreccionFichaje(payload: AdminCorreccionRequest): Observable<AdminCorreccionResponse> {
+    return this.http.post<AdminCorreccionResponse>(`${this.apiUrl}/intranet/admin/fichajes/correccion`, payload);
   }
 }

@@ -367,6 +367,58 @@ class AdminService:
         }
 
     @staticmethod
+    def create_correccion(
+        empleado_id: str,
+        tipo_evento: str,
+        fecha_hora: datetime,
+        observaciones: str | None,
+    ) -> dict:
+        from fastapi import HTTPException
+
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Verify empleado exists
+                cursor.execute(
+                    """
+                    SELECT e.id::text AS empleado_id,
+                           e.nombre || ' ' || e.apellidos AS nombre_completo
+                    FROM empleados e
+                    WHERE e.id::text = %s
+                    """,
+                    (empleado_id,),
+                )
+                emp = cursor.fetchone()
+                if not emp:
+                    raise HTTPException(status_code=404, detail="Empleado no encontrado")
+
+                cursor.execute(
+                    """
+                    INSERT INTO fichajes (empleado_id, tipo_evento, origen, observaciones, fecha_hora)
+                    VALUES (%s::uuid, %s::tipo_evento_fichaje, 'correccion'::origen_fichaje, %s, %s)
+                    RETURNING
+                        id::text AS fichaje_id,
+                        empleado_id::text AS empleado_id,
+                        tipo_evento::text AS tipo_evento,
+                        fecha_hora,
+                        origen::text AS origen,
+                        observaciones
+                    """,
+                    (empleado_id, tipo_evento, observaciones, fecha_hora),
+                )
+                row = dict(cursor.fetchone())
+            connection.commit()
+
+        return {
+            "fichaje_id": row["fichaje_id"],
+            "empleado_id": row["empleado_id"],
+            "nombre_completo": emp["nombre_completo"],
+            "tipo_evento": row["tipo_evento"],
+            "fecha_hora": row["fecha_hora"],
+            "origen": row["origen"],
+            "observaciones": row["observaciones"],
+        }
+
+    @staticmethod
     def _mes_label(mes_str: str) -> str:
         try:
             year, month = mes_str.split("-")

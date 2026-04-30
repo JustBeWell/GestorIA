@@ -738,9 +738,10 @@
   border-radius: 10px;
 }
 
+.fichajes-filters__add { margin-left: auto; }
+
 .fichajes-filters select,
-.fichajes-filters input[type="date"] {
-  border: 1px solid #cbd5e1;
+.fichajes-filters input[type="date"] {  border: 1px solid #cbd5e1;
   border-radius: 7px;
   padding: 7px 10px;
   font-size: 13px;
