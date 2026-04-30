@@ -41,6 +41,21 @@ export class AdminPageComponent implements OnInit {
   // ─── Tabs ──────────────────────────────────────────────────────────────────
   protected readonly activeTab = signal<'resumen' | 'fichajes'>('resumen');
 
+  // ─── Vista gráficas ───────────────────────────────────────────────────────
+  protected readonly activeChartView = signal<'combined' | 'grid'>('combined');
+  protected readonly hoveredIdx = signal<number | null>(null);
+  protected readonly hiddenSeries = signal<Set<string>>(new Set<string>());
+
+  /** Descriptores de las 6 series para la gráfica combinada */
+  protected readonly combinedSeries: { key: string; name: string; color: string; values: () => number[] }[] = [
+    { key: 'facturado',   name: 'Facturado',    color: '#e8a838', values: () => this.facturacionValues('facturado_total') },
+    { key: 'cobrado',     name: 'Cobrado',      color: '#22c55e', values: () => this.facturacionValues('cobrado_total') },
+    { key: 'trabajos',    name: 'Trab. nuevos', color: '#3b82f6', values: () => this.trabajosValues('trabajos_creados') },
+    { key: 'finalizados', name: 'Finalizados',  color: '#0d9488', values: () => this.trabajosValues('finalizados') },
+    { key: 'clientes',    name: 'Clientes',     color: '#a855f7', values: () => this.clientesValues() },
+    { key: 'horas',       name: 'Horas',        color: '#f59e0b', values: () => this.horasValues() },
+  ];
+
   // ─── Tab fichajes ─────────────────────────────────────────────────────────
   protected readonly fichajesLoading = signal(false);
   protected fichajes: AdminFichajesResponse | null = null;
@@ -345,5 +360,98 @@ export class AdminPageComponent implements OnInit {
   protected formatAxisCurrency(value: number): string {
     if (value >= 1000) return `${(value / 1000).toFixed(0)}k€`;
     return `${value.toFixed(0)}€`;
+  }
+
+  // ─── Gráfica combinada ────────────────────────────────────────────────────
+
+  protected toggleSeries(key: string): void {
+    const s = new Set(this.hiddenSeries());
+    if (s.has(key)) s.delete(key); else s.add(key);
+    this.hiddenSeries.set(s);
+  }
+
+  protected isHidden(key: string): boolean {
+    return this.hiddenSeries().has(key);
+  }
+
+  /** Polyline normalizada 0..max → 0..h para la gráfica combinada */
+  protected buildNormPolyline(values: number[], w = 800, h = 180, padX = 24, padY = 14): string {
+    if (!values.length) return '';
+    const max = Math.max(...values) || 1;
+    const usableW = w - padX * 2;
+    const usableH = h - padY * 2;
+    return values
+      .map((v, i) => {
+        const x = padX + (i / Math.max(values.length - 1, 1)) * usableW;
+        const y = padY + usableH - (v / max) * usableH;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+  }
+
+  /** Puntos para área rellena (polyline cerrada por abajo) */
+  protected buildNormArea(values: number[], w = 800, h = 180, padX = 24, padY = 14): string {
+    if (!values.length) return '';
+    const pts = this.buildNormPolyline(values, w, h, padX, padY);
+    const lastX = (padX + (w - padX * 2)).toFixed(1);
+    const firstX = padX.toFixed(1);
+    const bottom = (h - padY + 2).toFixed(1);
+    return `${pts} ${lastX},${bottom} ${firstX},${bottom}`;
+  }
+
+  /** Coordenada X de la línea vertical del hover */
+  protected hoverLineX(w = 800, padX = 24): number {
+    const idx = this.hoveredIdx();
+    const labels = this.chartLabels('facturacion');
+    if (idx === null || !labels.length) return -1;
+    return padX + (idx / Math.max(labels.length - 1, 1)) * (w - padX * 2);
+  }
+
+  /** Punto XY de una serie en el índice hovereado */
+  protected hoverDot(values: number[], w = 800, h = 180, padX = 24, padY = 14): { x: number; y: number } | null {
+    const idx = this.hoveredIdx();
+    if (idx === null || !values[idx] && values[idx] !== 0) return null;
+    const max = Math.max(...values) || 1;
+    const x = padX + (idx / Math.max(values.length - 1, 1)) * (w - padX * 2);
+    const y = padY + (h - padY * 2) - (values[idx] / max) * (h - padY * 2);
+    return { x, y };
+  }
+
+  protected onChartHover(event: MouseEvent): void {
+    const el = event.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const labels = this.chartLabels('facturacion');
+    if (!labels.length) return;
+    const idx = Math.round((x / rect.width) * (labels.length - 1));
+    this.hoveredIdx.set(Math.max(0, Math.min(idx, labels.length - 1)));
+  }
+
+  protected clearHover(): void { this.hoveredIdx.set(null); }
+
+  protected tooltipData(): { label: string; series: { key: string; name: string; value: string; color: string }[] } | null {
+    const idx = this.hoveredIdx();
+    const c = this.charts();
+    if (idx === null || !c) return null;
+    const label = c.facturacion[idx]?.label ?? c.trabajos[idx]?.label ?? '';
+    return {
+      label,
+      series: [
+        { key: 'facturado', name: 'Facturado',   value: this.formatCurrency(c.facturacion[idx]?.facturado_total ?? 0), color: '#e8a838' },
+        { key: 'cobrado',   name: 'Cobrado',      value: this.formatCurrency(c.facturacion[idx]?.cobrado_total   ?? 0), color: '#22c55e' },
+        { key: 'trabajos',  name: 'Trab. nuevos', value: String(c.trabajos[idx]?.trabajos_creados ?? 0),                color: '#3b82f6' },
+        { key: 'finalizados', name: 'Finalizados', value: String(c.trabajos[idx]?.finalizados ?? 0),                   color: '#0d9488' },
+        { key: 'clientes',  name: 'Clientes',     value: String(c.clientes[idx]?.clientes_nuevos ?? 0),                color: '#a855f7' },
+        { key: 'horas',     name: 'Horas',        value: `${(c.horas[idx]?.horas_totales ?? 0).toFixed(1)}h`,          color: '#f59e0b' },
+      ].filter(s => !this.isHidden(s.key)),
+    };
+  }
+
+  /** Posición horizontal del tooltip (0..100%) para anclar cerca del mes */
+  protected tooltipLeft(): number {
+    const idx = this.hoveredIdx();
+    const labels = this.chartLabels('facturacion');
+    if (idx === null || !labels.length) return 50;
+    return (idx / Math.max(labels.length - 1, 1)) * 100;
   }
 }

@@ -266,135 +266,224 @@
           <!-- ─── HISTORIAL GRÁFICAS ─────────────────────────────── -->
           @if (charts()) {
             <div class="charts-section">
-              <h2 class="charts-heading">Histórico últimos 12 meses</h2>
+              <div class="charts-section-header">
+                <h2 class="charts-heading">Histórico últimos 12 meses</h2>
+                <div class="chart-view-toggle">
+                  <button class="chart-view-btn" [class.chart-view-btn--active]="activeChartView() === 'combined'" (click)="activeChartView.set('combined')">Combinada</button>
+                  <button class="chart-view-btn" [class.chart-view-btn--active]="activeChartView() === 'grid'" (click)="activeChartView.set('grid')">Individual</button>
+                </div>
+              </div>
 
-              <div class="charts-grid">
+              <!-- ─── VISTA COMBINADA ───────────────────────────── -->
+              @if (activeChartView() === 'combined') {
+                <div class="combined-chart-card">
 
-                <!-- Facturación vs Cobros -->
-                <div class="chart-card">
-                  <div class="chart-card-header">
-                    <span class="chart-card-title">Facturación vs Cobros</span>
-                    <div class="chart-legend">
-                      <span class="legend-dot legend-dot--gold"></span><span>Facturado</span>
-                      <span class="legend-dot legend-dot--green"></span><span>Cobrado</span>
-                    </div>
+                  <!-- Leyenda / controles de serie -->
+                  <div class="combined-legend">
+                    @for (s of combinedSeries; track s.key) {
+                      <button class="legend-btn" [class.legend-btn--off]="isHidden(s.key)" (click)="toggleSeries(s.key)" [style.--s-color]="s.color">
+                        <span class="legend-btn-dot" [style.background]="isHidden(s.key) ? '#cbd5e1' : s.color"></span>
+                        {{ s.name }}
+                      </button>
+                    }
                   </div>
-                  <div class="chart-body">
-                    <div class="chart-y-labels">
-                      <span>{{ formatAxisCurrency(maxVal(facturacionValues('facturado_total'))) }}</span>
-                      <span></span>
-                      <span>0</span>
-                    </div>
-                    <div class="chart-svg-wrap">
-                      <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
-                        <defs>
-                          <linearGradient id="grad-gold" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#e8c163" stop-opacity="0.25"/>
-                            <stop offset="100%" stop-color="#e8c163" stop-opacity="0"/>
+
+                  <!-- SVG principal con hover -->
+                  <div class="combined-chart-wrap"
+                       (mousemove)="onChartHover($event)"
+                       (mouseleave)="clearHover()">
+
+                    <svg viewBox="0 0 800 200" preserveAspectRatio="none" class="combined-svg">
+                      <defs>
+                        @for (s of combinedSeries; track s.key) {
+                          <linearGradient [id]="'area-' + s.key" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"   [attr.stop-color]="s.color" stop-opacity="0.12"/>
+                            <stop offset="100%" [attr.stop-color]="s.color" stop-opacity="0"/>
                           </linearGradient>
-                          <linearGradient id="grad-green" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#4ade80" stop-opacity="0.18"/>
-                            <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
-                          </linearGradient>
-                        </defs>
-                        <polyline [attr.points]="buildPolyline(facturacionValues('facturado_total'))" class="chart-line chart-line--gold" fill="none"/>
-                        <polyline [attr.points]="buildPolyline(facturacionValues('cobrado_total'))" class="chart-line chart-line--green" fill="none"/>
-                      </svg>
-                      <div class="chart-x-labels">
-                        @for (label of chartLabels('facturacion'); track label; let i = $index) {
-                          @if (i === 0 || i === chartLabels('facturacion').length - 1 || i % 3 === 2) {
-                            <span>{{ label }}</span>
+                        }
+                      </defs>
+
+                      <!-- Grid lines horizontales -->
+                      @for (pct of [0, 25, 50, 75, 100]; track pct) {
+                        <line x1="24" [attr.x2]="776" [attr.y1]="14 + (1 - pct/100) * 158" [attr.y2]="14 + (1 - pct/100) * 158"
+                              stroke="#f1f5f9" stroke-width="1"/>
+                      }
+
+                      <!-- Áreas y líneas por serie -->
+                      @for (s of combinedSeries; track s.key) {
+                        @if (!isHidden(s.key)) {
+                          <polygon [attr.points]="buildNormArea(s.values())" [attr.fill]="'url(#area-' + s.key + ')'" />
+                          <polyline [attr.points]="buildNormPolyline(s.values())" [attr.stroke]="s.color" class="combined-line" fill="none"/>
+                        }
+                      }
+
+                      <!-- Línea vertical hover -->
+                      @if (hoveredIdx() !== null) {
+                        <line [attr.x1]="hoverLineX()" [attr.x2]="hoverLineX()" y1="12" y2="188"
+                              stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+                        <!-- Puntos hover por serie -->
+                        @for (s of combinedSeries; track s.key) {
+                          @if (!isHidden(s.key)) {
+                            @let dot = hoverDot(s.values());
+                            @if (dot) {
+                              <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="4"
+                                      [attr.fill]="s.color" stroke="#fff" stroke-width="2"/>
+                            }
                           }
                         }
+                      }
+                    </svg>
+
+                    <!-- Tooltip -->
+                    @if (tooltipData(); as tip) {
+                      <div class="combined-tooltip" [style.left.%]="tooltipLeft()" [class.combined-tooltip--right]="tooltipLeft() > 65">
+                        <div class="tooltip-label">{{ tip.label }}</div>
+                        @for (row of tip.series; track row.key) {
+                          <div class="tooltip-row">
+                            <span class="tooltip-dot" [style.background]="row.color"></span>
+                            <span class="tooltip-name">{{ row.name }}</span>
+                            <span class="tooltip-value">{{ row.value }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Labels eje X -->
+                    <div class="combined-x-labels">
+                      @for (label of chartLabels('facturacion'); track label; let i = $index) {
+                        @if (i === 0 || i === chartLabels('facturacion').length - 1 || i % 3 === 2) {
+                          <span [style.left.%]="(i / (chartLabels('facturacion').length - 1)) * 100">{{ label }}</span>
+                        }
+                      }
+                    </div>
+
+                  </div><!-- /combined-chart-wrap -->
+
+                  <p class="combined-note">Los valores están normalizados (0–máx) por serie para permitir comparación visual. Pasa el ratón para ver los valores reales.</p>
+                </div>
+              }
+
+              <!-- ─── VISTA GRID (4 gráficas individuales) ──────── -->
+              @if (activeChartView() === 'grid') {
+                <div class="charts-grid">
+
+                  <!-- Facturación vs Cobros -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Facturación vs Cobros</span>
+                      <div class="chart-legend">
+                        <span class="legend-dot legend-dot--gold"></span><span>Facturado</span>
+                        <span class="legend-dot legend-dot--green"></span><span>Cobrado</span>
+                      </div>
+                    </div>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ formatAxisCurrency(maxVal(facturacionValues('facturado_total'))) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(facturacionValues('facturado_total'))" class="chart-line chart-line--gold" fill="none"/>
+                          <polyline [attr.points]="buildPolyline(facturacionValues('cobrado_total'))" class="chart-line chart-line--green" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('facturacion'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('facturacion').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
+                          }
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Trabajos creados vs finalizados -->
-                <div class="chart-card">
-                  <div class="chart-card-header">
-                    <span class="chart-card-title">Trabajos</span>
-                    <div class="chart-legend">
-                      <span class="legend-dot legend-dot--blue"></span><span>Creados</span>
-                      <span class="legend-dot legend-dot--green"></span><span>Finalizados</span>
+                  <!-- Trabajos creados vs finalizados -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Trabajos</span>
+                      <div class="chart-legend">
+                        <span class="legend-dot legend-dot--blue"></span><span>Creados</span>
+                        <span class="legend-dot legend-dot--green"></span><span>Finalizados</span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="chart-body">
-                    <div class="chart-y-labels">
-                      <span>{{ maxVal(trabajosValues('trabajos_creados')) }}</span>
-                      <span></span>
-                      <span>0</span>
-                    </div>
-                    <div class="chart-svg-wrap">
-                      <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
-                        <polyline [attr.points]="buildPolyline(trabajosValues('trabajos_creados'))" class="chart-line chart-line--blue" fill="none"/>
-                        <polyline [attr.points]="buildPolyline(trabajosValues('finalizados'))" class="chart-line chart-line--green" fill="none"/>
-                      </svg>
-                      <div class="chart-x-labels">
-                        @for (label of chartLabels('trabajos'); track label; let i = $index) {
-                          @if (i === 0 || i === chartLabels('trabajos').length - 1 || i % 3 === 2) {
-                            <span>{{ label }}</span>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(trabajosValues('trabajos_creados')) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(trabajosValues('trabajos_creados'))" class="chart-line chart-line--blue" fill="none"/>
+                          <polyline [attr.points]="buildPolyline(trabajosValues('finalizados'))" class="chart-line chart-line--green" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('trabajos'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('trabajos').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
                           }
-                        }
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Clientes nuevos -->
-                <div class="chart-card">
-                  <div class="chart-card-header">
-                    <span class="chart-card-title">Nuevos clientes por mes</span>
-                  </div>
-                  <div class="chart-body">
-                    <div class="chart-y-labels">
-                      <span>{{ maxVal(clientesValues()) }}</span>
-                      <span></span>
-                      <span>0</span>
+                  <!-- Clientes nuevos -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Nuevos clientes por mes</span>
                     </div>
-                    <div class="chart-svg-wrap">
-                      <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
-                        <polyline [attr.points]="buildPolyline(clientesValues())" class="chart-line chart-line--indigo" fill="none"/>
-                      </svg>
-                      <div class="chart-x-labels">
-                        @for (label of chartLabels('clientes'); track label; let i = $index) {
-                          @if (i === 0 || i === chartLabels('clientes').length - 1 || i % 3 === 2) {
-                            <span>{{ label }}</span>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(clientesValues()) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(clientesValues())" class="chart-line chart-line--indigo" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('clientes'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('clientes').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
                           }
-                        }
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Horas trabajadas -->
-                <div class="chart-card">
-                  <div class="chart-card-header">
-                    <span class="chart-card-title">Horas trabajadas por mes</span>
-                  </div>
-                  <div class="chart-body">
-                    <div class="chart-y-labels">
-                      <span>{{ maxVal(horasValues()) | number:'1.0-0' }}h</span>
-                      <span></span>
-                      <span>0</span>
+                  <!-- Horas trabajadas -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Horas trabajadas por mes</span>
                     </div>
-                    <div class="chart-svg-wrap">
-                      <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
-                        <polyline [attr.points]="buildPolyline(horasValues())" class="chart-line chart-line--gold" fill="none"/>
-                      </svg>
-                      <div class="chart-x-labels">
-                        @for (label of chartLabels('horas'); track label; let i = $index) {
-                          @if (i === 0 || i === chartLabels('horas').length - 1 || i % 3 === 2) {
-                            <span>{{ label }}</span>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(horasValues()) | number:'1.0-0' }}h</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(horasValues())" class="chart-line chart-line--gold" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('horas'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('horas').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
                           }
-                        }
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-              </div><!-- /charts-grid -->
+                </div><!-- /charts-grid -->
+              }
+
             </div><!-- /charts-section -->
           }
 

@@ -108,8 +108,7 @@ Ultima revision: 2026-04-30
 - [x] Series trimestrales para todas las metricas del dashboard
 - [x] Calendario visual de fichajes del mes con detalle por dia
 - [x] Panel de administracion con KPIs, graficas historicas 12 meses y gestion de empleados y fichajes
-- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)
-- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
+- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)- [x] Gráfica combinada histórica: 6 series normalizadas, hover con tooltip, toggle de series y toggle Combinada/Individual- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
 
 ---
 

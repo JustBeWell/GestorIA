@@ -491,6 +491,179 @@
   .emp-identity { flex: 0 0 160px; }
 }
 
+/* ─── Charts section header con toggle ──────────────────────── */
+.charts-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.chart-view-toggle {
+  display: flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-view-btn {
+  background: #fff;
+  border: none;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.chart-view-btn + .chart-view-btn { border-left: 1px solid #e2e8f0; }
+.chart-view-btn--active { background: #f1f5f9; color: #0f172a; }
+.chart-view-btn:hover:not(.chart-view-btn--active) { background: #f8fafc; }
+
+/* ─── Gráfica combinada ──────────────────────────────────────── */
+.combined-chart-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.combined-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.legend-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.legend-btn:hover { border-color: #cbd5e1; background: #f8fafc; }
+.legend-btn--off  { opacity: 0.4; }
+
+.legend-btn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+/* Wrapper con position relative para el tooltip y los labels X */
+.combined-chart-wrap {
+  position: relative;
+  cursor: crosshair;
+}
+
+.combined-svg {
+  width: 100%;
+  height: 220px;
+  display: block;
+  overflow: visible;
+}
+
+.combined-line {
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Etiquetas eje X debajo del SVG */
+.combined-x-labels {
+  position: relative;
+  height: 18px;
+  margin-top: 2px;
+  /* los span se posicionan en % dentro de este div */
+}
+
+.combined-x-labels span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* Tooltip flotante */
+.combined-tooltip {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 160px;
+  pointer-events: none;
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+/* Cuando el tooltip está muy a la derecha, anclarlo desde la derecha */
+.combined-tooltip--right {
+  transform: translateX(-88%);
+}
+
+.tooltip-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 7px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+}
+
+.tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltip-name {
+  font-size: 10px;
+  color: #94a3b8;
+  flex: 1;
+}
+
+.tooltip-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  text-align: right;
+}
+
+.combined-note {
+  font-size: 10px;
+  color: #94a3b8;
+  margin: 0;
+  text-align: center;
+  font-style: italic;
+}
+
 /* ─── Emp card header actions ────────────────────────────────── */
 .admin-card-header-actions {
   display: flex;

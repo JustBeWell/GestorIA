@@ -37,3 +37,12 @@
 - `charts` convertida de propiedad plana a `signal<AdminChartsResponse | null>(null)` en `admin-page.component.ts`.
 - El template actualizado para usar `charts()` en el bloque `@if` y en todos los helpers (`facturacionValues`, `trabajosValues`, `chartLabels`, `horasValues`, `clientesValues`).
 - Con signal, Angular detecta el cambio cuando `getAdminCharts()` responde y renderiza las gráficas automáticamente sin necesidad de refrescar.
+
+### Gráfica combinada histórica en panel admin (M7)
+- Nueva vista "Combinada" por defecto en la sección de gráficas históricas del panel de administración.
+- SVG de ancho completo (800×200 viewBox) con 6 series normalizadas a su propio máximo: Facturado, Cobrado, Trabajos nuevos, Finalizados, Clientes nuevos, Horas trabajadas.
+- Hover interactivo: línea vertical, puntos de intersección por serie y tooltip oscuro con valores reales del mes.
+- Leyenda con 6 botones toggle para ocultar/mostrar series individualmente.
+- Toggle "Combinada / Individual" para alternar entre la nueva vista y las 4 gráficas pequeñas anteriores.
+- Grid lines horizontales en el SVG para referencia visual.
+- `combinedSeries` declarado como array de descriptores en el componente; métodos `buildNormPolyline`, `buildNormArea`, `hoverLineX`, `hoverDot`, `tooltipData`, `tooltipLeft` añadidos al TS.
