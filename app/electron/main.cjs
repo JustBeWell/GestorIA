@@ -222,11 +222,6 @@ async function runLauncher() {
 
 // ════════════════════════════════════════════════════════════
 app.whenReady().then(async () => {
-  // Icono en Dock y menú
-  if (process.platform === 'darwin') {
-    const iconPath = path.join(APP_DIR, 'public', 'app-logo.png');
-    if (fs.existsSync(iconPath)) app.dock.setIcon(iconPath);
-  }
   protocol.handle('app', (request) => {
     const url = new URL(request.url);
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
