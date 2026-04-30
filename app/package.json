@@ -1,5 +1,6 @@
 {
   "name": "login-desktop",
+  "productName": "GestorIA",
   "version": "0.0.0",
   "main": "electron/main.cjs",
   "scripts": {

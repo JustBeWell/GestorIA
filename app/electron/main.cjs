@@ -22,6 +22,9 @@ const { spawn } = require('child_process');
 const APP_DIR = path.join(__dirname, '..');
 const PROJECT_ROOT = process.env.GESTORIA_PROJECT_ROOT || path.join(__dirname, '..', '..');
 
+// ── Nombre e icono de la app (antes de whenReady) ──────────────
+app.name = 'GestorIA';
+
 const isDev = process.env.NODE_ENV === 'development';
 const DIST = path.join(__dirname, '..', 'dist', 'login-desktop', 'browser');
 
@@ -219,6 +222,11 @@ async function runLauncher() {
 
 // ════════════════════════════════════════════════════════════
 app.whenReady().then(async () => {
+  // Icono en Dock y menú
+  if (process.platform === 'darwin') {
+    const iconPath = path.join(APP_DIR, 'public', 'app-logo.png');
+    if (fs.existsSync(iconPath)) app.dock.setIcon(iconPath);
+  }
   protocol.handle('app', (request) => {
     const url = new URL(request.url);
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
