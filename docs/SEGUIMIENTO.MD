@@ -55,3 +55,18 @@
 - Signal `exportingPDF` y método `exportHistorialPDF()` añadidos a `FichajePageComponent`.
 - Botón "Exportar PDF" en la cabecera de la página de fichaje; el botón CSV renombrado a "Exportar CSV" para distinguirlos.
 - Backend reconstruido con `docker-compose build --no-cache backend` — endpoint confirmado en OpenAPI.
+
+### Lanzador macOS — GestorIA.app
+- Creado `GestorIA.app` como bundle nativo macOS (doble clic, sin terminal).
+- El script `GestorIA.app/Contents/MacOS/GestorIA` usa `open -n` para lanzar Electron fuera del sandbox de macOS, evitando errores EPERM.
+- Parámetros pasados al proceso Electron mediante fichero temporal `/tmp/.gestoria_launcher` (env vars no se propagan con `open -n`).
+- Firma ad-hoc con `codesign --force --deep --sign -` para eliminar cuarentena de `node_modules/electron/dist/Electron.app`.
+- `Info.plist` de Electron.app parcheado en cada arranque con `PlistBuddy` para mostrar "GestorIA" en la barra de menú.
+- Icono `AppIcon.icns` generado desde PNG 1024×1024 con fondo blanco sólido para que macOS aplique la máscara squircle sobre el bundle.
+- `dock-icon.png` (1024×1024, squircle pre-aplicado, radio 230 px) usado en `app.dock.setIcon()` para el icono durante la ejecución.
+
+### Pantalla de carga (splash)
+- `app/electron/splash.html` rediseñado con el estilo visual de la app: fondo `#f6f7f8`, tipografía Plus Jakarta Sans, colores `#0f1b2d`/`#3b82f6`.
+- Eliminados los indicadores técnicos de pasos (DB/API/UI/Launch); sustituidos por barra de progreso con porcentaje numérico y mensajes amigables.
+- Mensajes: "Preparando los datos…", "Conectando con la base de datos…", "Cargando los servicios…", "Preparando la interfaz…", "Abriendo GestorIA…", "¡Todo listo!".
+- `splashUpdate()` en `main.cjs` simplificada a `(splash, pct, text)` — sin `stepId`.

@@ -1,6 +1,6 @@
 # GestorIA
 
-Comprehensive web-based management system for administrative agencies: legal filing, clients, jobs, and billing with document automation.
+Sistema de gestión integral para asesorías: fichaje, clientes, trabajos, facturación y automatización documental. Aplicación de escritorio macOS construida con Angular + Electron + FastAPI + PostgreSQL.
 
 ## Backend
 
@@ -51,4 +51,37 @@ docker-compose down
 
 ```bash
 docker-compose down -v
+```
+
+---
+
+## Lanzador macOS (doble clic)
+
+`GestorIA.app` es un bundle nativo de macOS que arranca toda la pila (DB → backend → frontend) sin abrir ningún terminal.
+
+### Primer uso
+
+```bash
+# Desde la raíz del repositorio
+chmod +x GestorIA.app/Contents/MacOS/GestorIA
+# Quitar cuarentena si se descargó de internet
+xattr -cr GestorIA.app
+```
+
+Doble clic en `GestorIA.app`. Aparece una pantalla de carga con barra de progreso mientras:
+
+1. Se construyen e inician los contenedores Docker (DB + backend)
+2. Se compila el frontend Angular
+3. Se abre la ventana principal
+
+### Requisitos previos
+
+- Docker Desktop instalado y en ejecución
+- Node.js (vía nvm o instalación directa)
+- Dependencias instaladas: `cd app && npm install`
+
+### Lanzador por terminal (alternativa)
+
+```bash
+bash scripts/launch.sh
 ```

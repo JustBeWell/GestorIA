@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-04-30 (M3 exportación PDF completada)
+Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
 
 ---
 
