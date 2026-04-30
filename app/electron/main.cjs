@@ -125,28 +125,58 @@ function spawnAsync(cmd, args, cwd) {
 }
 
 async function runLauncher() {
-  // Ensure Docker CLI is findable
-  if (!process.env.PATH.includes('/usr/local/bin')) {
-    process.env.PATH = `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}`;
+  // Ampliar PATH: Docker Desktop, Homebrew, nvm
+  const extraPaths = [
+    '/Applications/Docker.app/Contents/Resources/bin',  // Docker Desktop CLI real
+    '/usr/local/bin',
+    '/opt/homebrew/bin',
+    '/opt/homebrew/sbin',
+  ];
+  const nodeBin = process.execPath ? path.dirname(process.execPath) : '';
+  const pathParts = (process.env.PATH || '').split(':');
+  for (const p of [...extraPaths, nodeBin]) {
+    if (p && !pathParts.includes(p)) pathParts.unshift(p);
   }
+  // Buscar la versión de nvm activa
+  try {
+    const nvmBase = `${process.env.HOME}/.nvm/versions/node`;
+    const versions = fs.readdirSync(nvmBase).sort().reverse();
+    if (versions.length) {
+      const nvmBin = `${nvmBase}/${versions[0]}/bin`;
+      if (!pathParts.includes(nvmBin)) pathParts.unshift(nvmBin);
+    }
+  } catch { /* nvm no instalado */ }
+  process.env.PATH = pathParts.join(':');
 
   const splash = await createSplashWindow();
 
   try {
     // Step 1 — db
-    splashUpdate(splash, 8, 'Iniciando base de datos…', 'step-db');
-    await spawnAsync('docker', ['compose', 'up', '-d', '--build', 'db'], PROJECT_ROOT);
+    splashUpdate(splash, 5, 'Construyendo base de datos…', 'step-db');
+    await spawnAsync('docker', ['compose', 'build', 'db'], PROJECT_ROOT);
+    splashUpdate(splash, 18, 'Iniciando base de datos…', 'step-db');
+    await spawnAsync('docker', ['compose', 'up', '-d', 'db'], PROJECT_ROOT);
     splashUpdate(splash, 30, 'Base de datos lista', 'step-db');
 
     // Step 2 — backend
-    splashUpdate(splash, 35, 'Iniciando backend API…', 'step-api');
-    await spawnAsync('docker', ['compose', 'up', '-d', '--build', 'backend'], PROJECT_ROOT);
+    splashUpdate(splash, 33, 'Construyendo backend API…', 'step-api');
+    await spawnAsync('docker', ['compose', 'build', 'backend'], PROJECT_ROOT);
+    splashUpdate(splash, 48, 'Iniciando backend API…', 'step-api');
+    await spawnAsync('docker', ['compose', 'up', '-d', 'backend'], PROJECT_ROOT);
     splashUpdate(splash, 55, 'Backend API listo', 'step-api');
 
-    // Step 3 — Angular build
+    // Step 3 — Angular build (ng es un script JS, necesita node)
     splashUpdate(splash, 58, 'Compilando interfaz…', 'step-ui');
     const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
-    await spawnAsync(ng, ['build'], APP_DIR);
+    // Buscar node en PATH
+    const nodeExec = (() => {
+      for (const dir of process.env.PATH.split(':')) {
+        const candidate = path.join(dir, 'node');
+        try { fs.accessSync(candidate, fs.constants.X_OK); return candidate; } catch { /* sigue */ }
+      }
+      return 'node'; // fallback
+    })();
+    await spawnAsync(nodeExec, [ng, 'build'], APP_DIR);
     splashUpdate(splash, 85, 'Interfaz compilada', 'step-ui');
 
     // Step 4 — launch

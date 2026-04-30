@@ -2,16 +2,21 @@
 # GestorIA.app — lanza Electron con splash de carga (sin Terminal)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+APP_DIR="$PROJECT_ROOT/app"
 
-# PATH con ubicaciones habituales de Docker Desktop y Homebrew
+# Binario nativo de Electron (no necesita Node en PATH)
+ELECTRON_BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+
+if [ ! -f "$ELECTRON_BIN" ]; then
+  osascript -e "display alert \"GestorIA\" message \"No se encontró Electron en:\n$ELECTRON_BIN\n\nEjecuta 'npm install' en la carpeta app/.\" as critical"
+  exit 1
+fi
+
+# PATH con Docker Desktop y Homebrew (necesario para spawnAsync en main.cjs)
 export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
-# nvm: cargar sin cambiar versión activa, para que npm esté en PATH
-[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" --no-use
-
-# Variables para que main.cjs sepa que viene del launcher
+# Variables para que main.cjs active el modo launcher
 export GESTORIA_LAUNCHER=1
 export GESTORIA_PROJECT_ROOT="$PROJECT_ROOT"
 
-cd "$PROJECT_ROOT/app"
-exec ./node_modules/.bin/electron .
+exec "$ELECTRON_BIN" "$APP_DIR"
