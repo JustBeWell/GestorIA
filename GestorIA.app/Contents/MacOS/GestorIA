@@ -3,27 +3,25 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 APP_DIR="$PROJECT_ROOT/app"
-
-# Firma ad-hoc de Electron.app para que macOS no restrinja el acceso a ficheros.
-# Es necesario después de 'npm install' o cuando macOS aplica quarantine.
-codesign --force --deep --sign - "$ELECTRON_BIN" 2>/dev/null || true
-
-# Binario nativo de Electron (no necesita Node en PATH)
-ELECTRON_BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+ELECTRON_APP="$APP_DIR/node_modules/electron/dist/Electron.app"
+ELECTRON_BIN="$ELECTRON_APP/Contents/MacOS/Electron"
 
 if [ ! -f "$ELECTRON_BIN" ]; then
-  osascript -e "display alert \"GestorIA\" message \"No se encontró Electron en:\n$ELECTRON_BIN\n\nEjecuta 'npm install' en la carpeta app/.\" as critical"
+  osascript -e "display alert \"GestorIA\" message \"Electron no encontrado.\nEjecuta 'npm install' en la carpeta app/.\" as critical"
   exit 1
 fi
 
-# PATH con Docker Desktop y Homebrew (necesario para spawnAsync en main.cjs)
-export PATH="/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+# Firma ad-hoc: elimina quarantine del binario Electron
+codesign --force --deep --sign - "$ELECTRON_APP" 2>/dev/null || true
 
-# Variables para que main.cjs active el modo launcher
-export GESTORIA_LAUNCHER=1
-export GESTORIA_PROJECT_ROOT="$PROJECT_ROOT"
+# Pasar parámetros via fichero temp — 'open' no transmite variables de entorno
+printf 'GESTORIA_LAUNCHER=1\nGESTORIA_PROJECT_ROOT=%s\n' "$PROJECT_ROOT" \
+  > /tmp/.gestoria_launcher
 
-# cd al directorio de la app antes de lanzar Electron
-# (evita EPERM al leer package.json con rutas relativas)
-cd "$APP_DIR"
-exec "$ELECTRON_BIN" "$APP_DIR/electron/main.cjs"
+# Exponer ruta de Docker a procesos GUI lanzados desde Finder
+launchctl setenv GESTORIA_EXTRA_PATH \
+  "/Applications/Docker.app/Contents/Resources/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin" \
+  2>/dev/null || true
+
+# Lanzar Electron fuera del sandbox de esta .app (open -n da permisos completos)
+open -n "$ELECTRON_APP" --args "$APP_DIR/electron/main.cjs"

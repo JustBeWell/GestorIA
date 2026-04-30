@@ -4,6 +4,20 @@ const fs = require('fs');
 const { Readable } = require('stream');
 const { spawn } = require('child_process');
 
+// ── Bootstrap: leer parámetros del launcher desde fichero temp ───────────────
+// GestorIA.app los escribe en /tmp/.gestoria_launcher porque 'open' no pasa env
+;(function bootstrapLauncherEnv() {
+  const envFile = '/tmp/.gestoria_launcher';
+  try {
+    const lines = fs.readFileSync(envFile, 'utf8').trim().split('\n');
+    for (const line of lines) {
+      const eqIdx = line.indexOf('=');
+      if (eqIdx > 0) process.env[line.slice(0, eqIdx)] = line.slice(eqIdx + 1);
+    }
+    fs.unlinkSync(envFile);
+  } catch { /* no lanzado desde GestorIA.app */ }
+})();
+
 // ── Launcher directories ─────────────────────────────────────
 const APP_DIR = path.join(__dirname, '..');
 const PROJECT_ROOT = process.env.GESTORIA_PROJECT_ROOT || path.join(__dirname, '..', '..');
@@ -126,8 +140,10 @@ function spawnAsync(cmd, args, cwd) {
 
 async function runLauncher() {
   // Ampliar PATH: Docker Desktop, Homebrew, nvm
+  // GESTORIA_EXTRA_PATH es seteado por GestorIA.app via launchctl setenv
   const extraPaths = [
-    '/Applications/Docker.app/Contents/Resources/bin',  // Docker Desktop CLI real
+    ...(process.env.GESTORIA_EXTRA_PATH || '').split(':').filter(Boolean),
+    '/Applications/Docker.app/Contents/Resources/bin',
     '/usr/local/bin',
     '/opt/homebrew/bin',
     '/opt/homebrew/sbin',
