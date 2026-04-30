@@ -32,7 +32,7 @@ echo ""
 # ── Paso 1: Docker — db + backend ────────────────────────────
 log "Paso 1/3 — Construyendo e iniciando db + backend..."
 cd "$PROJECT_ROOT"
-docker compose up -d --build db backend
+docker-compose up -d --build db backend
 ok "Servicios Docker activos (db → 5432, backend → 8008)"
 
 # ── Paso 2: Angular build ────────────────────────────────────

@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# Launcher macOS .app — abre Terminal y ejecuta scripts/launch.sh
+# GestorIA.app — lanza Electron con splash de carga (sin Terminal)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-LAUNCH_SCRIPT="$PROJECT_ROOT/scripts/launch.sh"
 
-chmod +x "$LAUNCH_SCRIPT"
+# PATH con ubicaciones habituales de Docker Desktop y Homebrew
+export PATH="/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 
-osascript -e "
-tell application \"Terminal\"
-  activate
-  do script \"bash '$LAUNCH_SCRIPT'\"
-end tell"
+# nvm: cargar sin cambiar versión activa, para que npm esté en PATH
+[ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh" --no-use
+
+# Variables para que main.cjs sepa que viene del launcher
+export GESTORIA_LAUNCHER=1
+export GESTORIA_PROJECT_ROOT="$PROJECT_ROOT"
+
+cd "$PROJECT_ROOT/app"
+exec ./node_modules/.bin/electron .

@@ -2,6 +2,11 @@ const { app, BrowserWindow, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
+const { spawn } = require('child_process');
+
+// ── Launcher directories ─────────────────────────────────────
+const APP_DIR = path.join(__dirname, '..');
+const PROJECT_ROOT = process.env.GESTORIA_PROJECT_ROOT || path.join(__dirname, '..', '..');
 
 const isDev = process.env.NODE_ENV === 'development';
 const DIST = path.join(__dirname, '..', 'dist', 'login-desktop', 'browser');
@@ -70,7 +75,104 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+// ════════════════════════════════════════════════════════════
+//  LAUNCHER — splash window + build steps
+// ════════════════════════════════════════════════════════════
+
+/** Open the splash window and resolve when its DOM is ready */
+function createSplashWindow() {
+  const splash = new BrowserWindow({
+    width: 480,
+    height: 300,
+    frame: false,
+    resizable: false,
+    center: true,
+    skipTaskbar: true,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  return new Promise((resolve) => {
+    splash.loadFile(path.join(__dirname, 'splash.html'));
+    splash.webContents.on('did-finish-load', () => resolve(splash));
+  });
+}
+
+/** Push a progress update to the splash window */
+function splashUpdate(splash, pct, text, stepId) {
+  if (splash.isDestroyed()) return;
+  const call = `updateProgress(${pct}, ${JSON.stringify(text)}, ${JSON.stringify(stepId || null)})`;
+  splash.webContents.executeJavaScript(call).catch(() => {});
+}
+
+/** Spawn a child process and resolve/reject on exit */
+function spawnAsync(cmd, args, cwd) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(cmd, args, { cwd, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let errOut = '';
+    proc.stderr.on('data', (d) => { errOut += d.toString(); });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else {
+        const hint = errOut.trim().split('\n').filter(Boolean).slice(-3).join(' ');
+        reject(new Error(hint || `${path.basename(cmd)} falló (código ${code})`));
+      }
+    });
+    proc.on('error', (err) => reject(new Error(`No se encontró '${path.basename(cmd)}': ${err.message}`)));
+  });
+}
+
+async function runLauncher() {
+  // Ensure Docker CLI is findable
+  if (!process.env.PATH.includes('/usr/local/bin')) {
+    process.env.PATH = `/usr/local/bin:/opt/homebrew/bin:${process.env.PATH}`;
+  }
+
+  const splash = await createSplashWindow();
+
+  try {
+    // Step 1 — db
+    splashUpdate(splash, 8, 'Iniciando base de datos…', 'step-db');
+    await spawnAsync('docker', ['compose', 'up', '-d', '--build', 'db'], PROJECT_ROOT);
+    splashUpdate(splash, 30, 'Base de datos lista', 'step-db');
+
+    // Step 2 — backend
+    splashUpdate(splash, 35, 'Iniciando backend API…', 'step-api');
+    await spawnAsync('docker', ['compose', 'up', '-d', '--build', 'backend'], PROJECT_ROOT);
+    splashUpdate(splash, 55, 'Backend API listo', 'step-api');
+
+    // Step 3 — Angular build
+    splashUpdate(splash, 58, 'Compilando interfaz…', 'step-ui');
+    const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
+    await spawnAsync(ng, ['build'], APP_DIR);
+    splashUpdate(splash, 85, 'Interfaz compilada', 'step-ui');
+
+    // Step 4 — launch
+    splashUpdate(splash, 90, 'Iniciando aplicación…', 'step-launch');
+    await new Promise((r) => setTimeout(r, 600));
+
+    if (!splash.isDestroyed()) {
+      splash.webContents.executeJavaScript('showDone()').catch(() => {});
+    }
+    await new Promise((r) => setTimeout(r, 900));
+
+    createWindow();
+    if (!splash.isDestroyed()) splash.close();
+  } catch (err) {
+    if (!splash.isDestroyed()) {
+      splash.webContents
+        .executeJavaScript(`showError(${JSON.stringify('✗ ' + err.message)})`)
+        .catch(() => {});
+    }
+    // Keep splash visible so user can read the error; quit after 15 s
+    setTimeout(() => app.quit(), 15000);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+app.whenReady().then(async () => {
   protocol.handle('app', (request) => {
     const url = new URL(request.url);
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
@@ -83,7 +185,11 @@ app.whenReady().then(() => {
     return serveFile(path.join(DIST, 'index.html'), null);
   });
 
-  createWindow();
+  if (process.env.GESTORIA_LAUNCHER === '1') {
+    await runLauncher();
+  } else {
+    createWindow();
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
