@@ -90,6 +90,10 @@ def _enrich_user_role(token_data: TokenData) -> TokenData:
     return TokenData(user_id=token_data.user_id, nombre_usuario=token_data.nombre_usuario, role=role)
 
 
+MAX_INTENTOS = 5
+BLOQUEO_MINUTOS = 15
+
+
 def authenticate_user(dni: str, password: str) -> TokenData:
     normalized_dni = dni.strip().upper()
 
@@ -103,7 +107,9 @@ def authenticate_user(dni: str, password: str) -> TokenData:
                     u.password_hash,
                     u.rol::text,
                     u.activo,
-                    e.activo
+                    e.activo,
+                    u.intentos_fallidos,
+                    u.bloqueado_hasta
                 FROM usuarios u
                 JOIN empleados e ON e.usuario_id = u.id
                 WHERE UPPER(e.nif) = %s
@@ -113,15 +119,49 @@ def authenticate_user(dni: str, password: str) -> TokenData:
             )
             row = cursor.fetchone()
 
-    if not row:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+            if not row:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
-    user_id, nombre_usuario, password_hash, role, active_user, active_employee = row
+            user_id, nombre_usuario, password_hash, role, active_user, active_employee, intentos, bloqueado_hasta = row
 
-    if not active_user or not active_employee:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo")
+            if not active_user or not active_employee:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo")
 
-    if not pwd_context.verify(password, password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+            # Comprobar bloqueo temporal
+            now = datetime.now(timezone.utc)
+            if bloqueado_hasta and bloqueado_hasta > now:
+                segundos_restantes = int((bloqueado_hasta - now).total_seconds())
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Cuenta bloqueada temporalmente. Inténtalo en {segundos_restantes} segundos.",
+                )
+
+            # Verificar contraseña
+            if not pwd_context.verify(password, password_hash):
+                nuevos_intentos = (intentos or 0) + 1
+                if nuevos_intentos >= MAX_INTENTOS:
+                    nuevo_bloqueo = now + timedelta(minutes=BLOQUEO_MINUTOS)
+                    cursor.execute(
+                        "UPDATE usuarios SET intentos_fallidos = %s, bloqueado_hasta = %s WHERE id = %s",
+                        (nuevos_intentos, nuevo_bloqueo, user_id),
+                    )
+                    connection.commit()
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail=f"Demasiados intentos fallidos. Cuenta bloqueada {BLOQUEO_MINUTOS} minutos.",
+                    )
+                cursor.execute(
+                    "UPDATE usuarios SET intentos_fallidos = %s WHERE id = %s",
+                    (nuevos_intentos, user_id),
+                )
+                connection.commit()
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+
+            # Login correcto: resetear contadores
+            cursor.execute(
+                "UPDATE usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL, ultimo_acceso = NOW() WHERE id = %s",
+                (user_id,),
+            )
+            connection.commit()
 
     return TokenData(user_id=str(user_id), nombre_usuario=nombre_usuario, role=role)

@@ -1,6 +1,8 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+const isDev = process.env.NODE_ENV === 'development';
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -12,7 +14,12 @@ function createWindow() {
     },
   });
 
-  win.loadURL('http://localhost:4200');
+  if (isDev) {
+    win.loadURL('http://localhost:4200');
+  } else {
+    const indexPath = path.join(__dirname, '..', 'dist', 'login-desktop', 'browser', 'index.html');
+    win.loadFile(indexPath);
+  }
 }
 
 app.whenReady().then(() => {

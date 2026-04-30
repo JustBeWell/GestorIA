@@ -7,6 +7,7 @@
     "start": "concurrently \"npm run start:web\" \"npm run start:electron\"",
     "start:web": "ng serve --port 4200",
     "start:electron": "wait-on tcp:4200 && electron .",
+    "start:desktop": "electron .",
     "electron": "electron .",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
