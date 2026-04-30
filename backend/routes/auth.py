@@ -1,9 +1,6 @@
-from urllib.parse import urlencode
+from fastapi import APIRouter, Depends, Header, HTTPException
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import RedirectResponse
-
-from models import GoogleTokenRequest, LoginRequest, TokenResponse
+from models import LoginRequest, TokenResponse
 from service_config import settings
 from services.auth_service import TokenService, authenticate_user, get_current_user
 
@@ -41,10 +38,20 @@ async def get_token(current_user=Depends(get_current_user)):
     }
 
 @router.post("/logout")
-async def logout(current_user=Depends(get_current_user)):
-    return {"message": f"Logout successful for {current_user.nombre_usuario}"}
+async def logout(
+    current_user=Depends(get_current_user),
+    authorization: str | None = Header(default=None),
+):
+    if authorization:
+        _, _, token = authorization.partition(" ")
+        if token:
+            from datetime import datetime, timedelta, timezone
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=TokenService.get_expiration_seconds())
+            TokenService.revoke_token(token, current_user.user_id, expires_at)
+    return {"message": f"Sesión cerrada para {current_user.nombre_usuario}"}
 
 
 @router.post("/logout/all")
 async def logout_all(current_user=Depends(get_current_user)):
-    return {"message": f"All sessions closed for {current_user.nombre_usuario}"}
+    TokenService.revoke_all_user_tokens(current_user.user_id)
+    return {"message": f"Todas las sesiones cerradas para {current_user.nombre_usuario}"}

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
+import { AuthApiService } from '../../../core/services/auth-api.service';
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { SessionStorageService } from '../../../core/services/session-storage.service';
 
@@ -14,6 +15,7 @@ import { SessionStorageService } from '../../../core/services/session-storage.se
 })
 export class IntranetSidebarComponent {
   private readonly router = inject(Router);
+  private readonly authApiService = inject(AuthApiService);
   private readonly empleadoService = inject(EmpleadoService);
   private readonly sessionStorageService = inject(SessionStorageService);
 
@@ -60,8 +62,7 @@ export class IntranetSidebarComponent {
   }
 
   protected logout(): void {
-    this.sessionStorageService.clearSession();
     this.empleadoService.clearCachedEmpleado();
-    void this.router.navigateByUrl('/auth');
+    this.authApiService.logout();
   }
 }

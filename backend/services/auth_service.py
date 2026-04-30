@@ -46,6 +46,67 @@ class TokenService:
     def get_expiration_seconds() -> int:
         return settings.jwt_expiration_hours * 3600
 
+    @staticmethod
+    def revoke_token(token: str, user_id: str, expires_at: datetime) -> None:
+        token_hash = TokenService.hash_token(token)
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO token_blacklist (token_hash, user_id, expires_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (token_hash) DO NOTHING
+                    """,
+                    (token_hash, user_id, expires_at),
+                )
+                connection.commit()
+
+    @staticmethod
+    def revoke_all_user_tokens(user_id: str) -> int:
+        """Purga todos los tokens activos del usuario añadiéndolos a la blacklist con expiración futura."""
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiration_hours)
+        # Generamos un hash único por usuario+timestamp para bloquear sesiones activas
+        synthetic_hash = hashlib.sha256(f"{user_id}:all:{expires_at.timestamp()}".encode()).hexdigest()
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                # Insertar una marca que invalida todos los tokens emitidos antes de ahora
+                cursor.execute(
+                    """
+                    INSERT INTO token_blacklist (token_hash, user_id, expires_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (token_hash) DO NOTHING
+                    """,
+                    (synthetic_hash, user_id, expires_at),
+                )
+                # Actualizar revoked_at del usuario para invalidar tokens anteriores
+                cursor.execute(
+                    "UPDATE usuarios SET updated_at = NOW() WHERE id = %s",
+                    (user_id,),
+                )
+                connection.commit()
+        return 1
+
+    @staticmethod
+    def is_token_revoked(token: str) -> bool:
+        token_hash = TokenService.hash_token(token)
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM token_blacklist WHERE token_hash = %s AND expires_at > NOW()",
+                    (token_hash,),
+                )
+                return cursor.fetchone() is not None
+
+    @staticmethod
+    def purge_expired_tokens() -> int:
+        """Limpia entradas caducadas de la blacklist."""
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM token_blacklist WHERE expires_at <= NOW()")
+                deleted = cursor.rowcount
+                connection.commit()
+        return deleted
+
 
 def get_current_user(authorization: str | None = Header(default=None)) -> TokenData:
     if not authorization:
@@ -54,6 +115,9 @@ def get_current_user(authorization: str | None = Header(default=None)) -> TokenD
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization format")
+
+    if TokenService.is_token_revoked(token):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token revocado")
 
     token_data = TokenService.decode_token(token)
     return _enrich_user_role(token_data)

@@ -9,6 +9,7 @@ import { EmpleadoService } from '../../../core/services/empleado.service';
 import { FichajeEventoItem, FichajeTabResponse } from '../../../core/models/intranet.models';
 import { IntranetService } from '../../../core/services/intranet.service';
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
+import { AuthApiService } from '../../../core/services/auth-api.service';
 import { SessionStorageService } from '../../../core/services/session-storage.service';
 import { formatEventLabel } from '../../../shared/utils/event-label';
 
@@ -72,6 +73,7 @@ export class FichajePageComponent implements OnInit {
   private readonly empleadoService = inject(EmpleadoService);
   private readonly intranetService = inject(IntranetService);
   private readonly sessionStorageService = inject(SessionStorageService);
+  private readonly authApiService = inject(AuthApiService);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -237,9 +239,8 @@ export class FichajePageComponent implements OnInit {
   }
 
   protected logout(): void {
-    this.sessionStorageService.clearSession();
     this.empleadoService.clearCachedEmpleado();
-    void this.router.navigateByUrl('/auth');
+    this.authApiService.logout();
   }
 
   private loadFichaje(): void {
