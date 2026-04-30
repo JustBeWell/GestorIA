@@ -42,17 +42,12 @@
   margin-bottom: 12px;
 }
 
-.brand-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #e8c163, #c6833f);
-  display: grid;
-  place-items: center;
-  color: #2b210b;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: -0.02em;
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .brand-title {
@@ -147,14 +142,15 @@
 .nav-icon {
   width: 16px;
   height: 16px;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(231, 238, 249, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(231, 238, 249, 0.75);
 }
 
-.nav-link:hover .nav-icon {
+.nav-link:hover .nav-icon,
+.nav-link.active .nav-icon {
   color: #e7eef9;
 }
 
@@ -385,22 +381,24 @@
 .tool-icon {
   width: 16px;
   height: 16px;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(231, 238, 249, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgba(231, 238, 249, 0.75);
+}
+
+.tool-item:hover .tool-icon,
+.tool-item.active .tool-icon {
+  color: #e7eef9;
 }
 
 .nav-icon svg,
 .tool-icon svg {
   width: 16px;
   height: 16px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
+  flex-shrink: 0;
 }
 
 @media (max-width: 1200px) {
