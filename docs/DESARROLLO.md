@@ -153,11 +153,11 @@ Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
 - [ ] Cobertura de tests en services de clientes, trabajos y pagos
 
 ### Base de datos
-- [ ] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — definidos en documentacion pero no en migraciones aplicadas
-- [ ] Vistas `v_deuda_por_cliente`, `v_horas_diarias`, `v_resumen_mensual` no estan en ninguna migracion aplicada
-- [ ] Migracion V003 pendiente para triggers y vistas
-- [ ] Indice en `fichajes(empleado_id, fecha_hora)` para mejorar rendimiento en consultas de exportacion
-- [ ] Campo `intentos_fallidos` y `bloqueado_hasta` en `usuarios` — existen en modelo pero la logica de bloqueo no esta implementada
+- [x] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — ya presentes en V001
+- [x] Vistas `v_deuda_por_cliente`, `v_horas_diarias`, `v_resumen_mensual` — creadas en migración V003
+- [x] Migracion V003 aplicada — vistas analíticas
+- [x] Indice en `fichajes(empleado_id, fecha_hora)` — ya presente en V001 (`idx_fichajes_empleado_fecha`)
+- [x] Campo `intentos_fallidos` y `bloqueado_hasta` en `usuarios` — lógica de bloqueo implementada en `auth_service.py`
 
 ---
 
