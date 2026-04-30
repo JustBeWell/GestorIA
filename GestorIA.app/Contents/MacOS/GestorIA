@@ -14,6 +14,14 @@ fi
 # Firma ad-hoc: elimina quarantine del binario Electron
 codesign --force --deep --sign - "$ELECTRON_APP" 2>/dev/null || true
 
+# Parchear Info.plist del Electron.app para nombre e icono de GestorIA
+ELECTRON_PLIST="$ELECTRON_APP/Contents/Info.plist"
+ICNS_SRC="$SCRIPT_DIR/../Resources/AppIcon.icns"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName GestorIA"        "$ELECTRON_PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName GestorIA" "$ELECTRON_PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Set :CFBundleIconFile AppIcon"     "$ELECTRON_PLIST" 2>/dev/null || true
+[ -f "$ICNS_SRC" ] && cp "$ICNS_SRC" "$ELECTRON_APP/Contents/Resources/AppIcon.icns" 2>/dev/null || true
+
 # Pasar parámetros via fichero temp — 'open' no transmite variables de entorno
 printf 'GESTORIA_LAUNCHER=1\nGESTORIA_PROJECT_ROOT=%s\n' "$PROJECT_ROOT" \
   > /tmp/.gestoria_launcher
