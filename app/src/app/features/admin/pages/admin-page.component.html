@@ -168,7 +168,10 @@
           <div class="admin-card">
             <div class="admin-card-header">
               <h2 class="admin-card-title">Equipo activo</h2>
-              <span class="admin-card-badge">{{ empleadosActivos.length }} empleados</span>
+              <div class="admin-card-header-actions">
+                <span class="admin-card-badge">{{ empleadosActivos.length }} empleados</span>
+                <button class="btn-primary btn-sm" (click)="openCreateModal()">+ Nuevo empleado</button>
+              </div>
             </div>
             <div class="emp-list">
               @for (emp of empleadosActivos; track emp.empleado_id) {
@@ -215,6 +218,10 @@
                     }
                   </div>
 
+                  <button class="btn-icon" title="Editar" (click)="openEditModal(emp)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+
                 </div>
               }
             </div>
@@ -237,6 +244,9 @@
                         <span class="pill pill--neutral">{{ emp.rol }}</span>
                       </div>
                     </div>
+                    <button class="btn-icon" title="Editar" (click)="openEditModal(emp)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
                   </div>
                 }
               </div>
@@ -383,3 +393,99 @@
     </section>
   </section>
 </main>
+
+<!-- ─── MODAL CREAR EMPLEADO ──────────────────────────────────────────────── -->
+@if (showCreateModal) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Nuevo empleado</h3>
+        <button class="modal-close" (click)="closeCreateModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Email (usuario)</label>
+            <input type="email" [(ngModel)]="createForm.nombre_usuario" placeholder="empleado@empresa.com"/>
+          </div>
+          <div class="form-field">
+            <label>Contraseña</label>
+            <input type="password" [(ngModel)]="createForm.password" placeholder="Mínimo 8 caracteres"/>
+          </div>
+          <div class="form-field">
+            <label>Nombre</label>
+            <input type="text" [(ngModel)]="createForm.nombre" placeholder="Nombre"/>
+          </div>
+          <div class="form-field">
+            <label>Apellidos</label>
+            <input type="text" [(ngModel)]="createForm.apellidos" placeholder="Apellidos"/>
+          </div>
+          <div class="form-field">
+            <label>NIF</label>
+            <input type="text" [(ngModel)]="createForm.nif" placeholder="12345678A"/>
+          </div>
+          <div class="form-field">
+            <label>Teléfono</label>
+            <input type="text" [(ngModel)]="createForm.telefono" placeholder="Opcional"/>
+          </div>
+          <div class="form-field">
+            <label>Rol</label>
+            <select [(ngModel)]="createForm.rol">
+              <option value="empleado">Empleado</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitCreateEmpleado()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Crear empleado' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL EDITAR EMPLEADO ──────────────────────────────────────────────── -->
+@if (showEditModal && editTarget) {
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar — {{ editTarget.nombre_completo }}</h3>
+        <button class="modal-close" (click)="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Rol</label>
+            <select [(ngModel)]="editForm.rol">
+              <option value="empleado">Empleado</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+          <div class="form-field form-field--toggle">
+            <label>Estado</label>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editForm.activo"/>
+              <span class="toggle-track"></span>
+              <span class="toggle-label">{{ editForm.activo ? 'Activo' : 'Inactivo' }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeEditModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitEditEmpleado()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

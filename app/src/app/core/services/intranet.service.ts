@@ -13,6 +13,7 @@ import {
   IntranetHomeResponse,
   QuarterSeriesResponse,
 } from '../models/intranet.models';
+import { UserCreatePayload, UserAdminUpdatePayload } from '../models/user-admin.models';
 
 @Injectable({ providedIn: 'root' })
 export class IntranetService {
@@ -107,5 +108,13 @@ export class IntranetService {
 
   getAdminCharts(months = 12): Observable<AdminChartsResponse> {
     return this.http.get<AdminChartsResponse>(`${this.apiUrl}/intranet/admin/charts?months=${months}`);
+  }
+
+  createEmpleado(payload: UserCreatePayload): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/users/`, payload);
+  }
+
+  adminUpdateEmpleado(userId: string, payload: UserAdminUpdatePayload): Observable<unknown> {
+    return this.http.put(`${this.apiUrl}/users/${userId}/admin`, payload);
   }
 }

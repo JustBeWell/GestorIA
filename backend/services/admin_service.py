@@ -23,6 +23,7 @@ class AdminService:
                     """
                     SELECT
                         e.id::text AS empleado_id,
+                        u.id::text AS usuario_id,
                         e.nombre,
                         e.apellidos,
                         u.rol::text AS rol,
@@ -37,11 +38,11 @@ class AdminService:
                 empleados = []
                 for emp in empleados_rows:
                     emp_id = emp["empleado_id"]
-
+                    usuario_id = emp["usuario_id"]
                     cursor.execute(
                         """
-                        SELECT tipo_evento::text AS tipo_evento, fecha_hora
-                        FROM fichajes
+                        SELECT tipo_evento, fecha_hora
+                        FROM fichaje_eventos
                         WHERE empleado_id = %s
                         AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid') BETWEEN %s AND %s
                         ORDER BY fecha_hora ASC
@@ -74,6 +75,7 @@ class AdminService:
 
                     empleados.append({
                         "empleado_id": emp_id,
+                        "usuario_id": usuario_id,
                         "nombre_completo": f"{emp['nombre']} {emp['apellidos']}".strip(),
                         "rol": emp["rol"],
                         "activo": emp["activo"],

@@ -100,6 +100,7 @@ export interface FichajeTabResponse {
 
 export interface AdminEmpleadoResumen {
   empleado_id: string;
+  usuario_id: string;
   nombre_completo: string;
   rol: string;
   activo: boolean;
