@@ -5,8 +5,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { take } from 'rxjs';
 
 import { AuthApiService } from '../../../core/services/auth-api.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 import { EmpleadoService } from '../../../core/services/empleado.service';
-import { SessionStorageService } from '../../../core/services/session-storage.service';
 
 @Component({
   selector: 'app-login-page',
@@ -18,8 +18,8 @@ import { SessionStorageService } from '../../../core/services/session-storage.se
 export class LoginPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authApiService = inject(AuthApiService);
+  private readonly authState = inject(AuthStateService);
   private readonly empleadoService = inject(EmpleadoService);
-  private readonly sessionStorageService = inject(SessionStorageService);
   private readonly heroVideos = ['/asesoriaescano.mp4', '/asesoriaescano2.mp4'];
 
   protected readonly loading = signal(false);
@@ -121,7 +121,7 @@ export class LoginPageComponent {
   private completeLogin(token: string, user: { id: string; nombre_usuario: string; role: string }): void {
     // Limpiar datos del empleado anterior antes de establecer la nueva sesión
     this.empleadoService.clearCachedEmpleado();
-    this.sessionStorageService.setSession(token, user);
+    this.authState.login(token, user);
     this.successMessage.set(`Accediendo al sistema como ${user.role}...`);
 
     this.empleadoService.me().pipe(take(1)).subscribe({

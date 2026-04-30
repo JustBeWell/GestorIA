@@ -3,8 +3,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthApiService } from '../../../core/services/auth-api.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 import { EmpleadoService } from '../../../core/services/empleado.service';
-import { SessionStorageService } from '../../../core/services/session-storage.service';
 
 @Component({
   selector: 'app-intranet-sidebar',
@@ -16,8 +16,8 @@ import { SessionStorageService } from '../../../core/services/session-storage.se
 export class IntranetSidebarComponent {
   private readonly router = inject(Router);
   private readonly authApiService = inject(AuthApiService);
+  private readonly authState = inject(AuthStateService);
   private readonly empleadoService = inject(EmpleadoService);
-  private readonly sessionStorageService = inject(SessionStorageService);
 
   protected readonly showLogoutModal = signal(false);
 
@@ -27,7 +27,7 @@ export class IntranetSidebarComponent {
       return `${empleado.nombre} ${empleado.apellidos ?? ''}`.trim();
     }
 
-    return this.sessionStorageService.getUser()?.nombre_usuario ?? 'Usuario';
+    return this.authState.currentUser()?.nombre_usuario ?? 'Usuario';
   }
 
   protected get employeeFirstName(): string {

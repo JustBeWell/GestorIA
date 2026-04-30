@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { IntranetFeatureCard } from '../../../core/models/intranet.models';
 import { AuthApiService } from '../../../core/services/auth-api.service';
-import { SessionStorageService } from '../../../core/services/session-storage.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 import { IntranetShellHeaderComponent } from '../../../shared/components/intranet-shell-header/intranet-shell-header.component';
 
 @Component({
@@ -18,7 +18,7 @@ export class IntranetModulePageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authApiService = inject(AuthApiService);
-  private readonly sessionStorageService = inject(SessionStorageService);
+  private readonly authState = inject(AuthStateService);
 
   protected readonly navigationLinks: IntranetFeatureCard[] = [
     { clave: 'fichaje', titulo: 'Fichaje', descripcion: '', ruta: '/fichaje' },
@@ -37,7 +37,7 @@ export class IntranetModulePageComponent {
   }
 
   protected get employeeName(): string {
-    return this.sessionStorageService.getUser()?.nombre_usuario ?? 'Usuario';
+    return this.authState.currentUser()?.nombre_usuario ?? 'Usuario';
   }
 
   protected readonly showLogoutModal = signal(false);
