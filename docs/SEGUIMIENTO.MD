@@ -46,3 +46,12 @@
 - Toggle "Combinada / Individual" para alternar entre la nueva vista y las 4 gráficas pequeñas anteriores.
 - Grid lines horizontales en el SVG para referencia visual.
 - `combinedSeries` declarado como array de descriptores en el componente; métodos `buildNormPolyline`, `buildNormArea`, `hoverLineX`, `hoverDot`, `tooltipData`, `tooltipLeft` añadidos al TS.
+
+### Exportación PDF de fichaje (M3 — última HU)
+- Nuevo endpoint `GET /intranet/fichaje/export/pdf` en FastAPI (route `intranet.py`).
+- Generación del PDF con `fpdf2` (añadido a `requirements.txt`): cabecera corporativa con fondo `slate-800`, tabla de días con filas alternas, columna Estado con color semántico (verde/ámbar/gris), resumen estadístico (días completos, ausencias, horas acumuladas) y pie de página.
+- Función auxiliar `_build_fichaje_pdf(data)` y `_pdf_today()` colocadas en `routes/intranet.py`.
+- Nuevo método `exportFichajePDF()` en `IntranetService` (Angular).
+- Signal `exportingPDF` y método `exportHistorialPDF()` añadidos a `FichajePageComponent`.
+- Botón "Exportar PDF" en la cabecera de la página de fichaje; el botón CSV renombrado a "Exportar CSV" para distinguirlos.
+- Backend reconstruido con `docker-compose build --no-cache backend` — endpoint confirmado en OpenAPI.

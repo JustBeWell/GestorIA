@@ -4,6 +4,7 @@ import csv
 import io
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fpdf import FPDF
 from psycopg2 import Error as PsycopgError
 
 from models import (
@@ -159,6 +160,170 @@ async def intranet_fichaje_export(
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
     )
+
+
+@router.get("/fichaje/export/pdf")
+async def intranet_fichaje_export_pdf(
+    fecha_desde: date | None = Query(default=None),
+    fecha_hasta: date | None = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    data = FichajeService.get_fichaje_export(
+        current_user.user_id,
+        fecha_desde.isoformat() if fecha_desde else None,
+        fecha_hasta.isoformat() if fecha_hasta else None,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    pdf_bytes = _build_fichaje_pdf(data)
+    filename = f"fichaje_{data['label'].replace(' ', '_')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+def _build_fichaje_pdf(data: dict) -> bytes:
+    """Genera el PDF del registro de fichaje a partir de los datos de exportación."""
+    usuario = data["usuario"]
+    rows = data["rows"]
+    label = data["label"]
+    nombre_completo = usuario.get("nombre_completo", usuario.get("nombre_usuario", "Empleado"))
+
+    # ── Colores corporativos ──
+    C_PRIMARY   = (30,  41,  59)   # slate-800
+    C_HEADER_BG = (241, 245, 249)  # slate-100
+    C_WHITE     = (255, 255, 255)
+    C_ALT_ROW   = (248, 250, 252)  # slate-50
+    C_COMPLETA  = (21,  128, 61)   # green-700
+    C_EN_CURSO  = (180, 83,  9)    # amber-700
+    C_AUSENCIA  = (100, 116, 139)  # slate-500
+    C_BORDER    = (226, 232, 240)  # slate-200
+
+    pdf = FPDF()
+    pdf.set_margins(left=15, top=15, right=15)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # ── Cabecera ──────────────────────────────────────────────────────────────
+    pdf.set_fill_color(*C_PRIMARY)
+    pdf.rect(x=0, y=0, w=210, h=28, style="F")
+
+    pdf.set_y(8)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*C_WHITE)
+    pdf.cell(0, 8, "GestorIA", align="L")
+
+    pdf.set_y(17)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(148, 163, 184)  # slate-400
+    pdf.cell(0, 5, "Sistema de gestión de fichaje", align="L")
+
+    # Título del documento a la derecha
+    pdf.set_xy(15, 8)
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(*C_WHITE)
+    pdf.cell(0, 8, "REGISTRO DE FICHAJE", align="R")
+
+    pdf.set_xy(15, 17)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 5, label, align="R")
+
+    # ── Ficha del empleado ────────────────────────────────────────────────────
+    pdf.set_y(34)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(*C_PRIMARY)
+
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(0, 5, nombre_completo, ln=True)
+
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 4, f"Periodo: {label}  ·  Exportado el {_pdf_today()}", ln=True)
+
+    pdf.ln(5)
+
+    # ── Tabla ─────────────────────────────────────────────────────────────────
+    col_widths = [32, 28, 28, 24, 30]  # Día | Entrada | Salida | Horas | Estado
+    headers    = ["Día", "Entrada", "Salida", "Horas", "Estado"]
+    row_h = 7
+
+    # Cabecera de tabla
+    pdf.set_fill_color(*C_HEADER_BG)
+    pdf.set_draw_color(*C_BORDER)
+    pdf.set_text_color(*C_PRIMARY)
+    pdf.set_font("Helvetica", "B", 8)
+    for i, (col, w) in enumerate(zip(headers, col_widths)):
+        align = "R" if col == "Horas" else "C"
+        pdf.cell(w, row_h, col, border=1, align=align, fill=True)
+    pdf.ln()
+
+    # Filas de datos
+    pdf.set_font("Helvetica", "", 8)
+    for idx, row in enumerate(rows):
+        status_label = row["status_label"]
+        fill_bg = C_ALT_ROW if idx % 2 == 1 else C_WHITE
+        pdf.set_fill_color(*fill_bg)
+
+        if status_label == "Completa":
+            status_color = C_COMPLETA
+        elif status_label == "En curso":
+            status_color = C_EN_CURSO
+        else:
+            status_color = C_AUSENCIA
+
+        pdf.set_text_color(*C_PRIMARY)
+        pdf.cell(col_widths[0], row_h, row["day_label"],    border="LRB", align="L", fill=True)
+        pdf.cell(col_widths[1], row_h, row["entry_time"],   border="LRB", align="C", fill=True)
+        pdf.cell(col_widths[2], row_h, row["exit_time"],    border="LRB", align="C", fill=True)
+        pdf.cell(col_widths[3], row_h, row["hours_label"],  border="LRB", align="R", fill=True)
+
+        # Celda de estado con color específico
+        pdf.set_text_color(*status_color)
+        pdf.cell(col_widths[4], row_h, status_label,        border="LRB", align="C", fill=True)
+        pdf.set_text_color(*C_PRIMARY)
+        pdf.ln()
+
+    # ── Resumen estadístico ───────────────────────────────────────────────────
+    total_completas = sum(1 for r in rows if r["status_label"] == "Completa")
+    total_ausencias = sum(1 for r in rows if r["status_label"] == "Ausencia")
+    horas_acumuladas = 0.0
+    for r in rows:
+        h = r["hours_label"].replace("h", "")
+        try:
+            horas_acumuladas += float(h)
+        except ValueError:
+            pass
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_text_color(*C_PRIMARY)
+    pdf.cell(0, 5, "RESUMEN DEL PERIODO", ln=True)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(50, 5, f"Días completos: {total_completas}")
+    pdf.cell(50, 5, f"Ausencias: {total_ausencias}")
+    pdf.cell(0,  5, f"Horas acumuladas: {horas_acumuladas:.1f} h", ln=True)
+
+    # ── Pie de página ─────────────────────────────────────────────────────────
+    pdf.set_y(-12)
+    pdf.set_font("Helvetica", "", 7)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 4, f"Documento generado por GestorIA · {_pdf_today()} · Confidencial", align="C")
+
+    return bytes(pdf.output())
+
+
+def _pdf_today() -> str:
+    from datetime import datetime, timezone
+    from zoneinfo import ZoneInfo
+    now = datetime.now(ZoneInfo("Europe/Madrid"))
+    months = ["ene", "feb", "mar", "abr", "may", "jun",
+              "jul", "ago", "sep", "oct", "nov", "dic"]
+    return f"{now.day:02d} {months[now.month - 1]} {now.year}"
 
 
 @router.get("/clientes", response_model=ClientesTabResponse)

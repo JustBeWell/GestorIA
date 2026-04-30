@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-04-30
+Ultima revision: 2026-04-30 (M3 exportación PDF completada)
 
 ---
 
@@ -41,18 +41,18 @@ Ultima revision: 2026-04-30
 
 ---
 
-### M3 · Fichaje — COMPLETO (funcional en MVP)
+### M3 · Fichaje — COMPLETO
 - [x] Registro de entrada/salida con validaciones
 - [x] Soporte de pausas inicio/fin (migracion V002 aplicada)
 - [x] Regla: no dos entradas/salidas consecutivas
 - [x] Calculo de duracion diaria y horas totales
 - [x] Deshacer ultimo fichaje del dia
 - [x] Exportacion CSV por rango de fechas
+- [x] Exportacion PDF mensual con fpdf2 (cabecera corporativa, tabla de dias, resumen estadistico)
 - [x] UI completa con calendario, detalle de dia y modal de error
 - [x] Filtros por tipo evento y rango de fechas
 - [x] Correccion manual por gerente desde UI
 - [x] Vista de fichajes de todos los empleados (solo admin)
-- [ ] Exportacion PDF (solo CSV implementado)
 
 ---
 
@@ -114,7 +114,7 @@ Ultima revision: 2026-04-30
 
 ### M8 · Exportaciones — PARCIAL
 - [x] Exportacion CSV de fichaje por rango de fechas
-- [ ] Exportacion PDF de fichaje mensual
+- [x] Exportacion PDF de fichaje mensual (fpdf2, endpoint GET /intranet/fichaje/export/pdf)
 - [ ] Exportacion de listado de facturas/deuda a CSV
 - [ ] Generacion de documento mensual de cierre
 

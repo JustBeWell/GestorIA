@@ -78,6 +78,7 @@ export class FichajePageComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly exporting = signal(false);
+  protected readonly exportingPDF = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly actionErrorMessage = signal('');
 
@@ -181,6 +182,40 @@ export class FichajePageComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.handleError(err, 'No se pudo exportar el registro.');
+        },
+      });
+  }
+
+  protected exportHistorialPDF(): void {
+    if (this.exportingPDF()) {
+      return;
+    }
+
+    const monthRange = this.getMonthRange();
+    this.exportingPDF.set(true);
+    const actionStartedAt = Date.now();
+
+    this.intranetService
+      .exportFichajePDF({
+        fecha_desde: monthRange.start,
+        fecha_hasta: monthRange.end,
+      })
+      .pipe(finalize(() => {
+        const elapsed = Date.now() - actionStartedAt;
+        const remaining = Math.max(0, this.minActionDelayMs - elapsed);
+        setTimeout(() => this.exportingPDF.set(false), remaining);
+      }))
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `fichaje_${monthRange.label.replace(/\s+/g, '_')}.pdf`;
+          link.click();
+          URL.revokeObjectURL(url);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.handleError(err, 'No se pudo exportar el registro PDF.');
         },
       });
   }

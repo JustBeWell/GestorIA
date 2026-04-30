@@ -101,6 +101,27 @@ export class IntranetService {
     return this.http.get(url, { responseType: 'blob' });
   }
 
+  exportFichajePDF(params: {
+    fecha_desde?: string;
+    fecha_hasta?: string;
+  }): Observable<Blob> {
+    const searchParams = new URLSearchParams();
+
+    if (params.fecha_desde) {
+      searchParams.set('fecha_desde', params.fecha_desde);
+    }
+    if (params.fecha_hasta) {
+      searchParams.set('fecha_hasta', params.fecha_hasta);
+    }
+
+    const query = searchParams.toString();
+    const url = query
+      ? `${this.apiUrl}/intranet/fichaje/export/pdf?${query}`
+      : `${this.apiUrl}/intranet/fichaje/export/pdf`;
+
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
   deleteLastFichaje(): Observable<FichajeUndoResponse> {
     return this.http.post<FichajeUndoResponse>(`${this.apiUrl}/intranet/fichaje/ultimo/eliminar`, {});
   }

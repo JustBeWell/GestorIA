@@ -27,7 +27,14 @@
             class="secondary-button"
             (click)="exportHistorial()"
             [disabled]="exporting() || !filteredHistorialRows.length">
-            Exportar registro
+            Exportar CSV
+          </button>
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="exportHistorialPDF()"
+            [disabled]="exportingPDF() || !filteredHistorialRows.length">
+            {{ exportingPDF() ? 'Generando PDF...' : 'Exportar PDF' }}
           </button>
           <button
             type="button"
