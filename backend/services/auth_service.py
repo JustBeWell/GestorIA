@@ -158,6 +158,74 @@ MAX_INTENTOS = 5
 BLOQUEO_MINUTOS = 15
 
 
+class TwoFactorService:
+    """Servicio para autenticación de dos factores vía SMS (Twilio)."""
+
+    OTP_EXPIRE_MINUTES = 5
+
+    @staticmethod
+    def is_configured() -> bool:
+        """True sólo si las tres variables de Twilio están definidas."""
+        return bool(
+            settings.twilio_account_sid
+            and settings.twilio_auth_token
+            and settings.twilio_from_number
+        )
+
+    @staticmethod
+    def generate_and_store_otp(user_id: str) -> tuple[str, str]:
+        """Genera un OTP de 6 dígitos, lo almacena hasheado y devuelve (session_id, plain_code)."""
+        import secrets
+
+        code = "".join(secrets.choice("0123456789") for _ in range(6))
+        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=TwoFactorService.OTP_EXPIRE_MINUTES)
+        with db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO otp_codes (user_id, code_hash, expires_at) VALUES (%s, %s, %s) RETURNING id::text",
+                    (user_id, code_hash, expires_at),
+                )
+                session_id: str = cur.fetchone()[0]
+                conn.commit()
+        return session_id, code
+
+    @staticmethod
+    def send_sms(phone: str, code: str) -> None:
+        """Envía el OTP por SMS. Silencia fallos de importación si twilio no está instalado."""
+        try:
+            from twilio.rest import Client  # type: ignore[import]
+        except ImportError:
+            return
+        client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
+        client.messages.create(
+            body=f"Tu código de verificación GestorIA: {code}. Válido {TwoFactorService.OTP_EXPIRE_MINUTES} minutos.",
+            from_=settings.twilio_from_number,
+            to=phone,
+        )
+
+    @staticmethod
+    def verify_otp(session_id: str, code: str) -> str:
+        """Valida el OTP y devuelve user_id. Lanza HTTP 401 si es inválido o expirado."""
+        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        with db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT user_id::text FROM otp_codes
+                    WHERE id = %s AND code_hash = %s AND expires_at > NOW() AND used = FALSE
+                    """,
+                    (session_id, code_hash),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Código inválido o expirado")
+                user_id = row[0]
+                cur.execute("UPDATE otp_codes SET used = TRUE WHERE id = %s", (session_id,))
+                conn.commit()
+        return user_id
+
+
 def authenticate_user(dni: str, password: str) -> TokenData:
     normalized_dni = dni.strip().upper()
 

@@ -37,6 +37,9 @@ services:
       JWT_ALGORITHM: HS256
       JWT_EXPIRATION_HOURS: 8
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
     ports:
       - "8008:8008"
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8008"]

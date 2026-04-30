@@ -27,7 +27,8 @@ class AdminService:
                         e.nombre,
                         e.apellidos,
                         u.rol::text AS rol,
-                        e.activo
+                        e.activo,
+                        u.mfa_habilitado
                     FROM empleados e
                     JOIN usuarios u ON u.id = e.usuario_id
                     ORDER BY e.apellidos, e.nombre
@@ -79,6 +80,7 @@ class AdminService:
                         "nombre_completo": f"{emp['nombre']} {emp['apellidos']}".strip(),
                         "rol": emp["rol"],
                         "activo": emp["activo"],
+                        "mfa_habilitado": bool(emp.get("mfa_habilitado", False)),
                         "horas_mes": round(total_horas, 1),
                         "turno_activo": fichaje["turno_activo"],
                         "trabajos_en_curso": int(trabajos_row.get("en_curso") or 0),

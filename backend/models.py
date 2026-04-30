@@ -48,6 +48,7 @@ class UserUpdateRequest(BaseModel):
 class UserAdminUpdateRequest(BaseModel):
 	rol: Literal["administrador", "empleado"] | None = None
 	activo: bool | None = None
+	mfa_habilitado: bool | None = None
 
 
 class GoogleTokenRequest(BaseModel):
@@ -64,6 +65,26 @@ class TokenResponse(BaseModel):
 	token_type: str = "bearer"
 	expires_in: int
 	user: dict
+
+
+class LoginResponse(BaseModel):
+	"""Respuesta unificada del endpoint /auth/login.
+
+	Si requires_2fa=True, devuelve session_id y el cliente debe llamar a /auth/otp/verify.
+	Si requires_2fa=False, devuelve el token JWT completo directamente.
+	"""
+
+	requires_2fa: bool = False
+	session_id: str | None = None
+	access_token: str | None = None
+	token_type: str = "bearer"
+	expires_in: int | None = None
+	user: dict | None = None
+
+
+class OtpVerifyRequest(BaseModel):
+	session_id: str
+	code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class FeatureCard(BaseModel):
@@ -226,9 +247,11 @@ class PagosTabResponse(BaseModel):
 
 class AdminEmpleadoResumen(BaseModel):
 	empleado_id: str
+	usuario_id: str = ""
 	nombre_completo: str
 	rol: str
 	activo: bool
+	mfa_habilitado: bool = False
 	horas_mes: float
 	turno_activo: bool
 	trabajos_en_curso: int

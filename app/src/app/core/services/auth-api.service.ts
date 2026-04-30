@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginResponse } from '../models/auth.models';
+import { LoginRequest, LoginResponse, OtpVerifyRequest } from '../models/auth.models';
 import { SessionStorageService } from './session-storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,10 @@ export class AuthApiService {
 
   login(payload: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, payload);
+  }
+
+  verifyOtp(payload: OtpVerifyRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/otp/verify`, payload);
   }
 
   logout(): void {

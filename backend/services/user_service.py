@@ -194,6 +194,11 @@ class UserService:
                         """,
                         (payload.activo, payload.activo, user_id),
                     )
+                if payload.mfa_habilitado is not None:
+                    cursor.execute(
+                        "UPDATE usuarios SET mfa_habilitado = %s WHERE id = %s",
+                        (payload.mfa_habilitado, user_id),
+                    )
             connection.commit()
 
         return UserService.get(user_id)

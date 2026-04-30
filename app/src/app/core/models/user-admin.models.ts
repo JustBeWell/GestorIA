@@ -11,4 +11,5 @@ export interface UserCreatePayload {
 export interface UserAdminUpdatePayload {
   rol?: 'administrador' | 'empleado';
   activo?: boolean;
+  mfa_habilitado?: boolean;
 }

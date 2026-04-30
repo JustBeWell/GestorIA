@@ -1,20 +1,42 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from models import LoginRequest, TokenResponse
+from database import db_connection
+from models import LoginRequest, LoginResponse, OtpVerifyRequest, TokenResponse
 from service_config import settings
-from services.auth_service import TokenService, authenticate_user, get_current_user
+from services.auth_service import TokenService, TwoFactorService, authenticate_user, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=LoginResponse)
 async def login(payload: LoginRequest):
     current_user = authenticate_user(payload.dni, payload.password)
+
+    # Si Twilio está configurado, comprobar si el usuario tiene 2FA activo y teléfono
+    if TwoFactorService.is_configured():
+        with db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT u.mfa_habilitado, e.telefono
+                    FROM usuarios u
+                    JOIN empleados e ON e.usuario_id = u.id
+                    WHERE u.id = %s
+                    """,
+                    (current_user.user_id,),
+                )
+                row = cur.fetchone()
+        if row and row[0] and row[1]:
+            session_id, code = TwoFactorService.generate_and_store_otp(current_user.user_id)
+            TwoFactorService.send_sms(row[1], code)
+            return LoginResponse(requires_2fa=True, session_id=session_id)
+
     token, _ = TokenService.create_access_token(
         user_id=current_user.user_id,
         nombre_usuario=current_user.nombre_usuario,
     )
-    return TokenResponse(
+    return LoginResponse(
+        requires_2fa=False,
         access_token=token,
         expires_in=TokenService.get_expiration_seconds(),
         user={
@@ -22,6 +44,37 @@ async def login(payload: LoginRequest):
             "nombre_usuario": current_user.nombre_usuario,
             "role": current_user.role,
         },
+    )
+
+
+@router.post("/otp/verify", response_model=LoginResponse)
+async def verify_otp(payload: OtpVerifyRequest):
+    """Valida el código OTP y devuelve el JWT completo si es correcto."""
+    user_id = TwoFactorService.verify_otp(payload.session_id, payload.code)
+
+    with db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    COALESCE(to_jsonb(u)->>'nombre_usuario', to_jsonb(u)->>'usuario') AS nombre_usuario,
+                    u.rol::text
+                FROM usuarios u
+                WHERE u.id = %s
+                """,
+                (user_id,),
+            )
+            row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    nombre_usuario, role = row
+    token, _ = TokenService.create_access_token(user_id=user_id, nombre_usuario=nombre_usuario)
+    return LoginResponse(
+        requires_2fa=False,
+        access_token=token,
+        expires_in=TokenService.get_expiration_seconds(),
+        user={"id": user_id, "nombre_usuario": nombre_usuario, "role": role},
     )
 
 @router.get("/token")

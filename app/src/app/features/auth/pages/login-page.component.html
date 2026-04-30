@@ -13,26 +13,58 @@
 
   <section class="login-panel">
     <div class="card">
-      <h1>GestorIA</h1>
-      <p>Introduce tu DNI y contraseña para acceder al portal</p>
+      @if (step() === 'credentials') {
+        <h1>GestorIA</h1>
+        <p>Introduce tu DNI y contraseña para acceder al portal</p>
 
-      <form [formGroup]="loginForm" (ngSubmit)="login()">
-        <label for="dni">DNI</label>
-        <input id="dni" type="text" formControlName="dni" placeholder="12345678A" />
-        @if (hasError('dni')) {
-          <small class="field-error">{{ getFieldError('dni') }}</small>
-        }
+        <form [formGroup]="loginForm" (ngSubmit)="login()">
+          <label for="dni">DNI</label>
+          <input id="dni" type="text" formControlName="dni" placeholder="12345678A" />
+          @if (hasError('dni')) {
+            <small class="field-error">{{ getFieldError('dni') }}</small>
+          }
 
-        <label for="password">Contraseña</label>
-        <input id="password" type="password" formControlName="password" placeholder="***********" />
-        @if (hasError('password')) {
-          <small class="field-error">{{ getFieldError('password') }}</small>
-        }
+          <label for="password">Contraseña</label>
+          <input id="password" type="password" formControlName="password" placeholder="***********" />
+          @if (hasError('password')) {
+            <small class="field-error">{{ getFieldError('password') }}</small>
+          }
 
-        <button type="submit" [disabled]="loading()">
-          {{ loading() ? 'Entrando...' : 'Acceder' }}
+          <button type="submit" [disabled]="loading()">
+            {{ loading() ? 'Verificando...' : 'Acceder' }}
+          </button>
+        </form>
+      }
+
+      @if (step() === 'otp') {
+        <h1>Verificación</h1>
+        <p class="otp-hint">Hemos enviado un código de 6 dígitos a tu móvil. Introdúcelo a continuación.</p>
+
+        <form [formGroup]="otpForm" (ngSubmit)="submitOtp()">
+          <label for="otp-code">Código de verificación</label>
+          <input
+            id="otp-code"
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            autocomplete="one-time-code"
+            formControlName="code"
+            placeholder="123456"
+            class="otp-input"
+          />
+          @if (hasOtpError()) {
+            <small class="field-error">Introduce el código de 6 dígitos enviado a tu móvil.</small>
+          }
+
+          <button type="submit" [disabled]="loading()">
+            {{ loading() ? 'Verificando...' : 'Confirmar código' }}
+          </button>
+        </form>
+
+        <button type="button" class="back-link" (click)="backToCredentials()">
+          ← Volver al login
         </button>
-      </form>
+      }
 
       @if (errorMessage()) {
         <p class="message error" aria-live="polite">{{ errorMessage() }}</p>

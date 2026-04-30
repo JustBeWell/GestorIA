@@ -147,7 +147,7 @@ export class AdminPageComponent implements OnInit {
   // ─── Modal editar ──────────────────────────────────────────────────────────
   protected openEditModal(emp: AdminEmpleadoResumen): void {
     this.editTarget = emp;
-    this.editForm = { rol: emp.rol as 'administrador' | 'empleado', activo: emp.activo };
+    this.editForm = { rol: emp.rol as 'administrador' | 'empleado', activo: emp.activo, mfa_habilitado: emp.mfa_habilitado };
     this.modalError.set('');
     this.showEditModal = true;
   }
@@ -165,6 +165,7 @@ export class AdminPageComponent implements OnInit {
     this.intranetService.adminUpdateEmpleado(this.editTarget.usuario_id, {
       rol: this.editForm.rol,
       activo: this.editForm.activo,
+      mfa_habilitado: this.editForm.mfa_habilitado,
     }).subscribe({
       next: () => {
         this.modalSaving.set(false);

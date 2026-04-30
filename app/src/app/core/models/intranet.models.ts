@@ -104,6 +104,7 @@ export interface AdminEmpleadoResumen {
   nombre_completo: string;
   rol: string;
   activo: boolean;
+  mfa_habilitado: boolean;
   horas_mes: number;
   turno_activo: boolean;
   trabajos_en_curso: number;

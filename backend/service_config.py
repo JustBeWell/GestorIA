@@ -31,6 +31,10 @@ class ServiceSettings:
 	openai_api_key: str | None = os.getenv("OPENAI_API_KEY", None)
 	frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:4200")
 
+	twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
+	twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
+	twilio_from_number: str | None = os.getenv("TWILIO_FROM_NUMBER")
+
 	@property
 	def effective_database_url(self) -> str:
 		"""Get explicit DATABASE_URL or build one from PostgreSQL parts."""

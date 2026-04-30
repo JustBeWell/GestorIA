@@ -28,9 +28,19 @@ export class LoginPageComponent {
   protected readonly submitAttempted = signal(false);
   protected readonly currentHeroVideoIndex = signal(0);
 
+  /** Paso del flujo de login: credenciales o código OTP */
+  protected readonly step = signal<'credentials' | 'otp'>('credentials');
+  /** session_id devuelto por el backend cuando requires_2fa=true */
+  protected readonly sessionId = signal('');
+  protected readonly otpSubmitAttempted = signal(false);
+
   protected readonly loginForm = this.fb.nonNullable.group({
     dni: ['', [Validators.required, Validators.minLength(9), Validators.maxLength(9)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
+  });
+
+  protected readonly otpForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6), Validators.pattern(/^\d{6}$/)]],
   });
 
   protected get currentHeroVideo(): string {
@@ -52,19 +62,14 @@ export class LoginPageComponent {
 
     this.authApiService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
-        this.sessionStorageService.setSession(response.access_token, response.user);
-        this.successMessage.set(`Accediendo al sistema como ${response.user.role}...`);
-
-        this.empleadoService.me().pipe(take(1)).subscribe({
-          next: () => {
-            this.loading.set(false);
-            this.authApiService.redirectToDashboard();
-          },
-          error: () => {
-            this.loading.set(false);
-            this.authApiService.redirectToDashboard();
-          },
-        });
+        if (response.requires_2fa) {
+          // Paso 2FA: mostrar formulario OTP
+          this.sessionId.set(response.session_id!);
+          this.step.set('otp');
+          this.loading.set(false);
+          return;
+        }
+        this.completeLogin(response.access_token!, response.user!);
       },
       error: (err: HttpErrorResponse) => {
         const detail = err?.error?.detail ?? 'No se pudo iniciar sesión';
@@ -72,12 +77,67 @@ export class LoginPageComponent {
         this.loading.set(false);
       },
     });
+  }
 
+  protected submitOtp(): void {
+    this.otpSubmitAttempted.set(true);
+
+    if (this.otpForm.invalid) {
+      this.otpForm.markAllAsTouched();
+      this.errorMessage.set('Introduce un código de 6 dígitos.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    this.authApiService.verifyOtp({
+      session_id: this.sessionId(),
+      code: this.otpForm.getRawValue().code,
+    }).subscribe({
+      next: (response) => {
+        this.completeLogin(response.access_token!, response.user!);
+      },
+      error: (err: HttpErrorResponse) => {
+        const detail = err?.error?.detail ?? 'Código inválido o expirado';
+        this.errorMessage.set(detail);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected backToCredentials(): void {
+    this.step.set('credentials');
+    this.sessionId.set('');
+    this.otpForm.reset();
+    this.otpSubmitAttempted.set(false);
+    this.errorMessage.set('');
+  }
+
+  private completeLogin(token: string, user: { id: string; nombre_usuario: string; role: string }): void {
+    this.sessionStorageService.setSession(token, user);
+    this.successMessage.set(`Accediendo al sistema como ${user.role}...`);
+
+    this.empleadoService.me().pipe(take(1)).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.authApiService.redirectToDashboard();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.authApiService.redirectToDashboard();
+      },
+    });
   }
 
   protected hasError(fieldName: 'dni' | 'password'): boolean {
     const field = this.loginForm.controls[fieldName];
     return field.invalid && (field.touched || this.submitAttempted());
+  }
+
+  protected hasOtpError(): boolean {
+    const field = this.otpForm.controls.code;
+    return field.invalid && (field.touched || this.otpSubmitAttempted());
   }
 
   protected getFieldError(fieldName: 'dni' | 'password'): string {
@@ -108,3 +168,4 @@ export class LoginPageComponent {
     void videoElement.play().catch(() => undefined);
   }
 }
+

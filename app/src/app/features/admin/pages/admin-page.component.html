@@ -573,6 +573,14 @@
               <span class="toggle-label">{{ editForm.activo ? 'Activo' : 'Inactivo' }}</span>
             </label>
           </div>
+          <div class="form-field form-field--toggle">
+            <label>2FA por SMS</label>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editForm.mfa_habilitado"/>
+              <span class="toggle-track"></span>
+              <span class="toggle-label">{{ editForm.mfa_habilitado ? 'Activado' : 'Desactivado' }}</span>
+            </label>
+          </div>
         </div>
       </div>
       <div class="modal-footer">
