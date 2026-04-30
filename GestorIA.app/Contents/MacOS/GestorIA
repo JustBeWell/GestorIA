@@ -25,4 +25,4 @@ export GESTORIA_PROJECT_ROOT="$PROJECT_ROOT"
 # cd al directorio de la app antes de lanzar Electron
 # (evita EPERM al leer package.json con rutas relativas)
 cd "$APP_DIR"
-exec "$ELECTRON_BIN" .
+exec "$ELECTRON_BIN" "$APP_DIR/electron/main.cjs"
