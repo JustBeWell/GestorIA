@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Launcher macOS .app — abre Terminal y ejecuta scripts/launch.sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+LAUNCH_SCRIPT="$PROJECT_ROOT/scripts/launch.sh"
+
+chmod +x "$LAUNCH_SCRIPT"
+
+osascript -e "
+tell application \"Terminal\"
+  activate
+  do script \"bash '$LAUNCH_SCRIPT'\"
+end tell"
