@@ -4,10 +4,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 APP_DIR="$PROJECT_ROOT/app"
 
-# Quitar quarantine del Electron.app en node_modules y del código fuente
-# (macOS bloquea lectura de ficheros a procesos con quarantine activo)
-xattr -cr "$APP_DIR/node_modules/electron/dist/Electron.app" 2>/dev/null || true
-xattr -cr "$APP_DIR/electron" 2>/dev/null || true
+# Firma ad-hoc de Electron.app para que macOS no restrinja el acceso a ficheros.
+# Es necesario después de 'npm install' o cuando macOS aplica quarantine.
+codesign --force --deep --sign - "$ELECTRON_BIN" 2>/dev/null || true
 
 # Binario nativo de Electron (no necesita Node en PATH)
 ELECTRON_BIN="$APP_DIR/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
