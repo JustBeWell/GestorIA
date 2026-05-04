@@ -11,6 +11,7 @@ import {
   ClienteDetailItem,
   ClienteCreate,
   ClienteUpdate,
+  TipoCliente,
 } from '../../../core/models/intranet.models';
 import { IntranetService } from '../../../core/services/intranet.service';
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
@@ -26,6 +27,7 @@ interface ClienteForm {
   codigo_postal: string;
   ciudad: string;
   provincia: string;
+  tipo_cliente: TipoCliente;
 }
 
 interface FormErrors {
@@ -36,6 +38,12 @@ interface FormErrors {
 
 const CIF_NIF_RE = /^([0-9]{8}[A-Za-z]|[XYZxyz][0-9]{7}[A-Za-z]|[ABCDEFGHJNPQRSUVWabcdefghjnpqrsuvw][0-9]{7}[0-9A-Ja-j])$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const AVATAR_COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
+  '#10b981', '#3b82f6', '#ef4444', '#14b8a6',
+  '#f97316', '#84cc16',
+];
 
 @Component({
   selector: 'app-clientes-page',
@@ -60,6 +68,10 @@ export class ClientesPageComponent implements OnInit {
   protected selectedItem: ClienteTabItem | null = null;
   protected searchQuery = '';
   protected showInactive = false;
+  protected activeFilter: string = 'Todos';
+
+  protected readonly tipoOpciones: TipoCliente[] = ['Sociedad', 'Autónomo', 'SCP', 'CB'];
+  protected readonly currentYear = new Date().getFullYear();
 
   protected form: ClienteForm = this.emptyForm();
   protected formErrors: FormErrors = {};
@@ -75,6 +87,7 @@ export class ClientesPageComponent implements OnInit {
     const q = this.searchQuery.trim().toLowerCase();
     return this.tabData.clientes.filter((c) => {
       if (!this.showInactive && !c.activo) return false;
+      if (this.activeFilter !== 'Todos' && c.tipo_cliente !== this.activeFilter) return false;
       if (!q) return true;
       return (
         c.nombre_fiscal.toLowerCase().includes(q) ||
@@ -150,6 +163,7 @@ export class ClientesPageComponent implements OnInit {
       codigo_postal: '',
       ciudad: '',
       provincia: '',
+      tipo_cliente: (item.tipo_cliente as TipoCliente) ?? 'Sociedad',
     };
     this.modalMode.set('edit');
     // Enrich form with full detail (address fields)
@@ -165,6 +179,7 @@ export class ClientesPageComponent implements OnInit {
           codigo_postal: d.codigo_postal ?? '',
           ciudad: d.ciudad ?? '',
           provincia: d.provincia ?? '',
+          tipo_cliente: (d.tipo_cliente as TipoCliente) ?? 'Sociedad',
         };
       },
     });
@@ -248,6 +263,42 @@ export class ClientesPageComponent implements OnInit {
     return parts.length ? parts.join(' · ') : '—';
   }
 
+  /** Formats a billing number as € XX.XXX (thousands separator, no decimals) */
+  protected formatBilling(value: number): string {
+    if (!value) return '€ 0';
+    return '€ ' + new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value);
+  }
+
+  /** Returns relative time label: Hoy / Ayer / N días / N meses */
+  protected getRelativeTime(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const diff = Date.now() - new Date(iso).getTime();
+    const days = Math.floor(diff / 86_400_000);
+    if (days === 0) return 'Hoy';
+    if (days === 1) return 'Ayer';
+    if (days < 30) return `${days} días`;
+    const months = Math.floor(days / 30);
+    return months === 1 ? '1 mes' : `${months} meses`;
+  }
+
+  /** Returns 1–2 capital initials from a name */
+  protected getInitials(name: string): string {
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('');
+  }
+
+  /** Deterministic color from name string */
+  protected getAvatarColor(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
   // ── Private ───────────────────────────────────────────────────────────────
   private validateForm(): boolean {
     let valid = true;
@@ -280,6 +331,7 @@ export class ClientesPageComponent implements OnInit {
       codigo_postal: this.form.codigo_postal.trim() || null,
       ciudad: this.form.ciudad.trim() || null,
       provincia: this.form.provincia.trim() || null,
+      tipo_cliente: this.form.tipo_cliente,
     };
   }
 
@@ -293,6 +345,7 @@ export class ClientesPageComponent implements OnInit {
       codigo_postal: '',
       ciudad: '',
       provincia: '',
+      tipo_cliente: 'Sociedad',
     };
   }
 

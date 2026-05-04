@@ -6,20 +6,27 @@
 
       <!-- Topbar -->
       <header class="topbar">
-        <div class="breadcrumbs">Inicio / <strong>Clientes</strong></div>
+        <div class="breadcrumbs">Inicio / <strong>Gestión de clientes</strong></div>
         <div class="topbar-actions">
-          <label class="search-field">
+          <label class="search-field-global">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input
               type="text"
-              placeholder="Buscar por nombre, CIF o email..."
+              placeholder="Buscar cliente, trabajo, factura..."
               [(ngModel)]="searchQuery" />
-            @if (searchQuery) {
-              <button type="button" class="clear-search" (click)="searchQuery = ''">×</button>
-            }
+            <kbd>⌘K</kbd>
           </label>
+          <button type="button" class="topbar-icon-btn" title="Notificaciones">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+          @if (isAdmin) {
+            <button type="button" class="primary-button small" (click)="openCreate()">+ Nuevo</button>
+          }
         </div>
       </header>
 
@@ -28,53 +35,24 @@
         <div>
           <h1 class="page-title">Gestión de clientes</h1>
           <p class="page-subtitle">
-            {{ resumen.activos }} activos · {{ resumen.total }} en total
+            {{ resumen.total }} clientes asignados · {{ resumen.activos }} activos
           </p>
         </div>
         <div class="page-header-actions">
-          @if (inactivosCount > 0) {
-            <button type="button" class="ghost-button" (click)="showInactive = !showInactive">
-              {{ showInactive ? 'Ocultar inactivos' : 'Mostrar inactivos (' + inactivosCount + ')' }}
-            </button>
-          }
+          <button type="button" class="export-button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Exportar
+          </button>
           @if (isAdmin) {
             <button type="button" class="primary-button" (click)="openCreate()">
               + Nuevo cliente
             </button>
           }
         </div>
-      </section>
-
-      <!-- Stat cards -->
-      <section class="stats-grid">
-        <article class="panel stat-card">
-          <div class="stat-header">
-            <span class="stat-title">Clientes activos</span>
-            <span class="stat-icon blue">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </span>
-          </div>
-          <p class="stat-value">{{ resumen.activos }}</p>
-          <p class="stat-helper">de {{ resumen.total }} en total</p>
-        </article>
-
-        <article class="panel stat-card">
-          <div class="stat-header">
-            <span class="stat-title">Resultados visibles</span>
-            <span class="stat-icon green">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </span>
-          </div>
-          <p class="stat-value">{{ filteredClientes.length }}</p>
-          <p class="stat-helper">{{ searchQuery ? 'con filtro activo' : 'sin filtro' }}</p>
-        </article>
       </section>
 
       <!-- Loading -->
@@ -101,37 +79,75 @@
 
       <!-- Content -->
       @else {
-        @if (filteredClientes.length === 0) {
-          <section class="empty-state panel">
-            @if (searchQuery) {
-              <p class="empty-icon">🔍</p>
-              <p class="empty-title">Sin resultados para «{{ searchQuery }}»</p>
-              <p class="empty-sub">Prueba con otro nombre, CIF o email.</p>
-              <button type="button" class="secondary-button" (click)="searchQuery = ''">Limpiar búsqueda</button>
-            } @else {
-              <p class="empty-icon">🏢</p>
-              <p class="empty-title">Todavía no hay clientes registrados</p>
-              @if (isAdmin) {
-                <p class="empty-sub">Empieza dando de alta el primer cliente.</p>
-                <button type="button" class="primary-button" (click)="openCreate()">+ Nuevo cliente</button>
+        <section class="panel table-section">
+
+          <!-- Toolbar: search + tipo tabs + filtros -->
+          <div class="table-toolbar">
+            <label class="table-search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Buscar por nombre o NIF/CIF..."
+                [(ngModel)]="searchQuery" />
+              @if (searchQuery) {
+                <button type="button" class="clear-search" (click)="searchQuery = ''">×</button>
               }
-            }
-          </section>
-        } @else {
-          <section class="panel table-section">
+            </label>
+
+            <nav class="tipo-tabs" aria-label="Filtrar por tipo">
+              <button
+                type="button"
+                class="tipo-tab"
+                [class.active]="activeFilter === 'Todos'"
+                (click)="activeFilter = 'Todos'">Todos</button>
+              @for (tipo of tipoOpciones; track tipo) {
+                <button
+                  type="button"
+                  class="tipo-tab"
+                  [class.active]="activeFilter === tipo"
+                  (click)="activeFilter = tipo">{{ tipo }}</button>
+              }
+            </nav>
+
+            <button type="button" class="filter-button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="6" x2="20" y2="6"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+                <line x1="11" y1="18" x2="13" y2="18"/>
+              </svg>
+              Filtros
+            </button>
+          </div>
+
+          @if (filteredClientes.length === 0) {
+            <div class="empty-state">
+              @if (searchQuery || activeFilter !== 'Todos') {
+                <p class="empty-icon">🔍</p>
+                <p class="empty-title">Sin resultados</p>
+                <p class="empty-sub">Prueba con otro nombre, CIF o cambia el filtro.</p>
+                <button type="button" class="secondary-button" (click)="searchQuery = ''; activeFilter = 'Todos'">Limpiar filtros</button>
+              } @else {
+                <p class="empty-icon">🏢</p>
+                <p class="empty-title">Todavía no hay clientes registrados</p>
+                @if (isAdmin) {
+                  <p class="empty-sub">Empieza dando de alta el primer cliente.</p>
+                  <button type="button" class="primary-button" (click)="openCreate()">+ Nuevo cliente</button>
+                }
+              }
+            </div>
+          } @else {
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Nombre fiscal</th>
-                  <th>CIF/NIF</th>
-                  <th>Email</th>
-                  <th>Teléfono</th>
-                  <th class="text-right">Trabajos</th>
-                  <th class="text-right">Pendiente</th>
-                  <th>Estado</th>
-                  @if (isAdmin) {
-                    <th class="col-actions">Acciones</th>
-                  }
+                  <th>CLIENTE</th>
+                  <th>NIF / CIF</th>
+                  <th>TIPO</th>
+                  <th class="text-right">FACTURACIÓN {{ currentYear }}</th>
+                  <th>ESTADO</th>
+                  <th>ÚLTIMA ACTIVIDAD</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -140,65 +156,63 @@
                     class="table-row"
                     [class.row-inactive]="!cliente.activo"
                     (click)="openDetail(cliente)">
-                    <td class="cell-primary">{{ cliente.nombre_fiscal }}</td>
-                    <td class="cell-mono">{{ cliente.cif_nif }}</td>
-                    <td class="cell-secondary">{{ cliente.email ?? '—' }}</td>
-                    <td class="cell-secondary">{{ cliente.telefono ?? '—' }}</td>
-                    <td class="text-right">
-                      @if (cliente.trabajos_abiertos > 0) {
-                        <span class="badge badge-blue">{{ cliente.trabajos_abiertos }}</span>
-                      } @else {
-                        <span class="cell-muted">0</span>
-                      }
-                    </td>
-                    <td class="text-right">
-                      @if (cliente.pendiente_total > 0) {
-                        <span class="cell-warn">{{ formatCurrency(cliente.pendiente_total) }}</span>
-                      } @else {
-                        <span class="cell-muted">—</span>
-                      }
-                    </td>
+
+                    <!-- CLIENTE: avatar + nombre + referencia -->
                     <td>
-                      <span class="badge"
-                        [class.badge-green]="cliente.activo"
-                        [class.badge-gray]="!cliente.activo">
+                      <div class="client-cell">
+                        <div
+                          class="avatar"
+                          [style.background-color]="getAvatarColor(cliente.nombre_fiscal)">
+                          {{ getInitials(cliente.nombre_fiscal) }}
+                        </div>
+                        <div class="client-info">
+                          <span class="client-name">{{ cliente.nombre_fiscal }}</span>
+                          <span class="client-ref">{{ cliente.referencia }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- NIF / CIF -->
+                    <td class="cell-mono">{{ cliente.cif_nif }}</td>
+
+                    <!-- TIPO -->
+                    <td>
+                      <span class="tipo-badge">{{ cliente.tipo_cliente }}</span>
+                    </td>
+
+                    <!-- FACTURACIÓN AÑO -->
+                    <td class="text-right cell-billing">
+                      {{ formatBilling(cliente.facturacion_anio) }}
+                    </td>
+
+                    <!-- ESTADO -->
+                    <td>
+                      <span
+                        class="estado-badge"
+                        [class.estado-activo]="cliente.activo"
+                        [class.estado-inactivo]="!cliente.activo">
                         {{ cliente.activo ? 'Activo' : 'Inactivo' }}
                       </span>
                     </td>
-                    @if (isAdmin) {
-                      <td class="col-actions" (click)="$event.stopPropagation()">
-                        <button
-                          type="button"
-                          class="icon-button"
-                          title="Editar cliente"
-                          (click)="openEdit(cliente, $event)">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                          </svg>
-                        </button>
-                        @if (cliente.activo) {
-                          <button
-                            type="button"
-                            class="icon-button icon-danger"
-                            title="Dar de baja"
-                            (click)="openDelete(cliente, $event)">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <polyline points="3 6 5 6 21 6"/>
-                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                              <path d="M10 11v6"/><path d="M14 11v6"/>
-                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                            </svg>
-                          </button>
-                        }
-                      </td>
-                    }
+
+                    <!-- ÚLTIMA ACTIVIDAD -->
+                    <td class="cell-secondary">
+                      {{ getRelativeTime(cliente.ultima_actividad) }}
+                    </td>
+
+                    <!-- Chevron -->
+                    <td class="cell-chevron">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
-          </section>
-        }
+          }
+
+        </section>
       }
 
     </section>
@@ -210,7 +224,17 @@
   <div class="modal-backdrop" (click)="closeModal()">
     <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ selectedItem?.nombre_fiscal }}</h2>
+        <div class="modal-title-group">
+          <div
+            class="avatar avatar-lg"
+            [style.background-color]="getAvatarColor(selectedItem?.nombre_fiscal ?? '')">
+            {{ getInitials(selectedItem?.nombre_fiscal ?? '') }}
+          </div>
+          <div>
+            <h2>{{ selectedItem?.nombre_fiscal }}</h2>
+            <span class="modal-ref">{{ selectedItem?.referencia }}</span>
+          </div>
+        </div>
         <button type="button" class="modal-close" (click)="closeModal()">×</button>
       </div>
 
@@ -225,6 +249,8 @@
           <div class="detail-section">
             <h3 class="detail-section-title">Datos fiscales y de contacto</h3>
             <dl class="detail-list">
+              <dt>Tipo</dt>
+              <dd><span class="tipo-badge">{{ selectedDetail.tipo_cliente }}</span></dd>
               <dt>CIF / NIF</dt><dd class="mono">{{ selectedDetail.cif_nif }}</dd>
               <dt>Email</dt><dd>{{ selectedDetail.email ?? '—' }}</dd>
               <dt>Teléfono</dt><dd>{{ selectedDetail.telefono ?? '—' }}</dd>
@@ -235,9 +261,10 @@
               <dt>Fecha de alta</dt><dd>{{ formatDate(selectedDetail.created_at) }}</dd>
               <dt>Estado</dt>
               <dd>
-                <span class="badge"
-                  [class.badge-green]="selectedDetail.activo"
-                  [class.badge-gray]="!selectedDetail.activo">
+                <span
+                  class="estado-badge"
+                  [class.estado-activo]="selectedDetail.activo"
+                  [class.estado-inactivo]="!selectedDetail.activo">
                   {{ selectedDetail.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </dd>
@@ -258,6 +285,10 @@
               <div class="detail-kpi">
                 <span class="kpi-label">Facturas emitidas</span>
                 <span class="kpi-value">{{ selectedDetail.facturas_count }}</span>
+              </div>
+              <div class="detail-kpi">
+                <span class="kpi-label">Facturación {{ currentYear }}</span>
+                <span class="kpi-value kpi-blue">{{ formatBilling(selectedDetail.facturacion_anio) }}</span>
               </div>
               <div class="detail-kpi">
                 <span class="kpi-label">Deuda pendiente</span>
@@ -330,6 +361,19 @@
             @if (formErrors.cif_nif) {
               <p class="field-error">{{ formErrors.cif_nif }}</p>
             }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="tipo_cliente">Tipo de entidad</label>
+            <select
+              id="tipo_cliente"
+              class="form-input"
+              [(ngModel)]="form.tipo_cliente"
+              name="tipo_cliente">
+              @for (tipo of tipoOpciones; track tipo) {
+                <option [value]="tipo">{{ tipo }}</option>
+              }
+            </select>
           </div>
 
           <div class="form-group">
