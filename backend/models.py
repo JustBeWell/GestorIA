@@ -283,16 +283,25 @@ class ClienteDetailItem(BaseModel):
 	pendiente_total: float
 
 
+class TrabajoEmpleadoAsignado(BaseModel):
+	empleado_id: str
+	nombre_completo: str
+
+
 class TrabajoTabItem(BaseModel):
 	trabajo_id: str
+	nro_trabajo: int
 	titulo: str
 	estado: str
 	prioridad: str
 	cliente_id: str
 	cliente_nombre: str
+	nro_cliente: int | None = None
 	fecha_inicio: date | None = None
 	fecha_objetivo: date | None = None
 	fecha_cierre: date | None = None
+	nota_bloqueo: str | None = None
+	empleados_asignados: list[TrabajoEmpleadoAsignado] = []
 
 
 class TrabajosTabResponse(BaseModel):
@@ -300,6 +309,93 @@ class TrabajosTabResponse(BaseModel):
 	resumen: TrabajosResumen
 	trabajos: list[TrabajoTabItem]
 	paginacion: PaginacionMeta
+
+
+ESTADOS_TRABAJO_VALIDOS = {'pendiente', 'en_curso', 'bloqueado', 'finalizado', 'cancelado'}
+PRIORIDADES_TRABAJO_VALIDAS = {'baja', 'media', 'alta', 'urgente', 'no_aplica'}
+
+
+class TrabajoCreate(BaseModel):
+	titulo: str = Field(..., min_length=2, max_length=255)
+	cliente_id: str
+	descripcion: str | None = None
+	prioridad: str = Field(default='media')
+	fecha_inicio: date | None = None
+	fecha_objetivo: date | None = None
+	nota_bloqueo: str | None = Field(default=None, max_length=500)
+
+	model_config = ConfigDict(str_strip_whitespace=True)
+
+	@field_validator('prioridad')
+	@classmethod
+	def validate_prioridad(cls, v: str) -> str:
+		if v not in PRIORIDADES_TRABAJO_VALIDAS:
+			raise ValueError(f'Prioridad inválida. Valores permitidos: {PRIORIDADES_TRABAJO_VALIDAS}')
+		return v
+
+
+
+class TrabajoUpdate(BaseModel):
+	titulo: str | None = Field(default=None, min_length=2, max_length=255)
+	descripcion: str | None = None
+	estado: str | None = None
+	prioridad: str | None = None
+	fecha_inicio: date | None = None
+	fecha_objetivo: date | None = None
+	fecha_cierre: date | None = None
+	nota_bloqueo: str | None = Field(default=None, max_length=500)
+
+	model_config = ConfigDict(str_strip_whitespace=True)
+
+	@field_validator('estado')
+	@classmethod
+	def validate_estado(cls, v: str | None) -> str | None:
+		if v is not None and v not in ESTADOS_TRABAJO_VALIDOS:
+			raise ValueError(f'Estado inválido. Valores permitidos: {ESTADOS_TRABAJO_VALIDOS}')
+		return v
+
+	@field_validator('prioridad')
+	@classmethod
+	def validate_prioridad(cls, v: str | None) -> str | None:
+		if v is not None and v not in PRIORIDADES_TRABAJO_VALIDAS:
+			raise ValueError(f'Prioridad inválida. Valores permitidos: {PRIORIDADES_TRABAJO_VALIDAS}')
+		return v
+
+
+class TrabajoDetailItem(BaseModel):
+	trabajo_id: str
+	nro_trabajo: int
+	titulo: str
+	descripcion: str | None
+	estado: str
+	prioridad: str
+	cliente_id: str
+	cliente_nombre: str
+	nro_cliente: int | None = None
+	fecha_inicio: date | None
+	fecha_objetivo: date | None
+	fecha_cierre: date | None
+	nota_bloqueo: str | None
+	creado_por_nombre: str
+	created_at: datetime
+	empleados_asignados: list[TrabajoEmpleadoAsignado] = []
+
+
+class TrabajoEmpleadoRequest(BaseModel):
+	empleado_id: str
+
+
+class TrabajoComentarioCreate(BaseModel):
+	texto: str = Field(..., min_length=1, max_length=1000)
+
+
+class TrabajoComentarioItem(BaseModel):
+	comentario_id: str
+	trabajo_id: str
+	autor_id: str
+	autor_nombre: str
+	texto: str
+	created_at: datetime
 
 
 class FacturaPagoTabItem(BaseModel):

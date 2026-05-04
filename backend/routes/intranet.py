@@ -24,7 +24,13 @@ from models import (
     PagosTabResponse,
     PortalIntranetHomeResponse,
     QuarterSeriesResponse,
+    TrabajoComentarioCreate,
+    TrabajoComentarioItem,
+    TrabajoCreate,
+    TrabajoDetailItem,
+    TrabajoEmpleadoRequest,
     TrabajosTabResponse,
+    TrabajoUpdate,
 )
 from services.admin_service import AdminService
 from services.auth_service import get_current_user
@@ -424,6 +430,124 @@ async def intranet_trabajos(
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.post("/trabajos", response_model=TrabajoDetailItem, status_code=status.HTTP_201_CREATED)
+async def intranet_trabajos_create(
+    payload: TrabajoCreate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        result = TrabajosService.create_trabajo(payload, current_user.user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    return result
+
+
+@router.get("/trabajos/{trabajo_id}", response_model=TrabajoDetailItem)
+async def intranet_trabajo_detail(
+    trabajo_id: str,
+    current_user=Depends(get_current_user),
+):
+    result = TrabajosService.get_trabajo_detail(trabajo_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado")
+    return result
+
+
+@router.put("/trabajos/{trabajo_id}", response_model=TrabajoDetailItem)
+async def intranet_trabajos_update(
+    trabajo_id: str,
+    payload: TrabajoUpdate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    result = TrabajosService.update_trabajo(trabajo_id, payload)
+    if not result:
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado")
+    return result
+
+
+@router.delete("/trabajos/{trabajo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def intranet_trabajos_delete(
+    trabajo_id: str,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    deleted = TrabajosService.delete_trabajo(trabajo_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado o ya inactivo")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/trabajos/{trabajo_id}/empleados")
+async def intranet_trabajos_empleados(
+    trabajo_id: str,
+    current_user=Depends(get_current_user),
+):
+    result = TrabajosService.get_empleados_asignados(trabajo_id)
+    return {"empleados": result}
+
+
+@router.post("/trabajos/{trabajo_id}/empleados", status_code=status.HTTP_201_CREATED)
+async def intranet_trabajos_asignar_empleado(
+    trabajo_id: str,
+    payload: TrabajoEmpleadoRequest,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        result = TrabajosService.assign_empleado(trabajo_id, payload.empleado_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PsycopgError as exc:
+        detail = exc.pgerror or str(exc)
+        if "uq_te_trabajo_empleado_activo" in detail:
+            raise HTTPException(status_code=409, detail="El empleado ya está asignado a este trabajo") from exc
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    return {"empleados": result}
+
+
+@router.delete("/trabajos/{trabajo_id}/empleados/{empleado_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def intranet_trabajos_desasignar_empleado(
+    trabajo_id: str,
+    empleado_id: str,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    removed = TrabajosService.unassign_empleado(trabajo_id, empleado_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Asignación no encontrada")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/trabajos/{trabajo_id}/comentarios", response_model=list[TrabajoComentarioItem])
+async def intranet_trabajos_comentarios(
+    trabajo_id: str,
+    current_user=Depends(get_current_user),
+):
+    return TrabajosService.get_comentarios(trabajo_id)
+
+
+@router.post("/trabajos/{trabajo_id}/comentarios", response_model=TrabajoComentarioItem, status_code=status.HTTP_201_CREATED)
+async def intranet_trabajos_add_comentario(
+    trabajo_id: str,
+    payload: TrabajoComentarioCreate,
+    current_user=Depends(get_current_user),
+):
+    try:
+        result = TrabajosService.add_comentario(trabajo_id, current_user.user_id, payload.texto)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return result
 
 
 @router.get("/pagos", response_model=PagosTabResponse)

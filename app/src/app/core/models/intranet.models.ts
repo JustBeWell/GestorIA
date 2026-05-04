@@ -267,3 +267,86 @@ export interface ClienteCreate {
 }
 
 export type ClienteUpdate = Partial<ClienteCreate>;
+
+// ── Trabajos ─────────────────────────────────────────────────────────────────
+
+export type EstadoTrabajo = 'pendiente' | 'en_curso' | 'bloqueado' | 'finalizado' | 'cancelado';
+export type PrioridadTrabajo = 'baja' | 'media' | 'alta' | 'urgente' | 'no_aplica';
+
+export interface TrabajoEmpleadoAsignado {
+  empleado_id: string;
+  nombre_completo: string;
+}
+
+export interface TrabajoTabItem {
+  trabajo_id: string;
+  nro_trabajo: number;
+  titulo: string;
+  estado: EstadoTrabajo;
+  prioridad: PrioridadTrabajo;
+  cliente_id: string;
+  cliente_nombre: string;
+  nro_cliente: number | null;
+  fecha_inicio: string | null;
+  fecha_objetivo: string | null;
+  fecha_cierre: string | null;
+  nota_bloqueo: string | null;
+  empleados_asignados: TrabajoEmpleadoAsignado[];
+}
+
+export interface TrabajosTabResponse {
+  usuario: IntranetUsuarioResumen;
+  resumen: TrabajosResumen;
+  trabajos: TrabajoTabItem[];
+  paginacion: PaginationMeta;
+}
+
+export interface TrabajoDetailItem {
+  trabajo_id: string;
+  nro_trabajo: number;
+  titulo: string;
+  descripcion: string | null;
+  estado: EstadoTrabajo;
+  prioridad: PrioridadTrabajo;
+  cliente_id: string;
+  cliente_nombre: string;
+  nro_cliente: number | null;
+  fecha_inicio: string | null;
+  fecha_objetivo: string | null;
+  fecha_cierre: string | null;
+  nota_bloqueo: string | null;
+  creado_por_nombre: string;
+  created_at: string;
+  empleados_asignados: TrabajoEmpleadoAsignado[];
+}
+
+export interface TrabajoCreate {
+  titulo: string;
+  cliente_id: string;
+  descripcion?: string | null;
+  prioridad?: PrioridadTrabajo;
+  fecha_inicio?: string | null;
+  fecha_objetivo?: string | null;
+  nota_bloqueo?: string | null;
+}
+
+export interface TrabajoUpdate {
+  titulo?: string;
+  descripcion?: string | null;
+  estado?: EstadoTrabajo;
+  prioridad?: PrioridadTrabajo;
+  fecha_inicio?: string | null;
+  fecha_objetivo?: string | null;
+  fecha_cierre?: string | null;
+  nota_bloqueo?: string | null;
+}
+
+export interface TrabajoComentario {
+  comentario_id: string;
+  trabajo_id: string;
+  autor_id: string;
+  autor_nombre: string;
+  texto: string;
+  created_at: string;
+}
+

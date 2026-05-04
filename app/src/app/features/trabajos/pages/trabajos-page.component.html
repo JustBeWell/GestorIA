@@ -3,25 +3,432 @@
     <app-intranet-sidebar />
 
     <section class="content">
+
+      <!-- Topbar -->
       <header class="topbar">
-        <div class="breadcrumbs">Inicio / <strong>Gestion de trabajos</strong></div>
+        <div class="breadcrumbs">Inicio / <strong>Gestión de trabajos</strong></div>
       </header>
 
+      <!-- Page header -->
       <section class="page-header">
         <div>
-          <h1 class="page-title">Gestion de trabajos</h1>
-          <p class="page-subtitle">Modulo en desarrollo</p>
+          <h1 class="page-title">Gestión de trabajos</h1>
+          @if (!loading()) {
+            <p class="page-subtitle">
+              {{ resumen.en_curso }} en curso · {{ resumen.finalizados }} finalizados
+            </p>
+          }
+        </div>
+        <div class="page-header-actions">
+          <!-- Filters toggle -->
+          <div class="filter-row">
+            <select class="filter-select" [(ngModel)]="filterPrioridad" name="filterPrioridad">
+              <option value="">Todas las prioridades</option>
+              @for (p of prioridades; track p.key) {
+                <option [value]="p.key">{{ p.label }}</option>
+              }
+            </select>
+            <select class="filter-select" [(ngModel)]="filterClienteId" name="filterClienteId">
+              <option value="">Todos los clientes</option>
+              @for (c of clientesList; track c.cliente_id) {
+                <option [value]="c.cliente_id">{{ c.nombre_fiscal }}</option>
+              }
+            </select>
+            @if (filterPrioridad || filterClienteId) {
+              <button type="button" class="clear-filters-btn" (click)="filterPrioridad=''; filterClienteId=''">
+                × Limpiar
+              </button>
+            }
+          </div>
+          @if (isAdmin) {
+            <button type="button" class="primary-button" (click)="openCreate()">
+              + Nuevo trabajo
+            </button>
+          }
         </div>
       </section>
 
-      <section class="module-container">
-        <article class="wip-card">
-          <h2 class="wip-title">Gestion de trabajos</h2>
-          <p class="wip-badge">Work in progress</p>
-          <p class="wip-description">Esta sección está en desarrollo y se activará en la siguiente iteración.</p>
-          <a routerLink="/home">Volver al panel principal</a>
-        </article>
-      </section>
+      <!-- Loading skeleton -->
+      @if (loading()) {
+        <section class="kanban-board">
+          @for (col of [1,2,3,4]; track col) {
+            <div class="kanban-column skeleton-col">
+              <div class="skeleton-col-header"></div>
+              @for (c of [1,2,3]; track c) {
+                <div class="skeleton-card"></div>
+              }
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Error state -->
+      @if (!loading() && errorMessage()) {
+        <div class="empty-state">
+          <p class="empty-state-text">{{ errorMessage() }}</p>
+          <button type="button" class="primary-button" (click)="loadData()">Reintentar</button>
+        </div>
+      }
+
+      <!-- Kanban board -->
+      @if (!loading() && !errorMessage()) {
+        <section class="kanban-board">
+          @for (col of visibleColumnas; track col.key) {
+            <div class="kanban-column">
+              <!-- Column header -->
+              <div class="col-header">
+                <span class="col-dot" [style.background]="col.color"></span>
+                <span class="col-title">{{ col.label }}</span>
+                <span class="col-count">{{ columnTrabajos(col.key).length }}</span>
+              </div>
+
+              <!-- Cards -->
+              <div class="col-cards">
+                @for (item of columnTrabajos(col.key); track item.trabajo_id) {
+                  <article class="trabajo-card" (click)="openDetail(item)">
+                    <!-- Card top row -->
+                    <div class="card-top">
+                      <span class="card-ref">{{ formatRef(item.nro_trabajo, 'T') }}</span>
+                      <span class="prioridad-badge" [class]="'prio-' + item.prioridad">
+                        {{ prioridadLabel(item.prioridad) }}
+                      </span>
+                    </div>
+
+                    <!-- Title -->
+                    <p class="card-title">{{ item.titulo }}</p>
+
+                    <!-- Blocker note -->
+                    @if (item.nota_bloqueo) {
+                      <p class="card-note">{{ item.nota_bloqueo }}</p>
+                    }
+
+                    <!-- Progress bar (solo en_curso) -->
+                    @if (item.estado === 'en_curso' && item.fecha_inicio && item.fecha_objetivo) {
+                      <div class="progress-track">
+                        <div class="progress-fill"
+                             [style.width.%]="progress(item)"
+                             [style.background]="progressColor(item)">
+                        </div>
+                      </div>
+                    }
+
+                    <!-- Employees avatars -->
+                    @if (item.empleados_asignados.length > 0) {
+                      <div class="card-avatars">
+                        @for (emp of item.empleados_asignados.slice(0, 3); track emp.empleado_id) {
+                          <span class="avatar-chip" [title]="emp.nombre_completo">
+                            {{ initials(emp.nombre_completo) }}
+                          </span>
+                        }
+                        @if (item.empleados_asignados.length > 3) {
+                          <span class="avatar-chip avatar-more">+{{ item.empleados_asignados.length - 3 }}</span>
+                        }
+                      </div>
+                    }
+
+                    <!-- Card bottom row -->
+                    <div class="card-bottom">
+                      <span class="card-client">
+                        {{ item.nro_cliente ? 'C-' + item.nro_cliente : item.cliente_nombre }}
+                      </span>
+                      @if (item.estado === 'finalizado' && item.fecha_cierre) {
+                        <span class="card-date card-done">{{ formatDate(item.fecha_cierre, 'Hecho ') }}</span>
+                      } @else {
+                        <span class="card-date">{{ formatDate(item.fecha_objetivo) }}</span>
+                      }
+                    </div>
+                  </article>
+                }
+
+                @if (columnTrabajos(col.key).length === 0) {
+                  <div class="col-empty">Sin trabajos</div>
+                }
+              </div>
+            </div>
+          }
+        </section>
+
+        <!-- Cancelados toggle -->
+        <div class="cancelados-toggle">
+          <button type="button" class="toggle-link" (click)="showCancelados = !showCancelados">
+            {{ showCancelados ? '▾ Ocultar cancelados' : '▸ Mostrar cancelados (' + resumen.cancelados + ')' }}
+          </button>
+        </div>
+      }
+
     </section>
   </section>
 </main>
+
+<!-- ══ Detail side panel ══════════════════════════════════════════════════ -->
+@if (detailOpen) {
+  <div class="panel-backdrop" (click)="closeDetail()"></div>
+  <aside class="detail-panel">
+
+    @if (loadingDetail()) {
+      <div class="panel-loading">
+        <div class="spinner"></div>
+      </div>
+    } @else if (selectedTrabajo) {
+      <!-- Panel header -->
+      <header class="panel-header">
+        <div>
+          <span class="panel-ref">{{ formatRef(selectedTrabajo.nro_trabajo, 'T') }}</span>
+          <h2 class="panel-title">{{ selectedTrabajo.titulo }}</h2>
+          <div class="panel-meta">
+            <span class="estado-badge" [style.background]="estadoColor(selectedTrabajo.estado) + '22'"
+                  [style.color]="estadoColor(selectedTrabajo.estado)"
+                  [style.border]="'1px solid ' + estadoColor(selectedTrabajo.estado) + '44'">
+              {{ estadoLabel(selectedTrabajo.estado) }}
+            </span>
+            <span class="prioridad-badge" [class]="'prio-' + selectedTrabajo.prioridad">
+              {{ prioridadLabel(selectedTrabajo.prioridad) }}
+            </span>
+          </div>
+        </div>
+        <button type="button" class="close-btn" (click)="closeDetail()">✕</button>
+      </header>
+
+      <!-- Quick estado change (admin only) -->
+      @if (isAdmin) {
+        <div class="panel-section estado-quick">
+          <label class="panel-label">Cambiar estado</label>
+          <div class="estado-pills">
+            @for (e of estados; track e.key) {
+              <button type="button"
+                      class="estado-pill"
+                      [class.active]="selectedTrabajo.estado === e.key"
+                      [style.--pill-color]="e.color"
+                      (click)="changeEstado(selectedItem!, e.key)">
+                {{ e.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Info -->
+      <div class="panel-section">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Cliente</span>
+            <span class="info-value">{{ selectedTrabajo.cliente_nombre }}</span>
+          </div>
+          @if (selectedTrabajo.fecha_objetivo) {
+            <div class="info-item">
+              <span class="info-label">Fecha objetivo</span>
+              <span class="info-value">{{ formatDate(selectedTrabajo.fecha_objetivo) }}</span>
+            </div>
+          }
+          @if (selectedTrabajo.fecha_inicio) {
+            <div class="info-item">
+              <span class="info-label">Fecha inicio</span>
+              <span class="info-value">{{ formatDate(selectedTrabajo.fecha_inicio) }}</span>
+            </div>
+          }
+          @if (selectedTrabajo.fecha_cierre) {
+            <div class="info-item">
+              <span class="info-label">Fecha cierre</span>
+              <span class="info-value">{{ formatDate(selectedTrabajo.fecha_cierre) }}</span>
+            </div>
+          }
+          <div class="info-item">
+            <span class="info-label">Creado por</span>
+            <span class="info-value">{{ selectedTrabajo.creado_por_nombre }}</span>
+          </div>
+        </div>
+        @if (selectedTrabajo.descripcion) {
+          <p class="info-desc">{{ selectedTrabajo.descripcion }}</p>
+        }
+        @if (selectedTrabajo.nota_bloqueo) {
+          <div class="nota-bloqueo-box">
+            <span class="nota-bloqueo-label">🔴 Nota de bloqueo</span>
+            <p>{{ selectedTrabajo.nota_bloqueo }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Empleados asignados -->
+      <div class="panel-section">
+        <h3 class="panel-section-title">Empleados asignados</h3>
+        @if (selectedTrabajo.empleados_asignados.length === 0) {
+          <p class="panel-empty-text">Sin empleados asignados</p>
+        } @else {
+          <div class="emp-list">
+            @for (emp of selectedTrabajo.empleados_asignados; track emp.empleado_id) {
+              <div class="emp-chip">
+                <span class="emp-avatar">{{ initials(emp.nombre_completo) }}</span>
+                <span class="emp-name">{{ emp.nombre_completo }}</span>
+                @if (isAdmin) {
+                  <button type="button" class="emp-remove" (click)="unassignEmpleado(emp.empleado_id)">×</button>
+                }
+              </div>
+            }
+          </div>
+        }
+        @if (isAdmin && getAvailableEmpleados().length > 0) {
+          <div class="add-emp-row">
+            <select class="filter-select" [(ngModel)]="addEmpleadoId" name="addEmpleadoId">
+              <option value="">Añadir empleado...</option>
+              @for (e of getAvailableEmpleados(); track e.id) {
+                <option [value]="e.id">{{ e.nombre_completo }}</option>
+              }
+            </select>
+            <button type="button" class="btn-sm-primary" [disabled]="!addEmpleadoId || savingAsignacion" (click)="assignEmpleado()">
+              Asignar
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Comentarios -->
+      <div class="panel-section panel-comments">
+        <h3 class="panel-section-title">Comentarios internos</h3>
+        @if (loadingComentarios) {
+          <p class="panel-empty-text">Cargando...</p>
+        } @else {
+          <div class="comments-list">
+            @for (c of comentarios; track c.comentario_id) {
+              <div class="comment-item">
+                <span class="comment-avatar">{{ initials(c.autor_nombre) }}</span>
+                <div class="comment-body">
+                  <div class="comment-meta">
+                    <strong>{{ c.autor_nombre }}</strong>
+                    <time>{{ formatDate(c.created_at) }}</time>
+                  </div>
+                  <p class="comment-text">{{ c.texto }}</p>
+                </div>
+              </div>
+            }
+            @if (comentarios.length === 0) {
+              <p class="panel-empty-text">Sin comentarios aún</p>
+            }
+          </div>
+          <div class="comment-input-row">
+            <textarea
+              class="comment-textarea"
+              [(ngModel)]="nuevoComentario"
+              name="nuevoComentario"
+              placeholder="Escribe un comentario..."
+              rows="2"
+              maxlength="1000">
+            </textarea>
+            <button type="button" class="btn-sm-primary"
+                    [disabled]="!nuevoComentario.trim() || savingComentario"
+                    (click)="submitComentario()">
+              Enviar
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Panel actions -->
+      @if (isAdmin) {
+        <div class="panel-actions">
+          <button type="button" class="btn-secondary" (click)="openEdit()">Editar trabajo</button>
+          <button type="button" class="btn-danger" (click)="openDelete()">Cancelar trabajo</button>
+        </div>
+      }
+    }
+
+  </aside>
+}
+
+<!-- ══ Modal create / edit ════════════════════════════════════════════════ -->
+@if (modalMode() === 'create' || modalMode() === 'edit') {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal" role="dialog" [attr.aria-label]="modalMode() === 'create' ? 'Nuevo trabajo' : 'Editar trabajo'">
+    <header class="modal-header">
+      <h2>{{ modalMode() === 'create' ? 'Nuevo trabajo' : 'Editar trabajo' }}</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </header>
+
+    <form class="modal-body" (ngSubmit)="submitForm()" #f="ngForm">
+      @if (formServerError) {
+        <div class="form-server-error">{{ formServerError }}</div>
+      }
+
+      <div class="form-field">
+        <label>Título <span class="required">*</span></label>
+        <input type="text" [(ngModel)]="form.titulo" name="titulo" placeholder="Nombre del trabajo" maxlength="255" />
+        @if (formErrors['titulo']) { <span class="field-error">{{ formErrors['titulo'] }}</span> }
+      </div>
+
+      <div class="form-field">
+        <label>Cliente <span class="required">*</span></label>
+        <select [(ngModel)]="form.cliente_id" name="cliente_id">
+          <option value="">Seleccionar cliente...</option>
+          @for (c of clientesList; track c.cliente_id) {
+            <option [value]="c.cliente_id">{{ c.nombre_fiscal }}</option>
+          }
+        </select>
+        @if (formErrors['cliente_id']) { <span class="field-error">{{ formErrors['cliente_id'] }}</span> }
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Prioridad</label>
+          <select [(ngModel)]="form.prioridad" name="prioridad">
+            @for (p of prioridades; track p.key) {
+              <option [value]="p.key">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Fecha objetivo</label>
+          <input type="date" [(ngModel)]="form.fecha_objetivo" name="fecha_objetivo" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Fecha inicio</label>
+          <input type="date" [(ngModel)]="form.fecha_inicio" name="fecha_inicio" />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>Descripción</label>
+        <textarea [(ngModel)]="form.descripcion" name="descripcion" rows="3" placeholder="Descripción detallada..."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>Nota de bloqueo</label>
+        <input type="text" [(ngModel)]="form.nota_bloqueo" name="nota_bloqueo" maxlength="500"
+               placeholder="Indica qué impide avanzar (opcional)" />
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="primary-button" [disabled]="saving()">
+          {{ saving() ? 'Guardando...' : (modalMode() === 'create' ? 'Crear trabajo' : 'Guardar cambios') }}
+        </button>
+      </footer>
+    </form>
+  </div>
+}
+
+<!-- ══ Modal confirm delete ═══════════════════════════════════════════════ -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="modal modal-sm" role="dialog" aria-label="Cancelar trabajo">
+    <header class="modal-header">
+      <h2>Cancelar trabajo</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </header>
+    <div class="modal-body">
+      @if (formServerError) { <div class="form-server-error">{{ formServerError }}</div> }
+      <p class="confirm-text">
+        ¿Confirmas que quieres cancelar el trabajo <strong>{{ selectedTrabajo?.titulo }}</strong>?
+        El trabajo no se eliminará, quedará marcado como cancelado.
+      </p>
+    </div>
+    <footer class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeModal()">Volver</button>
+      <button type="button" class="btn-danger" [disabled]="saving()" (click)="confirmDelete()">
+        {{ saving() ? 'Cancelando...' : 'Cancelar trabajo' }}
+      </button>
+    </footer>
+  </div>
+}
+

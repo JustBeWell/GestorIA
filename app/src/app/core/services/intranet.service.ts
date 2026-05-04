@@ -19,6 +19,11 @@ import {
   FichajeUndoResponse,
   IntranetHomeResponse,
   QuarterSeriesResponse,
+  TrabajoComentario,
+  TrabajoCreate,
+  TrabajoDetailItem,
+  TrabajosTabResponse,
+  TrabajoUpdate,
 } from '../models/intranet.models';
 import { UserCreatePayload, UserAdminUpdatePayload } from '../models/user-admin.models';
 
@@ -197,5 +202,82 @@ export class IntranetService {
 
   deleteCliente(clienteId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/intranet/clientes/${clienteId}`);
+  }
+
+  // ── Trabajos CRUD ─────────────────────────────────────────────────────────
+
+  getTrabajosTab(params: {
+    page?: number;
+    page_size?: number;
+    estado?: string;
+    prioridad?: string;
+    cliente_id?: string;
+    fecha_desde?: string;
+    fecha_hasta?: string;
+  } = {}): Observable<TrabajosTabResponse> {
+    const sp = new URLSearchParams();
+    if (params.page)        sp.set('page', String(params.page));
+    if (params.page_size)   sp.set('page_size', String(params.page_size));
+    if (params.estado)      sp.set('estado', params.estado);
+    if (params.prioridad)   sp.set('prioridad', params.prioridad);
+    if (params.cliente_id)  sp.set('cliente_id', params.cliente_id);
+    if (params.fecha_desde) sp.set('fecha_desde', params.fecha_desde);
+    if (params.fecha_hasta) sp.set('fecha_hasta', params.fecha_hasta);
+    const q = sp.toString();
+    return this.http.get<TrabajosTabResponse>(
+      `${this.apiUrl}/intranet/trabajos${q ? '?' + q : ''}`
+    );
+  }
+
+  getTrabajoDetail(trabajoId: string): Observable<TrabajoDetailItem> {
+    return this.http.get<TrabajoDetailItem>(`${this.apiUrl}/intranet/trabajos/${trabajoId}`);
+  }
+
+  createTrabajo(payload: TrabajoCreate): Observable<TrabajoDetailItem> {
+    return this.http.post<TrabajoDetailItem>(`${this.apiUrl}/intranet/trabajos`, payload);
+  }
+
+  updateTrabajo(trabajoId: string, payload: TrabajoUpdate): Observable<TrabajoDetailItem> {
+    return this.http.put<TrabajoDetailItem>(`${this.apiUrl}/intranet/trabajos/${trabajoId}`, payload);
+  }
+
+  deleteTrabajo(trabajoId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/intranet/trabajos/${trabajoId}`);
+  }
+
+  getTrabajoEmpleados(trabajoId: string): Observable<{ empleados: { empleado_id: string; nombre_completo: string }[] }> {
+    return this.http.get<{ empleados: { empleado_id: string; nombre_completo: string }[] }>(
+      `${this.apiUrl}/intranet/trabajos/${trabajoId}/empleados`
+    );
+  }
+
+  assignEmpleadoToTrabajo(trabajoId: string, empleadoId: string): Observable<{ empleados: { empleado_id: string; nombre_completo: string }[] }> {
+    return this.http.post<{ empleados: { empleado_id: string; nombre_completo: string }[] }>(
+      `${this.apiUrl}/intranet/trabajos/${trabajoId}/empleados`,
+      { empleado_id: empleadoId }
+    );
+  }
+
+  unassignEmpleadoFromTrabajo(trabajoId: string, empleadoId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/intranet/trabajos/${trabajoId}/empleados/${empleadoId}`
+    );
+  }
+
+  getTrabajoComentarios(trabajoId: string): Observable<TrabajoComentario[]> {
+    return this.http.get<TrabajoComentario[]>(`${this.apiUrl}/intranet/trabajos/${trabajoId}/comentarios`);
+  }
+
+  addTrabajoComentario(trabajoId: string, texto: string): Observable<TrabajoComentario> {
+    return this.http.post<TrabajoComentario>(
+      `${this.apiUrl}/intranet/trabajos/${trabajoId}/comentarios`,
+      { texto }
+    );
+  }
+
+  // ── Empleados (lista para selectores) ─────────────────────────────────────
+
+  getEmpleadosList(): Observable<{ id: string; nombre: string; apellidos: string; activo: boolean }[]> {
+    return this.http.get<{ id: string; nombre: string; apellidos: string; activo: boolean }[]>(`${this.apiUrl}/users/`);
   }
 }
