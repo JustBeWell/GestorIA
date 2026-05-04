@@ -259,6 +259,28 @@
   margin-bottom: 10px;
 }
 
+/* ── Empty board banner ───────────────────────────────────────────────────── */
+.board-empty-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 24px 16px;
+  text-align: center;
+}
+.board-empty-icon { font-size: 32px; }
+.board-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+.board-empty-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
 /* ── Empty / Error state ──────────────────────────────────────────────────── */
 .empty-state {
   display: grid;

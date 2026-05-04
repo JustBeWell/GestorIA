@@ -155,7 +155,9 @@ export class TrabajosPageComponent implements OnInit {
       .subscribe({
         next: (data) => { this.tabData = data; },
         error: (err: HttpErrorResponse) => {
-          this.errorMessage.set(err.error?.detail ?? 'Error al cargar los trabajos.');
+          const detail = err.error?.detail;
+          const msg = typeof detail === 'string' ? detail : 'Error al cargar los trabajos.';
+          this.errorMessage.set(msg);
         },
       });
   }

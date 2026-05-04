@@ -72,6 +72,20 @@
 
       <!-- Kanban board -->
       @if (!loading() && !errorMessage()) {
+
+        <!-- Empty board banner -->
+        @if (allTrabajos.length === 0) {
+          <div class="board-empty-banner">
+            <span class="board-empty-icon">📋</span>
+            <p class="board-empty-title">No hay trabajos todavía</p>
+            @if (isAdmin) {
+              <p class="board-empty-sub">Crea el primer trabajo con el botón <strong>+ Nuevo trabajo</strong></p>
+            } @else {
+              <p class="board-empty-sub">Aún no tienes trabajos asignados</p>
+            }
+          </div>
+        }
+
         <section class="kanban-board">
           @for (col of visibleColumnas; track col.key) {
             <div class="kanban-column">

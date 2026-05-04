@@ -409,7 +409,7 @@ async def intranet_clientes_delete(
 @router.get("/trabajos", response_model=TrabajosTabResponse)
 async def intranet_trabajos(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=500),
     estado: str | None = Query(default=None),
     prioridad: str | None = Query(default=None),
     cliente_id: str | None = Query(default=None),
