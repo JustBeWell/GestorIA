@@ -2,6 +2,11 @@
   min-height: 100vh;
 }
 
+/* Pack grid rows at the top — same density as dashboard */
+:host .content {
+  align-content: start;
+}
+
 .topbar-actions {
   display: flex;
   align-items: center;

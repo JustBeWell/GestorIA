@@ -358,8 +358,6 @@ async def intranet_clientes_create(
     payload: ClienteCreate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         return ClientesService.create_cliente(payload)
     except PsycopgError as exc:

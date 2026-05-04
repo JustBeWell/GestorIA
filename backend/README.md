@@ -99,6 +99,7 @@ Todo lo demás (`/auth/token`, `/auth/logout`, `/users/*`, `/intranet/*`).
 - `GET /intranet/home`
 - `GET /intranet/fichaje`
 - `GET /intranet/clientes`
+- `POST /intranet/clientes` — crea un nuevo cliente (requiere autenticación; sin restricción de rol)
 - `GET /intranet/trabajos`
 - `GET /intranet/pagos`
 

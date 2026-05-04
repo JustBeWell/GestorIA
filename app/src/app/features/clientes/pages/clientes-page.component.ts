@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
@@ -76,6 +76,7 @@ export class ClientesPageComponent implements OnInit {
   protected form: ClienteForm = this.emptyForm();
   protected formErrors: FormErrors = {};
   protected formServerError = '';
+  protected readonly showExportMenu = signal(false);
 
   // ── Computed ───────────────────────────────────────────────────────────────
   protected get isAdmin(): boolean {
@@ -103,6 +104,100 @@ export class ClientesPageComponent implements OnInit {
 
   protected get inactivosCount(): number {
     return (this.tabData?.clientes ?? []).filter((c) => !c.activo).length;
+  }
+
+  // ── Export menu ────────────────────────────────────────────────────────────
+  protected toggleExportMenu(): void {
+    this.showExportMenu.update((v) => !v);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.export-wrapper')) {
+      this.showExportMenu.set(false);
+    }
+  }
+
+  protected exportCsv(): void {
+    this.showExportMenu.set(false);
+    const rows = this.filteredClientes;
+    if (!rows.length) return;
+    const headers = ['Referencia', 'Nombre fiscal', 'CIF/NIF', 'Tipo', 'Email', 'Teléfono', 'Activo', 'Trabajos abiertos', 'Facturación año', 'Pendiente total', 'Última actividad'];
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      headers.join(','),
+      ...rows.map((c) =>
+        [
+          escape(c.referencia),
+          escape(c.nombre_fiscal),
+          escape(c.cif_nif),
+          escape(c.tipo_cliente),
+          escape(c.email),
+          escape(c.telefono),
+          escape(c.activo ? 'Sí' : 'No'),
+          escape(c.trabajos_abiertos),
+          escape(c.facturacion_anio.toFixed(2)),
+          escape(c.pendiente_total.toFixed(2)),
+          escape(c.ultima_actividad ? new Date(c.ultima_actividad).toLocaleDateString('es-ES') : ''),
+        ].join(',')
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clientes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected exportPdf(): void {
+    this.showExportMenu.set(false);
+    const rows = this.filteredClientes;
+    const fmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+    const date = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
+    const tableRows = rows
+      .map(
+        (c) => `<tr>
+          <td>${c.referencia || '—'}</td>
+          <td>${c.nombre_fiscal}</td>
+          <td>${c.cif_nif}</td>
+          <td>${c.tipo_cliente}</td>
+          <td>${c.email ?? '—'}</td>
+          <td>${c.activo ? 'Activo' : 'Inactivo'}</td>
+          <td>${c.trabajos_abiertos}</td>
+          <td>${fmt.format(c.facturacion_anio)}</td>
+          <td>${fmt.format(c.pendiente_total)}</td>
+          <td>${c.ultima_actividad ? date.format(new Date(c.ultima_actividad)) : '—'}</td>
+        </tr>`
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Clientes — ${new Date().toLocaleDateString('es-ES')}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; }
+        h1 { font-size: 16px; margin-bottom: 4px; }
+        p  { margin: 0 0 12px; color: #64748b; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f172a; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        @media print { @page { margin: 15mm; size: landscape; } }
+      </style></head><body>
+      <h1>Gestión de clientes</h1>
+      <p>Exportado el ${new Date().toLocaleDateString('es-ES')} · ${rows.length} registros</p>
+      <table><thead><tr>
+        <th>Referencia</th><th>Nombre fiscal</th><th>CIF/NIF</th><th>Tipo</th><th>Email</th>
+        <th>Estado</th><th>Trabajos</th><th>Facturación año</th><th>Pendiente</th><th>Últ. actividad</th>
+      </tr></thead><tbody>${tableRows}</tbody></table>
+      <script>window.onload=()=>{window.print();}<\/script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
   }
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────

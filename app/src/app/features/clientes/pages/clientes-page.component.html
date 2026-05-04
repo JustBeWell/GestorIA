@@ -7,27 +7,6 @@
       <!-- Topbar -->
       <header class="topbar">
         <div class="breadcrumbs">Inicio / <strong>Gestión de clientes</strong></div>
-        <div class="topbar-actions">
-          <label class="search-field-global">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Buscar cliente, trabajo, factura..."
-              [(ngModel)]="searchQuery" />
-            <kbd>⌘K</kbd>
-          </label>
-          <button type="button" class="topbar-icon-btn" title="Notificaciones">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
-          @if (isAdmin) {
-            <button type="button" class="primary-button small" (click)="openCreate()">+ Nuevo</button>
-          }
-        </div>
       </header>
 
       <!-- Page header -->
@@ -39,19 +18,43 @@
           </p>
         </div>
         <div class="page-header-actions">
-          <button type="button" class="export-button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            Exportar
-          </button>
-          @if (isAdmin) {
-            <button type="button" class="primary-button" (click)="openCreate()">
-              + Nuevo cliente
+          <div class="export-wrapper">
+            <button type="button" class="export-button" (click)="toggleExportMenu()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </button>
-          }
+            @if (showExportMenu()) {
+              <div class="export-menu" role="menu">
+                <button type="button" role="menuitem" (click)="exportCsv()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  Exportar CSV
+                </button>
+                <button type="button" role="menuitem" (click)="exportPdf()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  Exportar PDF
+                </button>
+              </div>
+            }
+          </div>
+          <button type="button" class="primary-button" (click)="openCreate()">
+            + Nuevo cliente
+          </button>
         </div>
       </section>
 
@@ -66,15 +69,16 @@
 
       <!-- Error -->
       @else if (errorMessage()) {
-        <div class="modal-backdrop" role="alert">
-          <section class="modal-card">
-            <h2>No se pudo cargar</h2>
-            <p>{{ errorMessage() }}</p>
-            <div class="modal-actions">
-              <button type="button" class="primary-button" (click)="loadClientes()">Reintentar</button>
-            </div>
-          </section>
-        </div>
+        <section class="state-card" role="alert">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <h2>Sin datos de clientes</h2>
+          <p>{{ errorMessage() }}</p>
+          <button type="button" class="primary-button" (click)="loadClientes()">Reintentar</button>
+        </section>
       }
 
       <!-- Content -->

@@ -1,58 +1,10 @@
 /* ── Layout base ─────────────────────────────────────────────────────────── */
 .module-layout { min-height: 100vh; }
 
-/* ── Topbar ──────────────────────────────────────────────────────────────── */
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Pack grid rows at the top — same density as dashboard */
+:host .content {
+  align-content: start;
 }
-
-.search-field-global {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  min-width: 260px;
-  color: #94a3b8;
-  cursor: text;
-}
-.search-field-global input {
-  border: 0;
-  outline: none;
-  width: 100%;
-  font-size: 13px;
-  background: transparent;
-  color: #0f172a;
-}
-.search-field-global input::placeholder { color: #94a3b8; }
-.search-field-global kbd {
-  font-size: 11px;
-  color: #94a3b8;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-family: inherit;
-  flex-shrink: 0;
-}
-
-.topbar-icon-btn {
-  background: none;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 7px;
-  cursor: pointer;
-  color: #64748b;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-}
-.topbar-icon-btn:hover { background: #f1f5f9; color: #0f172a; }
 
 /* ── Page header ─────────────────────────────────────────────────────────── */
 .page-header-actions {
@@ -77,6 +29,41 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .export-button:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+/* ── Export dropdown ─────────────────────────────────────────────────────── */
+.export-wrapper {
+  position: relative;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.export-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.export-menu button:hover { background: #f8fafc; }
 
 /* ── Table section ───────────────────────────────────────────────────────── */
 .table-section { padding: 0; overflow: hidden; }
