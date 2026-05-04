@@ -243,6 +243,11 @@ export class ClientesPageComponent implements OnInit {
     return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' }).format(new Date(iso));
   }
 
+  protected formatAddress(cp: string | null | undefined, ciudad: string | null | undefined): string {
+    const parts = ([cp, ciudad] as Array<string | null | undefined>).filter((v): v is string => !!v);
+    return parts.length ? parts.join(' · ') : '—';
+  }
+
   // ── Private ───────────────────────────────────────────────────────────────
   private validateForm(): boolean {
     let valid = true;

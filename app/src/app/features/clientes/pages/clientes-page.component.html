@@ -230,11 +230,7 @@
               <dt>Teléfono</dt><dd>{{ selectedDetail.telefono ?? '—' }}</dd>
               <dt>Dirección</dt><dd>{{ selectedDetail.direccion ?? '—' }}</dd>
               <dt>CP / Ciudad</dt>
-              <dd>
-                @if (selectedDetail.codigo_postal || selectedDetail.ciudad) {
-                  {{ [selectedDetail.codigo_postal, selectedDetail.ciudad].filter(Boolean).join(' · ') }}
-                } @else { — }
-              </dd>
+              <dd>{{ formatAddress(selectedDetail.codigo_postal, selectedDetail.ciudad) }}</dd>
               <dt>Provincia</dt><dd>{{ selectedDetail.provincia ?? '—' }}</dd>
               <dt>Fecha de alta</dt><dd>{{ formatDate(selectedDetail.created_at) }}</dd>
               <dt>Estado</dt>
