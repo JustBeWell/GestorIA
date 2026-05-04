@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="GestorIA">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#0ea5e9" />
+    </linearGradient>
+    <radialGradient id="glow" cx="70%" cy="20%" r="45%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)" />
+  <rect width="1600" height="1000" fill="url(#glow)" />
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="2">
+    <path d="M0 760 C280 650 520 660 760 760 S1270 890 1600 760" />
+    <path d="M0 640 C260 530 510 530 770 630 S1260 760 1600 620" />
+    <path d="M0 520 C250 410 500 390 770 500 S1260 620 1600 500" />
+  </g>
+  <g fill="#ffffff" fill-opacity="0.2">
+    <circle cx="260" cy="240" r="120" />
+    <circle cx="1320" cy="180" r="160" />
+    <circle cx="1180" cy="820" r="220" />
+  </g>
+</svg>

@@ -1,0 +1,136 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f1f5f9;
+}
+
+.module-layout {
+  min-height: 100vh;
+}
+
+.module-container {
+  min-height: calc(100vh - 132px);
+  display: grid;
+  place-items: start center;
+  padding: 16px;
+}
+
+.module-card {
+  width: min(980px, 100%);
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e6ebf2;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  padding: 22px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-2px);
+  border-color: #cfd8e6;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  color: #0f172a;
+}
+
+p {
+  margin: 0 0 20px;
+  color: #475569;
+}
+
+a {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Logout confirmation modal */
+.logout-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+.logout-modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: min(380px, calc(100vw - 32px));
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+  animation: slideUp 0.15s ease;
+}
+
+.logout-modal h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.logout-modal p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.logout-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+}
+
+.btn-confirm {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-confirm:hover {
+  background: #b91c1c;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

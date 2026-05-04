@@ -1,0 +1,738 @@
+<main class="module-layout">
+  <section class="intranet-shell">
+    <app-intranet-sidebar />
+
+    <section class="content admin-content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>Panel gerente</strong></div>
+      </header>
+
+      @if (loading()) {
+        <section class="fullscreen-message loading" role="status" aria-live="polite">
+          <div class="spinner-xl" aria-hidden="true"></div>
+          <h2>Cargando panel...</h2>
+        </section>
+      } @else if (errorMessage()) {
+        <section class="fullscreen-message error" role="alert">
+          <h2>Error al cargar</h2>
+          <p>{{ errorMessage() }}</p>
+        </section>
+      } @else if (data) {
+
+        <!-- ─── TAB BAR ──────────────────────────────────────────── -->
+        <nav class="admin-tabs">
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'resumen'"
+                  (click)="switchTab('resumen')">Resumen</button>
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'fichajes'"
+                  (click)="switchTab('fichajes')">Fichajes</button>
+        </nav>
+
+        <!-- ─── TAB: RESUMEN ─────────────────────────────────────── -->
+        @if (activeTab() === 'resumen') {
+        <div class="admin-layout">
+
+          <!-- ─── KPI CAROUSEL ───────────────────────────────────── -->
+          <div class="kpi-carousel">
+            <button class="kpi-nav kpi-nav--prev" (click)="scrollCarousel('prev')" aria-label="Anterior">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <div class="kpi-track" #kpiTrack>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Empleados activos</span>
+                <strong class="kpi-value">{{ empleadosActivos.length }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--blue">
+                <span class="kpi-label">Fichando hoy</span>
+                <strong class="kpi-value">{{ empleadosFichandoHoy }}</strong>
+              </div>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Clientes activos</span>
+                <strong class="kpi-value">{{ data.clientes.activos }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--indigo">
+                <span class="kpi-label">Trabajos en curso</span>
+                <strong class="kpi-value">{{ data.trabajos.en_curso }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--warn">
+                <span class="kpi-label">Bloqueados</span>
+                <strong class="kpi-value">{{ data.trabajos.bloqueados }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--warn">
+                <span class="kpi-label">Facturas vencidas</span>
+                <strong class="kpi-value">{{ data.facturacion.facturas_vencidas }}</strong>
+              </div>
+
+              <div class="kpi-card">
+                <span class="kpi-label">Pendiente cobro</span>
+                <strong class="kpi-value kpi-value--sm">{{ formatCurrency(data.facturacion.pendiente_total) }}</strong>
+              </div>
+
+              <div class="kpi-card kpi-card--green">
+                <span class="kpi-label">Cobrado total</span>
+                <strong class="kpi-value kpi-value--sm">{{ formatCurrency(data.facturacion.cobrado_total) }}</strong>
+              </div>
+
+            </div>
+
+            <button class="kpi-nav kpi-nav--next" (click)="scrollCarousel('next')" aria-label="Siguiente">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <!-- ─── FILA: TRABAJOS GRAFICA + FACTURACION ───────────── -->
+          <div class="admin-mid-row">
+
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title">Trabajos</h2>
+                <span class="admin-card-badge">{{ data.trabajos.total }} total</span>
+              </div>
+              <div class="admin-card-body">
+                <div class="trab-chart">
+
+                  <div class="trab-row">
+                    <span class="trab-dot"></span>
+                    <span class="trab-name">Pendientes</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.pendientes / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.pendientes }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--indigo"></span>
+                    <span class="trab-name">En curso</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--indigo" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.en_curso / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.en_curso }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--warn"></span>
+                    <span class="trab-name">Bloqueados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--warn" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.bloqueados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.bloqueados }}</span>
+                  </div>
+
+                  <div class="trab-row">
+                    <span class="trab-dot trab-dot--green"></span>
+                    <span class="trab-name">Finalizados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--green" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.finalizados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.finalizados }}</span>
+                  </div>
+
+                  <div class="trab-row trab-row--muted">
+                    <span class="trab-dot trab-dot--muted"></span>
+                    <span class="trab-name">Cancelados</span>
+                    <div class="trab-bar-track">
+                      <div class="trab-bar-fill trab-bar-fill--muted" [style.width.%]="data.trabajos.total > 0 ? (data.trabajos.cancelados / data.trabajos.total * 100) : 0"></div>
+                    </div>
+                    <span class="trab-count">{{ data.trabajos.cancelados }}</span>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title">Facturacion</h2>
+              </div>
+              <div class="admin-card-body">
+                <div class="fact-list">
+                  <div class="fact-row">
+                    <span class="fact-label">Cobrado total</span>
+                    <strong class="fact-value fact-value--green">{{ formatCurrency(data.facturacion.cobrado_total) }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Pendiente de cobro</span>
+                    <strong class="fact-value">{{ formatCurrency(data.facturacion.pendiente_total) }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Facturas vencidas</span>
+                    <strong class="fact-value fact-value--warn">{{ data.facturacion.facturas_vencidas }}</strong>
+                  </div>
+                  <div class="fact-row">
+                    <span class="fact-label">Clientes con facturas</span>
+                    <strong class="fact-value">{{ data.facturacion.clientes_con_facturas }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ─── EQUIPO ──────────────────────────────────────────── -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h2 class="admin-card-title">Equipo activo</h2>
+              <div class="admin-card-header-actions">
+                <span class="admin-card-badge">{{ empleadosActivos.length }} empleados</span>
+                <button class="btn-primary btn-sm" (click)="openCreateModal()">+ Nuevo empleado</button>
+              </div>
+            </div>
+            <div class="emp-list">
+              @for (emp of empleadosActivos; track emp.empleado_id) {
+                <div class="emp-row">
+
+                  <div class="emp-identity">
+                    <div class="emp-avatar">{{ emp.nombre_completo.charAt(0) }}</div>
+                    <div class="emp-info">
+                      <span class="emp-name">{{ emp.nombre_completo }}</span>
+                      <span class="pill" [class.pill--admin]="emp.rol === 'administrador'">{{ emp.rol }}</span>
+                    </div>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Estado</span>
+                    @if (emp.turno_activo) {
+                      <span class="pill pill--green">Fichado</span>
+                    } @else {
+                      <span class="pill pill--neutral">Fuera</span>
+                    }
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Horas mes</span>
+                    <span class="emp-stat-value">{{ formatHours(emp.horas_mes) }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">En curso</span>
+                    <span class="emp-stat-value">{{ emp.trabajos_en_curso }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Pendientes</span>
+                    <span class="emp-stat-value">{{ emp.trabajos_pendientes }}</span>
+                  </div>
+
+                  <div class="emp-stat">
+                    <span class="emp-stat-label">Bloqueados</span>
+                    @if (emp.trabajos_bloqueados > 0) {
+                      <span class="pill pill--warn">{{ emp.trabajos_bloqueados }}</span>
+                    } @else {
+                      <span class="emp-stat-value muted-text">—</span>
+                    }
+                  </div>
+
+                  <button class="btn-icon" title="Editar" (click)="openEditModal(emp)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- ─── INACTIVOS ─────────────────────────────────────────── -->
+          @if (empleadosInactivos.length > 0) {
+            <div class="admin-card admin-card--muted">
+              <div class="admin-card-header">
+                <h2 class="admin-card-title admin-card-title--muted">Empleados inactivos</h2>
+                <span class="admin-card-badge">{{ empleadosInactivos.length }}</span>
+              </div>
+              <div class="emp-list">
+                @for (emp of empleadosInactivos; track emp.empleado_id) {
+                  <div class="emp-row emp-row--inactive">
+                    <div class="emp-identity">
+                      <div class="emp-avatar emp-avatar--muted">{{ emp.nombre_completo.charAt(0) }}</div>
+                      <div class="emp-info">
+                        <span class="emp-name muted-text">{{ emp.nombre_completo }}</span>
+                        <span class="pill pill--neutral">{{ emp.rol }}</span>
+                      </div>
+                    </div>
+                    <button class="btn-icon" title="Editar" (click)="openEditModal(emp)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- ─── HISTORIAL GRÁFICAS ─────────────────────────────── -->
+          @if (charts()) {
+            <div class="charts-section">
+              <div class="charts-section-header">
+                <h2 class="charts-heading">Histórico últimos 12 meses</h2>
+                <div class="chart-view-toggle">
+                  <button class="chart-view-btn" [class.chart-view-btn--active]="activeChartView() === 'combined'" (click)="activeChartView.set('combined')">Combinada</button>
+                  <button class="chart-view-btn" [class.chart-view-btn--active]="activeChartView() === 'grid'" (click)="activeChartView.set('grid')">Individual</button>
+                </div>
+              </div>
+
+              <!-- ─── VISTA COMBINADA ───────────────────────────── -->
+              @if (activeChartView() === 'combined') {
+                <div class="combined-chart-card">
+
+                  <!-- Leyenda / controles de serie -->
+                  <div class="combined-legend">
+                    @for (s of combinedSeries; track s.key) {
+                      <button class="legend-btn" [class.legend-btn--off]="isHidden(s.key)" (click)="toggleSeries(s.key)" [style.--s-color]="s.color">
+                        <span class="legend-btn-dot" [style.background]="isHidden(s.key) ? '#cbd5e1' : s.color"></span>
+                        {{ s.name }}
+                      </button>
+                    }
+                  </div>
+
+                  <!-- SVG principal con hover -->
+                  <div class="combined-chart-wrap"
+                       (mousemove)="onChartHover($event)"
+                       (mouseleave)="clearHover()">
+
+                    <svg viewBox="0 0 800 200" preserveAspectRatio="none" class="combined-svg">
+                      <defs>
+                        @for (s of combinedSeries; track s.key) {
+                          <linearGradient [id]="'area-' + s.key" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"   [attr.stop-color]="s.color" stop-opacity="0.12"/>
+                            <stop offset="100%" [attr.stop-color]="s.color" stop-opacity="0"/>
+                          </linearGradient>
+                        }
+                      </defs>
+
+                      <!-- Grid lines horizontales -->
+                      @for (pct of [0, 25, 50, 75, 100]; track pct) {
+                        <line x1="24" [attr.x2]="776" [attr.y1]="14 + (1 - pct/100) * 158" [attr.y2]="14 + (1 - pct/100) * 158"
+                              stroke="#f1f5f9" stroke-width="1"/>
+                      }
+
+                      <!-- Áreas y líneas por serie -->
+                      @for (s of combinedSeries; track s.key) {
+                        @if (!isHidden(s.key)) {
+                          <polygon [attr.points]="buildNormArea(s.values())" [attr.fill]="'url(#area-' + s.key + ')'" />
+                          <polyline [attr.points]="buildNormPolyline(s.values())" [attr.stroke]="s.color" class="combined-line" fill="none"/>
+                        }
+                      }
+
+                      <!-- Línea vertical hover -->
+                      @if (hoveredIdx() !== null) {
+                        <line [attr.x1]="hoverLineX()" [attr.x2]="hoverLineX()" y1="12" y2="188"
+                              stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+                        <!-- Puntos hover por serie -->
+                        @for (s of combinedSeries; track s.key) {
+                          @if (!isHidden(s.key)) {
+                            @let dot = hoverDot(s.values());
+                            @if (dot) {
+                              <circle [attr.cx]="dot.x" [attr.cy]="dot.y" r="4"
+                                      [attr.fill]="s.color" stroke="#fff" stroke-width="2"/>
+                            }
+                          }
+                        }
+                      }
+                    </svg>
+
+                    <!-- Tooltip -->
+                    @if (tooltipData(); as tip) {
+                      <div class="combined-tooltip" [style.left.%]="tooltipLeft()" [class.combined-tooltip--right]="tooltipLeft() > 65">
+                        <div class="tooltip-label">{{ tip.label }}</div>
+                        @for (row of tip.series; track row.key) {
+                          <div class="tooltip-row">
+                            <span class="tooltip-dot" [style.background]="row.color"></span>
+                            <span class="tooltip-name">{{ row.name }}</span>
+                            <span class="tooltip-value">{{ row.value }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Labels eje X -->
+                    <div class="combined-x-labels">
+                      @for (label of chartLabels('facturacion'); track label; let i = $index) {
+                        @if (i === 0 || i === chartLabels('facturacion').length - 1 || i % 3 === 2) {
+                          <span [style.left.%]="(i / (chartLabels('facturacion').length - 1)) * 100">{{ label }}</span>
+                        }
+                      }
+                    </div>
+
+                  </div><!-- /combined-chart-wrap -->
+
+                  <p class="combined-note">Los valores están normalizados (0–máx) por serie para permitir comparación visual. Pasa el ratón para ver los valores reales.</p>
+                </div>
+              }
+
+              <!-- ─── VISTA GRID (4 gráficas individuales) ──────── -->
+              @if (activeChartView() === 'grid') {
+                <div class="charts-grid">
+
+                  <!-- Facturación vs Cobros -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Facturación vs Cobros</span>
+                      <div class="chart-legend">
+                        <span class="legend-dot legend-dot--gold"></span><span>Facturado</span>
+                        <span class="legend-dot legend-dot--green"></span><span>Cobrado</span>
+                      </div>
+                    </div>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ formatAxisCurrency(maxVal(facturacionValues('facturado_total'))) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(facturacionValues('facturado_total'))" class="chart-line chart-line--gold" fill="none"/>
+                          <polyline [attr.points]="buildPolyline(facturacionValues('cobrado_total'))" class="chart-line chart-line--green" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('facturacion'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('facturacion').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Trabajos creados vs finalizados -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Trabajos</span>
+                      <div class="chart-legend">
+                        <span class="legend-dot legend-dot--blue"></span><span>Creados</span>
+                        <span class="legend-dot legend-dot--green"></span><span>Finalizados</span>
+                      </div>
+                    </div>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(trabajosValues('trabajos_creados')) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(trabajosValues('trabajos_creados'))" class="chart-line chart-line--blue" fill="none"/>
+                          <polyline [attr.points]="buildPolyline(trabajosValues('finalizados'))" class="chart-line chart-line--green" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('trabajos'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('trabajos').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Clientes nuevos -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Nuevos clientes por mes</span>
+                    </div>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(clientesValues()) }}</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(clientesValues())" class="chart-line chart-line--indigo" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('clientes'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('clientes').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Horas trabajadas -->
+                  <div class="chart-card">
+                    <div class="chart-card-header">
+                      <span class="chart-card-title">Horas trabajadas por mes</span>
+                    </div>
+                    <div class="chart-body">
+                      <div class="chart-y-labels">
+                        <span>{{ maxVal(horasValues()) | number:'1.0-0' }}h</span>
+                        <span></span>
+                        <span>0</span>
+                      </div>
+                      <div class="chart-svg-wrap">
+                        <svg viewBox="0 0 400 80" preserveAspectRatio="none" class="chart-svg">
+                          <polyline [attr.points]="buildPolyline(horasValues())" class="chart-line chart-line--gold" fill="none"/>
+                        </svg>
+                        <div class="chart-x-labels">
+                          @for (label of chartLabels('horas'); track label; let i = $index) {
+                            @if (i === 0 || i === chartLabels('horas').length - 1 || i % 3 === 2) {
+                              <span>{{ label }}</span>
+                            }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div><!-- /charts-grid -->
+              }
+
+            </div><!-- /charts-section -->
+          }
+
+        </div>
+        } <!-- /tab resumen -->
+
+        <!-- ─── TAB: FICHAJES ────────────────────────────────────── -->
+        @if (activeTab() === 'fichajes') {
+        <div class="admin-layout">
+
+          <!-- Filtros -->
+          <div class="fichajes-filters">
+            <select [(ngModel)]="fichajesFilter.empleado_id">
+              <option value="">Todos los empleados</option>
+              @for (emp of (fichajes?.empleados ?? []); track emp.empleado_id) {
+                <option [value]="emp.empleado_id">{{ emp.nombre_completo }}</option>
+              }
+            </select>
+            <select [(ngModel)]="fichajesFilter.tipo_evento">
+              <option value="">Todos los tipos</option>
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+              <option value="pausa_inicio">Pausa inicio</option>
+              <option value="pausa_fin">Pausa fin</option>
+            </select>
+            <input type="date" [(ngModel)]="fichajesFilter.fecha_desde" placeholder="Desde"/>
+            <input type="date" [(ngModel)]="fichajesFilter.fecha_hasta" placeholder="Hasta"/>
+            <button class="btn-primary btn-sm" (click)="applyFichajesFilter()">Filtrar</button>
+            <button class="btn-secondary btn-sm fichajes-filters__add" (click)="openCorreccionModal()">+ Corrección</button>
+          </div>
+
+          <!-- Tabla -->
+          @if (fichajesLoading()) {
+            <section class="fullscreen-message loading" role="status">
+              <div class="spinner-xl"></div>
+              <h2>Cargando fichajes...</h2>
+            </section>
+          } @else if (fichajes) {
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3 class="admin-card-title">Fichajes</h3>
+                <span class="admin-badge">{{ fichajes.paginacion.total }}</span>
+              </div>
+              <div class="table-wrap">
+                <table class="fichajes-table">
+                  <thead>
+                    <tr>
+                      <th>Empleado</th>
+                      <th>Tipo</th>
+                      <th>Fecha y hora</th>
+                      <th>Origen</th>
+                      <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (f of fichajes.fichajes; track f.fichaje_id) {
+                      <tr>
+                        <td>{{ f.nombre_completo }}</td>
+                        <td><span class="tipo-badge tipo-badge--{{ f.tipo_evento }}">{{ tipoEventoLabel(f.tipo_evento) }}</span></td>
+                        <td class="fecha-cell">{{ f.fecha_hora | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td class="origen-cell">{{ f.origen }}</td>
+                        <td class="obs-cell">{{ f.observaciones ?? '—' }}</td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="5" class="empty-row">No hay fichajes para los filtros aplicados.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <!-- Paginación -->
+              @if (fichajes.paginacion.total_pages > 1) {
+                <div class="fichajes-pagination">
+                  <button class="btn-secondary btn-sm"
+                          [disabled]="fichajesFilter.page <= 1"
+                          (click)="fichajesGoToPage(fichajesFilter.page - 1)">‹ Anterior</button>
+                  <span class="pagination-info">
+                    Pág. {{ fichajes.paginacion.page }} / {{ fichajes.paginacion.total_pages }}
+                  </span>
+                  <button class="btn-secondary btn-sm"
+                          [disabled]="fichajesFilter.page >= fichajes.paginacion.total_pages"
+                          (click)="fichajesGoToPage(fichajesFilter.page + 1)">Siguiente ›</button>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+        } <!-- /tab fichajes -->
+
+      }
+    </section>
+  </section>
+</main>
+
+<!-- ─── MODAL CREAR EMPLEADO ──────────────────────────────────────────────── -->
+@if (showCreateModal) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Nuevo empleado</h3>
+        <button class="modal-close" (click)="closeCreateModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Email (usuario)</label>
+            <input type="email" [(ngModel)]="createForm.nombre_usuario" placeholder="empleado@empresa.com"/>
+          </div>
+          <div class="form-field">
+            <label>Contraseña</label>
+            <input type="password" [(ngModel)]="createForm.password" placeholder="Mínimo 8 caracteres"/>
+          </div>
+          <div class="form-field">
+            <label>Nombre</label>
+            <input type="text" [(ngModel)]="createForm.nombre" placeholder="Nombre"/>
+          </div>
+          <div class="form-field">
+            <label>Apellidos</label>
+            <input type="text" [(ngModel)]="createForm.apellidos" placeholder="Apellidos"/>
+          </div>
+          <div class="form-field">
+            <label>NIF</label>
+            <input type="text" [(ngModel)]="createForm.nif" placeholder="12345678A"/>
+          </div>
+          <div class="form-field">
+            <label>Teléfono</label>
+            <input type="text" [(ngModel)]="createForm.telefono" placeholder="Opcional"/>
+          </div>
+          <div class="form-field">
+            <label>Rol</label>
+            <select [(ngModel)]="createForm.rol">
+              <option value="empleado">Empleado</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreateModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitCreateEmpleado()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Crear empleado' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL EDITAR EMPLEADO ──────────────────────────────────────────────── -->
+@if (showEditModal && editTarget) {
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Editar — {{ editTarget.nombre_completo }}</h3>
+        <button class="modal-close" (click)="closeEditModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Rol</label>
+            <select [(ngModel)]="editForm.rol">
+              <option value="empleado">Empleado</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+          <div class="form-field form-field--toggle">
+            <label>Estado</label>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editForm.activo"/>
+              <span class="toggle-track"></span>
+              <span class="toggle-label">{{ editForm.activo ? 'Activo' : 'Inactivo' }}</span>
+            </label>
+          </div>
+          <div class="form-field form-field--toggle">
+            <label>2FA por SMS</label>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="editForm.mfa_habilitado"/>
+              <span class="toggle-track"></span>
+              <span class="toggle-label">{{ editForm.mfa_habilitado ? 'Activado' : 'Desactivado' }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeEditModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitEditEmpleado()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL CORRECCIÓN FICHAJE ──────────────────────────────────────────── -->
+@if (showCorreccionModal) {
+  <div class="modal-backdrop" (click)="closeCorreccionModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Añadir corrección de fichaje</h3>
+        <button class="modal-close" (click)="closeCorreccionModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        @if (modalError()) {
+          <p class="modal-error">{{ modalError() }}</p>
+        }
+        <div class="form-grid">
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>Empleado *</label>
+            <select [(ngModel)]="correccionForm.empleado_id">
+              <option value="">Selecciona un empleado</option>
+              @for (emp of (fichajes?.empleados ?? []); track emp.empleado_id) {
+                <option [value]="emp.empleado_id">{{ emp.nombre_completo }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Tipo de evento *</label>
+            <select [(ngModel)]="correccionForm.tipo_evento">
+              <option value="entrada">Entrada</option>
+              <option value="salida">Salida</option>
+              <option value="pausa_inicio">Pausa inicio</option>
+              <option value="pausa_fin">Pausa fin</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Fecha *</label>
+            <input type="date" [(ngModel)]="correccionForm.fecha"/>
+          </div>
+          <div class="form-field">
+            <label>Hora *</label>
+            <input type="time" [(ngModel)]="correccionForm.hora"/>
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1">
+            <label>Observaciones</label>
+            <input type="text" [(ngModel)]="correccionForm.observaciones" placeholder="Motivo de la corrección (opcional)"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCorreccionModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitCorreccion()" [disabled]="modalSaving()">
+          {{ modalSaving() ? 'Guardando…' : 'Registrar corrección' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

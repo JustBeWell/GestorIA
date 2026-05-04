@@ -1,0 +1,61 @@
+.module-layout {
+	min-height: 100vh;
+}
+
+.module-container {
+	display: grid;
+	place-items: center;
+	padding: 24px 0;
+}
+
+.wip-card {
+	width: min(760px, 100%);
+	background: #ffffff;
+	border-radius: 16px;
+	border: 1px solid #e2e8f0;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+	padding: 26px;
+	text-align: center;
+}
+
+.wip-title {
+	margin: 0;
+	font-size: 26px;
+	color: #0f172a;
+}
+
+.wip-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin: 12px auto 14px;
+	border-radius: 999px;
+	padding: 8px 14px;
+	background: #dbeafe;
+	border: 1px solid #bfdbfe;
+	color: #1e40af;
+	font-weight: 700;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.wip-description {
+	margin: 0;
+	color: #64748b;
+	font-size: 15px;
+}
+
+a {
+	display: inline-block;
+	margin-top: 16px;
+	color: #1d4ed8;
+	font-weight: 600;
+	text-decoration: none;
+	font-size: 15px;
+}
+
+a:hover {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}

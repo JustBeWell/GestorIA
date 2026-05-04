@@ -1,0 +1,241 @@
+<main class="home-layout">
+  @if (loading()) {
+    <section class="fullscreen-message loading" role="status" aria-live="polite">
+      <div class="spinner-xl" aria-hidden="true"></div>
+      <h2>Cargando intranet...</h2>
+      <p>Estamos preparando tu panel principal de trabajo.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="fullscreen-message error" role="alert" aria-live="assertive">
+      <h2>No se pudo cargar el Home</h2>
+      <p>{{ errorMessage() }}</p>
+      <div class="state-actions">
+        <button type="button" (click)="reload()">Reintentar</button>
+        <button type="button" class="secondary" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </section>
+  } @else {
+    <section class="intranet-shell">
+      <app-intranet-sidebar />
+
+      <section class="content">
+        <header class="topbar">
+          <div class="breadcrumbs">Inicio / <strong>Home</strong></div>
+        </header>
+
+        <section class="page-header">
+          <div>
+            <h1 class="page-title">Bienvenido, {{ empleado?.nombre ?? homeData?.usuario?.nombre_completo ?? 'NA' }}</h1>
+            <p class="page-subtitle">Resumen de tu actividad · {{ todayLabel }}</p>
+          </div>
+        </section>
+
+        <section class="home-grid">
+          <section class="hero-grid">
+            <article class="panel profile-card">
+              <p class="panel-title">Buenas tardes</p>
+              <div class="profile-header">
+                <div class="avatar-lg">{{ employeeInitials }}</div>
+                <div class="profile-meta">
+                  <h3>{{ profileFullName }}</h3>
+                  <p>Rol Empleado · {{ profileRole }}</p>
+                </div>
+              </div>
+              <div class="profile-details">
+                <div>
+                  NIF
+                  <span>{{ profileNif }}</span>
+                </div>
+                <div>
+                  Tel.
+                  <span>{{ profilePhone }}</span>
+                </div>
+                <div>
+                  Estado
+                  <span>{{ profileStatusLabel }}</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel summary-card">
+              <p class="panel-title">Resumen operativo</p>
+              <div class="summary-row">
+                <span>Facturas vencidas</span>
+                <strong>{{ homeData?.pagos?.facturas_vencidas ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos bloqueados</span>
+                <strong>{{ homeData?.trabajos?.bloqueados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos finalizados</span>
+                <strong>{{ homeData?.trabajos?.finalizados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Trabajos cancelados</span>
+                <strong>{{ homeData?.trabajos?.cancelados ?? 0 }}</strong>
+              </div>
+              <div class="summary-row">
+                <span>Ultimo evento</span>
+                <strong>{{ ultimoEventoLabel }}</strong>
+              </div>
+            </article>
+
+            <article class="panel shift-card">
+              <div class="summary-row">
+                <span>Turno actual</span>
+                <span class="badge" [class.success]="homeData?.fichaje?.turno_activo">{{ homeData?.fichaje?.turno_activo ? 'En marcha' : 'Cerrado' }}</span>
+              </div>
+              <div class="shift-timer">{{ shiftDurationLabel }}</div>
+              <div class="shift-grid">
+                <div>
+                  Entrada
+                  <span>{{ shiftStartLabel }}</span>
+                </div>
+                <div>
+                  Objetivo
+                  <span>{{ shiftObjectiveLabel }}</span>
+                </div>
+              </div>
+              <div class="shift-action">
+                <button type="button" class="primary-button" routerLink="/fichaje">Fichar salida</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="stat-grid">
+            <article class="panel stat-card">
+              <p class="panel-title">Fichaje · horas por dia</p>
+              <div class="stat-value stat-value-lg">{{ fichajeDayHoursLabel }}</div>
+              <div class="stat-meta">
+                <span class="stat-subtitle">Total mes</span>
+                <strong>{{ fichajeMonthTotalHoursLabel }}</strong>
+              </div>
+              <span class="stat-trend" [class.negative]="fichajeDayDeltaPercent < 0">{{ fichajeDayDeltaLabel }}</span>
+              <div class="mini-chart">
+                <svg class="mini-spark green" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="fichajeSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Clientes activos</p>
+              <div class="stat-value">{{ homeData?.clientes?.activos ?? 0 }}</div>
+              @if ((homeData?.clientes?.activos ?? 0) > 0) {
+                <span class="stat-trend">+5</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="clientesSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Trabajos · en curso</p>
+              <div class="stat-value">{{ homeData?.trabajos?.en_curso ?? 0 }}</div>
+              @if ((homeData?.trabajos?.en_curso ?? 0) > 0) {
+                <span class="stat-trend" style="color: #ef4444">-2 atrasados</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark orange" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="trabajosSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+            <article class="panel stat-card">
+              <p class="panel-title">Pagos · facturado mes</p>
+              <div class="stat-value">{{ formatCurrency(homeData?.pagos?.cobrado_mes) }}</div>
+              @if ((homeData?.pagos?.cobrado_mes ?? 0) > 0) {
+                <span class="stat-trend">+12,4%</span>
+              }
+              <div class="mini-chart">
+                <svg class="mini-spark amber" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline [attr.points]="pagosSparkline"></polyline>
+                </svg>
+              </div>
+            </article>
+          </section>
+
+          <section class="lower-grid">
+            <article class="panel calendar-panel">
+              <div class="summary-row">
+                <strong>Calendario de fichajes</strong>
+                <span>{{ monthLabel }}</span>
+              </div>
+              <div class="calendar-grid">
+                @for (cell of calendarDays; track $index) {
+                  <div
+                    class="calendar-cell"
+                    [class.active]="cell.day"
+                    [class.is-today]="cell.isToday"
+                    (click)="selectDay(cell.day)">
+                    @if (cell.day) {
+                      <span class="day-number">{{ cell.day }}</span>
+                      @if (cell.hoursLabel) {
+                        <span class="hours">{{ cell.hoursLabel }}</span>
+                      }
+                      <span class="day-summary">{{ cell.summaryLabel }}</span>
+                      <div class="bar-track">
+                        <span class="bar" [style.width.%]="cell.progressPercent"></span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <div class="day-detail">
+                <div class="day-detail-header">
+                  <strong>{{ selectedDayLabel }}</strong>
+                  <span class="day-detail-status">{{ selectedDayData?.statusLabel || 'Sin registro' }}</span>
+                </div>
+                <div class="day-detail-row">
+                  <span>{{ selectedDayData?.entryLabel || '--:--' }}</span>
+                  <div class="day-detail-bar">
+                    <span [style.width.%]="selectedDayData?.progressPercent || 0"></span>
+                  </div>
+                  <span>{{ selectedDayData?.exitLabel || '--:--' }}</span>
+                </div>
+                <div class="day-detail-summary">{{ selectedDayData?.summaryLabel || 'Sin registro' }}</div>
+              </div>
+            </article>
+
+            <article class="panel activity-panel">
+              <div class="summary-row">
+                <strong>Actividad reciente</strong>
+              </div>
+              <div class="activity-list">
+                @for (item of activityItems; track item.title) {
+                  <div class="activity-item">
+                    <div class="activity-tag">
+                      @switch (item.tag) {
+                        @case ('F') {
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm1-12a1 1 0 1 0-2 0v4a1 1 0 0 0 .293.707l2.828 2.829a1 1 0 1 0 1.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                        }
+                        @case ('T') {
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M6 6V5a3 3 0 0 1 6 0v1h2a2 2 0 0 1 2 2v3.57A22.952 22.952 0 0 1 10 13a22.95 22.95 0 0 1-6-1.43V8a2 2 0 0 1 2-2h2zm2-1a1 1 0 0 1 2 0v1H8V5zm-2 9a22.92 22.92 0 0 0 8 0V8H6v6z" clip-rule="evenodd"/></svg>
+                        }
+                        @case ('P') {
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><rect x="1" y="4" width="18" height="3" rx="1"/><path d="M1 9h18v7a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/></svg>
+                        }
+                        @case ('C') {
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M9 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM17 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 0 0-1.5-4.33A5 5 0 0 1 19 16v1h-6.07zM6 11a5 5 0 0 1 5 5v1H1v-1a5 5 0 0 1 5-5z"/></svg>
+                        }
+                        @default {
+                          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM9 9a1 1 0 0 0 0 2v3a1 1 0 0 0 1 1h1a1 1 0 1 0 0-2v-3a1 1 0 0 0-1-1H9z" clip-rule="evenodd"/></svg>
+                        }
+                      }
+                    </div>
+                    <div class="activity-meta">
+                      <strong>{{ item.title }}</strong>
+                      <span>{{ item.subtitle }}</span>
+                    </div>
+                    <span class="activity-time">{{ item.time }}</span>
+                  </div>
+                }
+              </div>
+            </article>
+          </section>
+        </section>
+      </section>
+    </section>
+  }
+</main>
