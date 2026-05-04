@@ -70,3 +70,37 @@
 - Eliminados los indicadores técnicos de pasos (DB/API/UI/Launch); sustituidos por barra de progreso con porcentaje numérico y mensajes amigables.
 - Mensajes: "Preparando los datos…", "Conectando con la base de datos…", "Cargando los servicios…", "Preparando la interfaz…", "Abriendo GestorIA…", "¡Todo listo!".
 - `splashUpdate()` en `main.cjs` simplificada a `(splash, pct, text)` — sin `stepId`.
+
+## 2026-05-04 — Sprint 1: Gestión de clientes (M4) completo
+
+### Plan de sprints creado
+- Generado `docs/PLAN_SPRINTS.md` con 5 sprints y 38 HUs hasta completar el MVP.
+- Orden de desarrollo: M4 Clientes → M5 Trabajos → M6 Facturación → M9 Auditoría + M8 → M10 Herramientas.
+- Cada sprint requiere aprobación explícita antes de arrancar el siguiente.
+
+### HU-M4-01 — Endpoints de escritura de clientes (backend)
+- `models.py`: añadidos `ClienteCreate`, `ClienteUpdate` con `field_validator` para CIF/NIF (regex DNI/NIE/CIF), y `ClienteDetailItem` con agregados de trabajos y facturas.
+- `clientes_service.py`: métodos `create_cliente`, `update_cliente`, `delete_cliente`, `get_cliente_detail` y helper privado `_map_detail`. Vista admin (`_get_clientes_detalle_admin`) muestra todos los clientes sin filtro por empleado; empleado sigue viendo solo los de sus trabajos asignados. Ambas variantes incluyen `email` y `telefono` en el listado.
+- `routes/intranet.py`: nuevos endpoints:
+  - `GET  /intranet/clientes/{id}` — detalle completo
+  - `POST /intranet/clientes` — alta (admin only · 201 · 409 si CIF/NIF duplicado)
+  - `PUT  /intranet/clientes/{id}` — edición (admin only)
+  - `DELETE /intranet/clientes/{id}` — baja lógica (admin only · 204)
+- `GET /intranet/clientes` actualizado: pasa `is_admin` al service para servir vista global o filtrada según rol.
+
+### HU-M4-02 a M4-07 — Pantalla completa de clientes (frontend)
+- `intranet.models.ts`: `ClienteTabItem` ampliado con `email`/`telefono`; añadidos `ClienteDetailItem`, `ClienteCreate`, `ClienteUpdate`.
+- `intranet.service.ts`: métodos `getClienteDetail`, `createCliente`, `updateCliente`, `deleteCliente`.
+- `clientes-page.component.ts`: reemplaza el placeholder WIP con componente completo basado en signals Angular. Incluye:
+  - Carga reactiva con `loading` signal y manejo de errores.
+  - Filtrado client-side por nombre fiscal, CIF/NIF y email.
+  - Toggle "Mostrar inactivos".
+  - Modal unificado de alta/edición con validación inline (nombre obligatorio, CIF/NIF con regex, email con regex). Precarga de campos de dirección desde `GET /clientes/{id}`.
+  - Modal de baja lógica con confirmación y mensaje explicativo.
+  - Modal de detalle con grid de datos fiscales + KPIs operativos.
+  - RBAC: botones de escritura solo visibles para `rol === 'administrador'`.
+- `clientes-page.component.html`: tabla con 7 columnas (nombre, CIF/NIF, email, teléfono, trabajos abiertos, pendiente, estado) + columna de acciones condicional + 4 modales con `@if` blocks.
+- `clientes-page.component.css`: CSS completo (tabla, badges, modales, formularios, estados vacíos, spinner).
+
+### Commit
+- `cbb4b56` — `feat(M4): Gestion de clientes Sprint 1` — 11 ficheros, +2386 -99 líneas.

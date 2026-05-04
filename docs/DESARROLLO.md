@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
+Ultima revision: 2026-05-04 (Sprint 1 — M4 Gestion de clientes completo)
 
 ---
 
@@ -56,17 +56,22 @@ Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
 
 ---
 
-### M4 · Gestion de clientes — PENDIENTE (backend OK, UI placeholder)
+### M4 · Gestion de clientes — COMPLETO (Sprint 1 · 2026-05-04)
 - [x] Endpoint `GET /intranet/clientes` — listado con resumen
 - [x] Series trimestrales de clientes activos
 - [x] Modelo `clientes` en BD con CIF/NIF unico y borrado logico
-- [ ] **UI: pantalla de clientes** — actualmente muestra "Work in progress"
-- [ ] Formulario de alta de cliente
-- [ ] Formulario de edicion y baja logica
-- [ ] Busqueda por nombre, CIF o email
-- [ ] Vista de detalle de cliente con trabajos y facturas asociadas
-- [ ] Validacion de formato CIF/NIF en frontend
-- [ ] Endpoints de escritura: `POST`, `PUT`, `DELETE` clientes (no existen en backend)
+- [x] **UI: pantalla de clientes** — tabla completa con estado de carga y estado vacio
+- [x] Formulario de alta de cliente con validacion CIF/NIF en frontend y backend
+- [x] Formulario de edicion con precarga de datos (incluye campos de direccion)
+- [x] Baja logica con confirmacion modal + toggle "Mostrar inactivos"
+- [x] Busqueda reactiva por nombre fiscal, CIF/NIF o email
+- [x] Vista de detalle de cliente con resumen operativo (trabajos y facturas)
+- [x] Validacion de formato CIF/NIF en frontend (regex DNI/NIE/CIF) y backend (Pydantic)
+- [x] Endpoints de escritura: `POST /clientes` (201), `PUT /clientes/{id}`, `DELETE /clientes/{id}` (204)
+- [x] Endpoint `GET /clientes/{id}` — detalle completo con agregados
+- [x] Control 409 para CIF/NIF duplicado, 403 para no-admin en escritura
+- [x] Vista admin muestra TODOS los clientes (sin filtro por empleado); empleado ve solo sus asignados
+- [x] RBAC en UI: botones de alta/edicion/baja solo visibles para rol administrador
 
 ---
 
@@ -141,13 +146,15 @@ Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
 ### Frontend
 - [ ] Estado global de usuario (actualmente cada pagina lee de `sessionStorage` directamente)
 - [ ] Manejo de errores HTTP centralizado (el interceptor de auth existe pero no cubre errores de negocio)
-- [ ] Feedback de carga en modulos de clientes/trabajos/pagos
+- [x] Feedback de carga en modulo de clientes (loading signal + estado vacio)
+- [ ] Feedback de carga en modulos de trabajos/pagos (pendiente Sprint 2/3)
 - [ ] Tests unitarios en componentes Angular (solo existe `app.spec.ts`)
 
 ### Backend
-- [ ] Endpoints de escritura para clientes, trabajos, facturas y pagos (todos los modulos tienen solo `GET`)
-- [ ] Paginacion en endpoint de clientes (actualmente devuelve todos)
-- [ ] Validacion de formato NIF/CIF en backend (solo hay unicidad en BD)
+- [x] Endpoints de escritura para clientes (POST/PUT/DELETE — Sprint 1)
+- [ ] Endpoints de escritura para trabajos, facturas y pagos (pendiente Sprints 2/3)
+- [x] Paginacion en endpoint de clientes (page_size hasta 200, default 50)
+- [x] Validacion de formato NIF/CIF en backend (Pydantic field_validator con regex)
 - [ ] Rate limiting en endpoints de autenticacion
 - [ ] Tests de integracion para escritura (los tests existentes cubren solo lectura)
 - [ ] Cobertura de tests en services de clientes, trabajos y pagos
@@ -163,14 +170,13 @@ Ultima revision: 2026-04-30 (lanzador macOS + splash rediseñado)
 
 ## Proximos pasos recomendados (orden de prioridad)
 
-1. **UI de gestion de clientes** — modulo mas urgente segun MVP; backend ya esta listo
-2. **UI de gestion de trabajos** — segundo modulo con backend listo
-3. **Endpoints de escritura de clientes y trabajos** — alta, edicion y baja
-4. **UI y endpoints de facturacion/pagos**
-5. **Migracion V003** — triggers y vistas de BD
-6. **Auditoria** — conectar eventos de escritura con la tabla de auditoria
-7. **Exportacion PDF de fichaje**
-8. **Calendario fiscal y Documentos** — definir modelo de datos y backend
+> Plan detallado en `docs/PLAN_SPRINTS.md`
+
+1. ~~**UI y endpoints de gestion de clientes**~~ — **COMPLETADO** en Sprint 1 (2026-05-04)
+2. **Sprint 2 — UI y endpoints de gestion de trabajos** — backend GET listo, falta escritura y UI
+3. **Sprint 3 — UI y endpoints de facturacion/pagos**
+4. **Sprint 4 — Auditoria** — conectar eventos de escritura con `auditoria_eventos` + UI
+5. **Sprint 5 — Herramientas** — Calendario fiscal, Documentos, Ajustes + deuda tecnica
 
 ---
 

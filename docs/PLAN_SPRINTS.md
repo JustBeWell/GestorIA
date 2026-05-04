@@ -2,7 +2,7 @@
 
 **Generado:** 2026-05-04  
 **Última revisión:** 2026-05-04  
-**Estado global:** ⏳ Pendiente de aprobación
+**Estado global:** 🟢 Sprint 1 completado — pendiente aprobación Sprint 2
 
 ---
 
@@ -844,8 +844,8 @@ El MVP se considera **COMPLETO** cuando:
 
 | Sprint | Fecha presentación | Fecha aprobación | Observaciones |
 |--------|-------------------|-----------------|---------------|
-| Plan completo | 2026-05-04 | — | Pendiente aprobación |
-| Sprint 1 | — | — | — |
+| Plan completo | 2026-05-04 | 2026-05-04 | Aprobado — arrancado inmediatamente |
+| Sprint 1 | 2026-05-04 | 2026-05-04 | ✅ Completado — commit cbb4b56 |
 | Sprint 2 | — | — | — |
 | Sprint 3 | — | — | — |
 | Sprint 4 | — | — | — |
