@@ -13,7 +13,10 @@ from models import (
     AdminCorreccionRequest,
     AdminCorreccionResponse,
     AdminFichajesResponse,
+    ClienteCreate,
+    ClienteDetailItem,
     ClientesTabResponse,
+    ClienteUpdate,
     FichajeRegistroRequest,
     FichajeRegistroResponse,
     FichajeUndoResponse,
@@ -329,13 +332,74 @@ def _pdf_today() -> str:
 @router.get("/clientes", response_model=ClientesTabResponse)
 async def intranet_clientes(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=50, ge=1, le=200),
     current_user=Depends(get_current_user),
 ):
-    data = ClientesService.get_clientes_tab(current_user.user_id, page, page_size)
+    is_admin = current_user.role == "administrador"
+    data = ClientesService.get_clientes_tab(current_user.user_id, page, page_size, is_admin=is_admin)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.get("/clientes/{cliente_id}", response_model=ClienteDetailItem)
+async def intranet_cliente_detail(
+    cliente_id: str,
+    current_user=Depends(get_current_user),
+):
+    data = ClientesService.get_cliente_detail(cliente_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return data
+
+
+@router.post("/clientes", response_model=ClienteDetailItem, status_code=status.HTTP_201_CREATED)
+async def intranet_clientes_create(
+    payload: ClienteCreate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        return ClientesService.create_cliente(payload)
+    except PsycopgError as exc:
+        detail = exc.pgerror or str(exc)
+        if "uq_clientes_cif_nif" in detail:
+            raise HTTPException(status_code=409, detail="Ya existe un cliente con ese CIF/NIF") from exc
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+
+
+@router.put("/clientes/{cliente_id}", response_model=ClienteDetailItem)
+async def intranet_clientes_update(
+    cliente_id: str,
+    payload: ClienteUpdate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        data = ClientesService.update_cliente(cliente_id, payload)
+    except PsycopgError as exc:
+        detail = exc.pgerror or str(exc)
+        if "uq_clientes_cif_nif" in detail:
+            raise HTTPException(status_code=409, detail="Ya existe un cliente con ese CIF/NIF") from exc
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    if not data:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado o inactivo")
+    return data
+
+
+@router.delete("/clientes/{cliente_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def intranet_clientes_delete(
+    cliente_id: str,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    deleted = ClientesService.delete_cliente(cliente_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado o ya inactivo")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/trabajos", response_model=TrabajosTabResponse)

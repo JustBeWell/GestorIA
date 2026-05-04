@@ -211,6 +211,8 @@ export interface ClienteTabItem {
   cliente_id: string;
   nombre_fiscal: string;
   cif_nif: string;
+  email: string | null;
+  telefono: string | null;
   activo: boolean;
   trabajos_abiertos: number;
   pendiente_total: number;
@@ -224,3 +226,34 @@ export interface ClientesTabResponse {
   page: number;
   page_size: number;
 }
+
+export interface ClienteDetailItem {
+  cliente_id: string;
+  nombre_fiscal: string;
+  cif_nif: string;
+  email: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  codigo_postal: string | null;
+  ciudad: string | null;
+  provincia: string | null;
+  activo: boolean;
+  created_at: string;
+  trabajos_count: number;
+  trabajos_abiertos: number;
+  facturas_count: number;
+  pendiente_total: number;
+}
+
+export interface ClienteCreate {
+  nombre_fiscal: string;
+  cif_nif: string;
+  email?: string | null;
+  telefono?: string | null;
+  direccion?: string | null;
+  codigo_postal?: string | null;
+  ciudad?: string | null;
+  provincia?: string | null;
+}
+
+export type ClienteUpdate = Partial<ClienteCreate>;

@@ -206,6 +206,8 @@ class ClienteTabItem(BaseModel):
 	cliente_id: str
 	nombre_fiscal: str
 	cif_nif: str
+	email: str | None = None
+	telefono: str | None = None
 	activo: bool
 	trabajos_abiertos: int
 	pendiente_total: float
@@ -218,6 +220,58 @@ class ClientesTabResponse(BaseModel):
 	total: int
 	page: int
 	page_size: int
+
+
+class ClienteCreate(BaseModel):
+	nombre_fiscal: str = Field(..., min_length=2, max_length=255)
+	cif_nif: str = Field(..., min_length=9, max_length=20)
+	email: EmailStr | None = None
+	telefono: str | None = Field(default=None, max_length=20)
+	direccion: str | None = None
+	codigo_postal: str | None = Field(default=None, max_length=10)
+	ciudad: str | None = Field(default=None, max_length=100)
+	provincia: str | None = Field(default=None, max_length=100)
+
+	@field_validator("cif_nif")
+	@classmethod
+	def validate_cif_nif(cls, v: str) -> str:
+		return _validate_nif_cif(v)
+
+
+class ClienteUpdate(BaseModel):
+	nombre_fiscal: str | None = Field(default=None, min_length=2, max_length=255)
+	cif_nif: str | None = Field(default=None, min_length=9, max_length=20)
+	email: EmailStr | None = None
+	telefono: str | None = Field(default=None, max_length=20)
+	direccion: str | None = None
+	codigo_postal: str | None = Field(default=None, max_length=10)
+	ciudad: str | None = Field(default=None, max_length=100)
+	provincia: str | None = Field(default=None, max_length=100)
+
+	@field_validator("cif_nif", mode="before")
+	@classmethod
+	def validate_cif_nif_optional(cls, v: str | None) -> str | None:
+		if v is None:
+			return v
+		return _validate_nif_cif(v)
+
+
+class ClienteDetailItem(BaseModel):
+	cliente_id: str
+	nombre_fiscal: str
+	cif_nif: str
+	email: str | None
+	telefono: str | None
+	direccion: str | None
+	codigo_postal: str | None
+	ciudad: str | None
+	provincia: str | None
+	activo: bool
+	created_at: datetime
+	trabajos_count: int
+	trabajos_abiertos: int
+	facturas_count: int
+	pendiente_total: float
 
 
 class TrabajoTabItem(BaseModel):

@@ -9,7 +9,10 @@ import {
   AdminCorreccionResponse,
   AdminFichajesResponse,
   AdminResumenResponse,
+  ClienteCreate,
+  ClienteDetailItem,
   ClientesTabResponse,
+  ClienteUpdate,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
   FichajeTabResponse,
@@ -176,5 +179,23 @@ export class IntranetService {
 
   createCorreccionFichaje(payload: AdminCorreccionRequest): Observable<AdminCorreccionResponse> {
     return this.http.post<AdminCorreccionResponse>(`${this.apiUrl}/intranet/admin/fichajes/correccion`, payload);
+  }
+
+  // ── Clientes CRUD ──────────────────────────────────────────────────────────
+
+  getClienteDetail(clienteId: string): Observable<ClienteDetailItem> {
+    return this.http.get<ClienteDetailItem>(`${this.apiUrl}/intranet/clientes/${clienteId}`);
+  }
+
+  createCliente(payload: ClienteCreate): Observable<ClienteDetailItem> {
+    return this.http.post<ClienteDetailItem>(`${this.apiUrl}/intranet/clientes`, payload);
+  }
+
+  updateCliente(clienteId: string, payload: ClienteUpdate): Observable<ClienteDetailItem> {
+    return this.http.put<ClienteDetailItem>(`${this.apiUrl}/intranet/clientes/${clienteId}`, payload);
+  }
+
+  deleteCliente(clienteId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/intranet/clientes/${clienteId}`);
   }
 }

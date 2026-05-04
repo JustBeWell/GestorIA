@@ -20,6 +20,7 @@ for arg in "$@"; do
   esac
 done
 
+colima restart 
 # ── 1. Backend (Docker) ────────────────────────────────────────────────────
 if [[ "$SKIP_DOCKER" == false ]]; then
   echo "── Iniciando DB y backend (Docker) ───────────────────────────"

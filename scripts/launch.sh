@@ -29,6 +29,8 @@ echo "║          GestorIA — Iniciando            ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
+colima restart
+
 # ── Paso 1: Docker — db + backend ────────────────────────────
 log "Paso 1/3 — Construyendo e iniciando db + backend..."
 cd "$PROJECT_ROOT"

@@ -3,25 +3,460 @@
     <app-intranet-sidebar />
 
     <section class="content">
+
+      <!-- Topbar -->
       <header class="topbar">
-        <div class="breadcrumbs">Inicio / <strong>Gestion de clientes</strong></div>
+        <div class="breadcrumbs">Inicio / <strong>Clientes</strong></div>
+        <div class="topbar-actions">
+          <label class="search-field">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, CIF o email..."
+              [(ngModel)]="searchQuery" />
+            @if (searchQuery) {
+              <button type="button" class="clear-search" (click)="searchQuery = ''">×</button>
+            }
+          </label>
+        </div>
       </header>
 
+      <!-- Page header -->
       <section class="page-header">
         <div>
-          <h1 class="page-title">Gestion de clientes</h1>
-          <p class="page-subtitle">Modulo en desarrollo</p>
+          <h1 class="page-title">Gestión de clientes</h1>
+          <p class="page-subtitle">
+            {{ resumen.activos }} activos · {{ resumen.total }} en total
+          </p>
+        </div>
+        <div class="page-header-actions">
+          @if (inactivosCount > 0) {
+            <button type="button" class="ghost-button" (click)="showInactive = !showInactive">
+              {{ showInactive ? 'Ocultar inactivos' : 'Mostrar inactivos (' + inactivosCount + ')' }}
+            </button>
+          }
+          @if (isAdmin) {
+            <button type="button" class="primary-button" (click)="openCreate()">
+              + Nuevo cliente
+            </button>
+          }
         </div>
       </section>
 
-      <section class="module-container">
-        <article class="wip-card">
-          <h2 class="wip-title">Gestion de clientes</h2>
-          <p class="wip-badge">Work in progress</p>
-          <p class="wip-description">Esta sección está en desarrollo y se activará en la siguiente iteración.</p>
-          <a routerLink="/home">Volver al panel principal</a>
+      <!-- Stat cards -->
+      <section class="stats-grid">
+        <article class="panel stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Clientes activos</span>
+            <span class="stat-icon blue">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+          </div>
+          <p class="stat-value">{{ resumen.activos }}</p>
+          <p class="stat-helper">de {{ resumen.total }} en total</p>
+        </article>
+
+        <article class="panel stat-card">
+          <div class="stat-header">
+            <span class="stat-title">Resultados visibles</span>
+            <span class="stat-icon green">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+            </span>
+          </div>
+          <p class="stat-value">{{ filteredClientes.length }}</p>
+          <p class="stat-helper">{{ searchQuery ? 'con filtro activo' : 'sin filtro' }}</p>
         </article>
       </section>
+
+      <!-- Loading -->
+      @if (loading()) {
+        <section class="state-card" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <h2>Cargando clientes...</h2>
+          <p>Estamos recuperando el listado.</p>
+        </section>
+      }
+
+      <!-- Error -->
+      @else if (errorMessage()) {
+        <div class="modal-backdrop" role="alert">
+          <section class="modal-card">
+            <h2>No se pudo cargar</h2>
+            <p>{{ errorMessage() }}</p>
+            <div class="modal-actions">
+              <button type="button" class="primary-button" (click)="loadClientes()">Reintentar</button>
+            </div>
+          </section>
+        </div>
+      }
+
+      <!-- Content -->
+      @else {
+        @if (filteredClientes.length === 0) {
+          <section class="empty-state panel">
+            @if (searchQuery) {
+              <p class="empty-icon">🔍</p>
+              <p class="empty-title">Sin resultados para «{{ searchQuery }}»</p>
+              <p class="empty-sub">Prueba con otro nombre, CIF o email.</p>
+              <button type="button" class="secondary-button" (click)="searchQuery = ''">Limpiar búsqueda</button>
+            } @else {
+              <p class="empty-icon">🏢</p>
+              <p class="empty-title">Todavía no hay clientes registrados</p>
+              @if (isAdmin) {
+                <p class="empty-sub">Empieza dando de alta el primer cliente.</p>
+                <button type="button" class="primary-button" (click)="openCreate()">+ Nuevo cliente</button>
+              }
+            }
+          </section>
+        } @else {
+          <section class="panel table-section">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre fiscal</th>
+                  <th>CIF/NIF</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th class="text-right">Trabajos</th>
+                  <th class="text-right">Pendiente</th>
+                  <th>Estado</th>
+                  @if (isAdmin) {
+                    <th class="col-actions">Acciones</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (cliente of filteredClientes; track cliente.cliente_id) {
+                  <tr
+                    class="table-row"
+                    [class.row-inactive]="!cliente.activo"
+                    (click)="openDetail(cliente)">
+                    <td class="cell-primary">{{ cliente.nombre_fiscal }}</td>
+                    <td class="cell-mono">{{ cliente.cif_nif }}</td>
+                    <td class="cell-secondary">{{ cliente.email ?? '—' }}</td>
+                    <td class="cell-secondary">{{ cliente.telefono ?? '—' }}</td>
+                    <td class="text-right">
+                      @if (cliente.trabajos_abiertos > 0) {
+                        <span class="badge badge-blue">{{ cliente.trabajos_abiertos }}</span>
+                      } @else {
+                        <span class="cell-muted">0</span>
+                      }
+                    </td>
+                    <td class="text-right">
+                      @if (cliente.pendiente_total > 0) {
+                        <span class="cell-warn">{{ formatCurrency(cliente.pendiente_total) }}</span>
+                      } @else {
+                        <span class="cell-muted">—</span>
+                      }
+                    </td>
+                    <td>
+                      <span class="badge"
+                        [class.badge-green]="cliente.activo"
+                        [class.badge-gray]="!cliente.activo">
+                        {{ cliente.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    @if (isAdmin) {
+                      <td class="col-actions" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="icon-button"
+                          title="Editar cliente"
+                          (click)="openEdit(cliente, $event)">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          </svg>
+                        </button>
+                        @if (cliente.activo) {
+                          <button
+                            type="button"
+                            class="icon-button icon-danger"
+                            title="Dar de baja"
+                            (click)="openDelete(cliente, $event)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                              <path d="M10 11v6"/><path d="M14 11v6"/>
+                              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                            </svg>
+                          </button>
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </section>
+        }
+      }
+
     </section>
   </section>
 </main>
+
+<!-- ── Modal: Detalle ──────────────────────────────────────────────────── -->
+@if (modalMode() === 'detail') {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedItem?.nombre_fiscal }}</h2>
+        <button type="button" class="modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      @if (loadingDetail()) {
+        <div class="modal-loading">
+          <div class="spinner"></div>
+          <p>Cargando datos...</p>
+        </div>
+      } @else if (selectedDetail) {
+        <div class="detail-grid">
+
+          <div class="detail-section">
+            <h3 class="detail-section-title">Datos fiscales y de contacto</h3>
+            <dl class="detail-list">
+              <dt>CIF / NIF</dt><dd class="mono">{{ selectedDetail.cif_nif }}</dd>
+              <dt>Email</dt><dd>{{ selectedDetail.email ?? '—' }}</dd>
+              <dt>Teléfono</dt><dd>{{ selectedDetail.telefono ?? '—' }}</dd>
+              <dt>Dirección</dt><dd>{{ selectedDetail.direccion ?? '—' }}</dd>
+              <dt>CP / Ciudad</dt>
+              <dd>
+                @if (selectedDetail.codigo_postal || selectedDetail.ciudad) {
+                  {{ [selectedDetail.codigo_postal, selectedDetail.ciudad].filter(Boolean).join(' · ') }}
+                } @else { — }
+              </dd>
+              <dt>Provincia</dt><dd>{{ selectedDetail.provincia ?? '—' }}</dd>
+              <dt>Fecha de alta</dt><dd>{{ formatDate(selectedDetail.created_at) }}</dd>
+              <dt>Estado</dt>
+              <dd>
+                <span class="badge"
+                  [class.badge-green]="selectedDetail.activo"
+                  [class.badge-gray]="!selectedDetail.activo">
+                  {{ selectedDetail.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </dd>
+            </dl>
+          </div>
+
+          <div class="detail-section">
+            <h3 class="detail-section-title">Resumen operativo</h3>
+            <div class="detail-kpi-grid">
+              <div class="detail-kpi">
+                <span class="kpi-label">Trabajos totales</span>
+                <span class="kpi-value">{{ selectedDetail.trabajos_count }}</span>
+              </div>
+              <div class="detail-kpi">
+                <span class="kpi-label">Trabajos abiertos</span>
+                <span class="kpi-value kpi-blue">{{ selectedDetail.trabajos_abiertos }}</span>
+              </div>
+              <div class="detail-kpi">
+                <span class="kpi-label">Facturas emitidas</span>
+                <span class="kpi-value">{{ selectedDetail.facturas_count }}</span>
+              </div>
+              <div class="detail-kpi">
+                <span class="kpi-label">Deuda pendiente</span>
+                <span class="kpi-value" [class.kpi-warn]="selectedDetail.pendiente_total > 0">
+                  {{ formatCurrency(selectedDetail.pendiente_total) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" (click)="closeModal()">Cerrar</button>
+          @if (isAdmin && selectedDetail.activo) {
+            <button type="button" class="primary-button" (click)="openEdit(selectedItem!, $event)">
+              Editar cliente
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Crear / Editar ────────────────────────────────────────────── -->
+@if (modalMode() === 'create' || modalMode() === 'edit') {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ modalMode() === 'create' ? 'Nuevo cliente' : 'Editar cliente' }}</h2>
+        <button type="button" class="modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      <form (ngSubmit)="saveCliente()">
+        <div class="form-grid">
+
+          <div class="form-group form-full">
+            <label class="form-label" for="nombre_fiscal">
+              Nombre fiscal <span class="required">*</span>
+            </label>
+            <input
+              id="nombre_fiscal"
+              type="text"
+              class="form-input"
+              [class.input-error]="formErrors.nombre_fiscal"
+              [(ngModel)]="form.nombre_fiscal"
+              name="nombre_fiscal"
+              placeholder="Empresa S.L. o Nombre Apellidos"
+              autocomplete="organization" />
+            @if (formErrors.nombre_fiscal) {
+              <p class="field-error">{{ formErrors.nombre_fiscal }}</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cif_nif">
+              CIF / NIF <span class="required">*</span>
+            </label>
+            <input
+              id="cif_nif"
+              type="text"
+              class="form-input mono"
+              [class.input-error]="formErrors.cif_nif"
+              [(ngModel)]="form.cif_nif"
+              name="cif_nif"
+              placeholder="B12345678"
+              maxlength="20"
+              (blur)="form.cif_nif = form.cif_nif.trim().toUpperCase()" />
+            @if (formErrors.cif_nif) {
+              <p class="field-error">{{ formErrors.cif_nif }}</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              class="form-input"
+              [class.input-error]="formErrors.email"
+              [(ngModel)]="form.email"
+              name="email"
+              placeholder="contacto@empresa.es"
+              autocomplete="email" />
+            @if (formErrors.email) {
+              <p class="field-error">{{ formErrors.email }}</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="telefono">Teléfono</label>
+            <input
+              id="telefono"
+              type="tel"
+              class="form-input"
+              [(ngModel)]="form.telefono"
+              name="telefono"
+              placeholder="612 345 678"
+              autocomplete="tel" />
+          </div>
+
+          <div class="form-group form-full">
+            <label class="form-label" for="direccion">Dirección</label>
+            <input
+              id="direccion"
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.direccion"
+              name="direccion"
+              placeholder="Calle, número, piso..." />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="codigo_postal">Código postal</label>
+            <input
+              id="codigo_postal"
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.codigo_postal"
+              name="codigo_postal"
+              placeholder="28001"
+              maxlength="10" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ciudad">Ciudad</label>
+            <input
+              id="ciudad"
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.ciudad"
+              name="ciudad"
+              placeholder="Madrid" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="provincia">Provincia</label>
+            <input
+              id="provincia"
+              type="text"
+              class="form-input"
+              [(ngModel)]="form.provincia"
+              name="provincia"
+              placeholder="Madrid" />
+          </div>
+
+        </div>
+
+        @if (formServerError) {
+          <p class="server-error">{{ formServerError }}</p>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-button" (click)="closeModal()" [disabled]="saving()">
+            Cancelar
+          </button>
+          <button type="submit" class="primary-button" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : (modalMode() === 'create' ? 'Crear cliente' : 'Guardar cambios') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Confirmar baja ────────────────────────────────────────────── -->
+@if (modalMode() === 'delete') {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card modal-narrow" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Dar de baja</h2>
+        <button type="button" class="modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      <p class="confirm-text">
+        ¿Seguro que quieres dar de baja a
+        <strong>{{ selectedItem?.nombre_fiscal }}</strong>?
+      </p>
+      <p class="confirm-sub">
+        El cliente quedará inactivo. Se conservará todo su historial de trabajos y facturas.
+      </p>
+
+      @if (formServerError) {
+        <p class="server-error">{{ formServerError }}</p>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="secondary-button" (click)="closeModal()" [disabled]="saving()">
+          Cancelar
+        </button>
+        <button type="button" class="danger-button" (click)="confirmDelete()" [disabled]="saving()">
+          {{ saving() ? 'Procesando...' : 'Dar de baja' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
