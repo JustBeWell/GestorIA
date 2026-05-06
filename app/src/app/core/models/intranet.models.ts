@@ -36,8 +36,12 @@ export interface TrabajosResumen {
 
 export interface PagosResumen {
   cobrado_mes: number;
+  facturado_mes: number;
+  facturas_emitidas_mes: number;
   pendiente_total: number;
+  pendiente_count: number;
   facturas_vencidas: number;
+  vencido_total: number;
 }
 
 export interface QuarterSeriesPoint {

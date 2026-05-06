@@ -12,7 +12,7 @@
       <!-- Page header -->
       <section class="page-header">
         <div>
-          <h1 class="page-title">Gestión de pagos</h1>
+          <h1 class="page-title">Pagos y facturación</h1>
           @if (!loading()) {
             <p class="page-subtitle">
               {{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }} ·
@@ -45,8 +45,42 @@
               Solo vencidas
             </label>
           </div>
+          <div class="export-wrapper">
+            <button type="button" class="export-button" (click)="toggleExportMenu()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            @if (showExportMenu()) {
+              <div class="export-menu" role="menu">
+                <button type="button" role="menuitem" (click)="exportCsv()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  Exportar CSV
+                </button>
+                <button type="button" role="menuitem" (click)="exportPdf()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  Exportar PDF
+                </button>
+              </div>
+            }
+          </div>
           <button type="button" class="primary-button" (click)="openCreateFactura()">
-            + Nueva factura
+            + Emitir factura
           </button>
         </div>
       </section>
@@ -61,25 +95,31 @@
 
       <!-- KPI cards -->
       <div class="kpi-row">
-        <article class="kpi-card kpi-cobrado">
-          <span class="kpi-icon">💶</span>
-          <div class="kpi-body">
-            <span class="kpi-label">Cobrado este mes</span>
-            <span class="kpi-value">{{ resumen().cobrado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+        <!-- Card 1: Total facturado mes (dark) -->
+        <article class="kpi-card kpi-dark">
+          <div class="kpi-label">TOTAL FACTURADO MES</div>
+          <div class="kpi-value">{{ resumen().facturado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-sub">{{ resumen().facturas_emitidas_mes }} factura{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }} emitida{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }}</div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar" [style.width.%]="resumen().facturado_mes > 0 ? 60 : 0"></div>
           </div>
         </article>
+        <!-- Card 2: Pendiente de cobro (orange) -->
         <article class="kpi-card kpi-pendiente">
-          <span class="kpi-icon">⏳</span>
-          <div class="kpi-body">
-            <span class="kpi-label">Pendiente total</span>
-            <span class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+          <div class="kpi-label">PENDIENTE DE COBRO</div>
+          <div class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-sub">{{ resumen().pendiente_count }} factura{{ resumen().pendiente_count !== 1 ? 's' : '' }} · vencimiento próximo</div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar" [style.width.%]="kpiBarPct(resumen().pendiente_total, resumen().facturado_mes)"></div>
           </div>
         </article>
+        <!-- Card 3: Vencido (red) -->
         <article class="kpi-card" [class.kpi-vencidas-alert]="resumen().facturas_vencidas > 0">
-          <span class="kpi-icon">🚨</span>
-          <div class="kpi-body">
-            <span class="kpi-label">Facturas vencidas</span>
-            <span class="kpi-value">{{ resumen().facturas_vencidas }}</span>
+          <div class="kpi-label">VENCIDO</div>
+          <div class="kpi-value">{{ resumen().vencido_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-sub">{{ resumen().facturas_vencidas }} factura{{ resumen().facturas_vencidas !== 1 ? 's' : '' }} · acción requerida</div>
+          <div class="kpi-bar-track">
+            <div class="kpi-bar" [style.width.%]="kpiBarPct(resumen().vencido_total, resumen().facturado_mes)"></div>
           </div>
         </article>
       </div>

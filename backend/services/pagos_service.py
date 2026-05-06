@@ -22,6 +22,7 @@ class PagosService:
         vencidas_solo: bool = False,
         fecha_pago_desde: str | None = None,
         fecha_pago_hasta: str | None = None,
+        is_admin: bool = False,
     ) -> dict:
         page_facturas, page_size_facturas, offset_facturas = normalize_pagination(page_facturas, page_size_facturas)
         page_pagos, page_size_pagos, offset_pagos = normalize_pagination(page_pagos, page_size_pagos)
@@ -33,20 +34,20 @@ class PagosService:
                     return {}
 
                 empleado_id = usuario["empleado_id"]
-                resumen = PagosService.get_pagos_resumen(cursor, empleado_id)
+                resumen = PagosService.get_pagos_resumen(cursor, empleado_id, is_admin=is_admin)
                 total_facturas = PagosService._count_facturas(
-                    cursor, empleado_id, estado_factura, cliente_id, vencidas_solo,
+                    cursor, empleado_id, estado_factura, cliente_id, vencidas_solo, is_admin=is_admin,
                 )
                 total_pagos = PagosService._count_pagos(
-                    cursor, empleado_id, cliente_id, fecha_pago_desde, fecha_pago_hasta,
+                    cursor, empleado_id, cliente_id, fecha_pago_desde, fecha_pago_hasta, is_admin=is_admin,
                 )
                 facturas = PagosService._get_facturas_detalle(
                     cursor, empleado_id, estado_factura, cliente_id, vencidas_solo,
-                    page_size_facturas, offset_facturas,
+                    page_size_facturas, offset_facturas, is_admin=is_admin,
                 )
                 pagos_recientes = PagosService._get_pagos_recientes(
                     cursor, empleado_id, cliente_id, fecha_pago_desde, fecha_pago_hasta,
-                    page_size_pagos, offset_pagos,
+                    page_size_pagos, offset_pagos, is_admin=is_admin,
                 )
 
         return {
@@ -61,16 +62,22 @@ class PagosService:
     # ── Semi-public helper (used by HomeService) ───────────────────────────────
 
     @staticmethod
-    def get_pagos_resumen(cursor: RealDictCursor, empleado_id: str) -> dict:
-        cursor.execute(
-            """
-            WITH clientes_asignados AS (
+    def get_pagos_resumen(cursor: RealDictCursor, empleado_id: str, is_admin: bool = False) -> dict:
+        if is_admin:
+            scope_frag = "clientes_asignados AS (SELECT id AS cliente_id FROM clientes)"
+            scope_vals: list = []
+        else:
+            scope_frag = """clientes_asignados AS (
                 SELECT DISTINCT t.cliente_id
                 FROM trabajo_empleado te
                 JOIN trabajos t ON t.id = te.trabajo_id
                 WHERE te.empleado_id = %s
                 AND te.desasignado_en IS NULL
-            ),
+            )"""
+            scope_vals = [empleado_id]
+        cursor.execute(
+            f"""
+            WITH {scope_frag},
             facturas_scope AS (
                 SELECT f.* FROM facturas f
                 WHERE f.cliente_id IN (SELECT cliente_id FROM clientes_asignados)
@@ -92,26 +99,53 @@ class PagosService:
                     0
                 ) AS cobrado_mes,
                 COALESCE(
+                    SUM(fs.total) FILTER (
+                        WHERE date_trunc('month', fs.fecha_emision::timestamp) = date_trunc('month', CURRENT_DATE::timestamp)
+                        AND fs.estado NOT IN ('borrador', 'anulada')
+                    ),
+                    0
+                ) AS facturado_mes,
+                COUNT(*) FILTER (
+                    WHERE date_trunc('month', fs.fecha_emision::timestamp) = date_trunc('month', CURRENT_DATE::timestamp)
+                    AND fs.estado NOT IN ('borrador', 'anulada')
+                ) AS facturas_emitidas_mes,
+                COALESCE(
                     SUM(GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0))
                     FILTER (WHERE fs.estado <> 'anulada'),
                     0
                 ) AS pendiente_total,
                 COUNT(*) FILTER (
+                    WHERE GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0) > 0
+                    AND fs.estado NOT IN ('anulada', 'borrador')
+                ) AS pendiente_count,
+                COUNT(*) FILTER (
                     WHERE fs.estado IN ('emitida', 'pagada_parcial')
                     AND fs.fecha_vencimiento IS NOT NULL
                     AND fs.fecha_vencimiento < CURRENT_DATE
-                ) AS facturas_vencidas
+                ) AS facturas_vencidas,
+                COALESCE(
+                    SUM(GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0)) FILTER (
+                        WHERE fs.estado IN ('emitida', 'pagada_parcial')
+                        AND fs.fecha_vencimiento IS NOT NULL
+                        AND fs.fecha_vencimiento < CURRENT_DATE
+                    ),
+                    0
+                ) AS vencido_total
             FROM facturas_scope fs
             LEFT JOIN pagos_scope ps ON ps.factura_id = fs.id
             LEFT JOIN pagos_por_factura ppf ON ppf.factura_id = fs.id
             """,
-            (empleado_id,),
+            scope_vals,
         )
         row = cursor.fetchone() or {}
         return {
             "cobrado_mes": float(row.get("cobrado_mes") or 0),
+            "facturado_mes": float(row.get("facturado_mes") or 0),
+            "facturas_emitidas_mes": int(row.get("facturas_emitidas_mes") or 0),
             "pendiente_total": float(row.get("pendiente_total") or 0),
+            "pendiente_count": int(row.get("pendiente_count") or 0),
             "facturas_vencidas": int(row.get("facturas_vencidas") or 0),
+            "vencido_total": float(row.get("vencido_total") or 0),
         }
 
     # ── Private helpers ────────────────────────────────────────────────────────
@@ -123,23 +157,30 @@ class PagosService:
         estado_factura: str | None,
         cliente_id: str | None,
         vencidas_solo: bool,
+        is_admin: bool = False,
     ) -> int:
-        where, values = PagosService._build_facturas_filters(empleado_id, estado_factura, cliente_id, vencidas_solo)
-        cursor.execute(
-            f"""
-            WITH clientes_asignados AS (
+        if is_admin:
+            scope_frag = "clientes_asignados AS (SELECT id AS cliente_id FROM clientes)"
+            scope_vals: list = []
+        else:
+            scope_frag = """clientes_asignados AS (
                 SELECT DISTINCT t.cliente_id
                 FROM trabajo_empleado te
                 JOIN trabajos t ON t.id = te.trabajo_id
                 WHERE te.empleado_id = %s
                 AND te.desasignado_en IS NULL
-            )
+            )"""
+            scope_vals = [empleado_id]
+        where, filter_vals = PagosService._build_facturas_filters(estado_factura, cliente_id, vencidas_solo)
+        cursor.execute(
+            f"""
+            WITH {scope_frag}
             SELECT COUNT(*) AS total
             FROM facturas f
             WHERE f.cliente_id IN (SELECT cliente_id FROM clientes_asignados)
             AND {where}
             """,
-            values,
+            [*scope_vals, *filter_vals],
         )
         row = cursor.fetchone() or {}
         return int(row.get("total") or 0)
@@ -153,17 +194,24 @@ class PagosService:
         vencidas_solo: bool,
         limit: int,
         offset: int,
+        is_admin: bool = False,
     ) -> list[dict]:
-        where, values = PagosService._build_facturas_filters(empleado_id, estado_factura, cliente_id, vencidas_solo)
-        cursor.execute(
-            f"""
-            WITH clientes_asignados AS (
+        if is_admin:
+            scope_frag = "clientes_asignados AS (SELECT id AS cliente_id FROM clientes)"
+            scope_vals: list = []
+        else:
+            scope_frag = """clientes_asignados AS (
                 SELECT DISTINCT t.cliente_id
                 FROM trabajo_empleado te
                 JOIN trabajos t ON t.id = te.trabajo_id
                 WHERE te.empleado_id = %s
                 AND te.desasignado_en IS NULL
-            ),
+            )"""
+            scope_vals = [empleado_id]
+        where, filter_vals = PagosService._build_facturas_filters(estado_factura, cliente_id, vencidas_solo)
+        cursor.execute(
+            f"""
+            WITH {scope_frag},
             pagos_por_factura AS (
                 SELECT factura_id, COALESCE(SUM(importe), 0) AS pagado
                 FROM pagos
@@ -188,7 +236,7 @@ class PagosService:
             ORDER BY f.fecha_emision DESC
             LIMIT %s OFFSET %s
             """,
-            (*values, limit, offset),
+            [*scope_vals, *filter_vals, limit, offset],
         )
         return [
             {
@@ -207,24 +255,31 @@ class PagosService:
         cliente_id: str | None,
         fecha_pago_desde: str | None,
         fecha_pago_hasta: str | None,
+        is_admin: bool = False,
     ) -> int:
-        where, values = PagosService._build_pagos_filters(empleado_id, cliente_id, fecha_pago_desde, fecha_pago_hasta)
-        cursor.execute(
-            f"""
-            WITH clientes_asignados AS (
+        if is_admin:
+            scope_frag = "clientes_asignados AS (SELECT id AS cliente_id FROM clientes)"
+            scope_vals: list = []
+        else:
+            scope_frag = """clientes_asignados AS (
                 SELECT DISTINCT t.cliente_id
                 FROM trabajo_empleado te
                 JOIN trabajos t ON t.id = te.trabajo_id
                 WHERE te.empleado_id = %s
                 AND te.desasignado_en IS NULL
-            )
+            )"""
+            scope_vals = [empleado_id]
+        where, filter_vals = PagosService._build_pagos_filters(cliente_id, fecha_pago_desde, fecha_pago_hasta)
+        cursor.execute(
+            f"""
+            WITH {scope_frag}
             SELECT COUNT(*) AS total
             FROM pagos p
             JOIN facturas f ON f.id = p.factura_id
             WHERE f.cliente_id IN (SELECT cliente_id FROM clientes_asignados)
             AND {where}
             """,
-            values,
+            [*scope_vals, *filter_vals],
         )
         row = cursor.fetchone() or {}
         return int(row.get("total") or 0)
@@ -238,17 +293,24 @@ class PagosService:
         fecha_pago_hasta: str | None,
         limit: int,
         offset: int,
+        is_admin: bool = False,
     ) -> list[dict]:
-        where, values = PagosService._build_pagos_filters(empleado_id, cliente_id, fecha_pago_desde, fecha_pago_hasta)
-        cursor.execute(
-            f"""
-            WITH clientes_asignados AS (
+        if is_admin:
+            scope_frag = "clientes_asignados AS (SELECT id AS cliente_id FROM clientes)"
+            scope_vals: list = []
+        else:
+            scope_frag = """clientes_asignados AS (
                 SELECT DISTINCT t.cliente_id
                 FROM trabajo_empleado te
                 JOIN trabajos t ON t.id = te.trabajo_id
                 WHERE te.empleado_id = %s
                 AND te.desasignado_en IS NULL
-            )
+            )"""
+            scope_vals = [empleado_id]
+        where, filter_vals = PagosService._build_pagos_filters(cliente_id, fecha_pago_desde, fecha_pago_hasta)
+        cursor.execute(
+            f"""
+            WITH {scope_frag}
             SELECT
                 p.id::text AS pago_id,
                 f.id::text AS factura_id,
@@ -265,7 +327,7 @@ class PagosService:
             ORDER BY p.fecha_pago DESC, p.created_at DESC
             LIMIT %s OFFSET %s
             """,
-            (*values, limit, offset),
+            [*scope_vals, *filter_vals, limit, offset],
         )
         return [
             {**dict(row), "importe": float(row["importe"] or 0)}
@@ -274,13 +336,12 @@ class PagosService:
 
     @staticmethod
     def _build_facturas_filters(
-        empleado_id: str,
         estado_factura: str | None,
         cliente_id: str | None,
         vencidas_solo: bool,
     ) -> tuple[str, list]:
         clauses = ["TRUE"]
-        values: list = [empleado_id]
+        values: list = []
         if estado_factura:
             clauses.append("f.estado::text = %s")
             values.append(estado_factura)
@@ -295,13 +356,12 @@ class PagosService:
 
     @staticmethod
     def _build_pagos_filters(
-        empleado_id: str,
         cliente_id: str | None,
         fecha_pago_desde: str | None,
         fecha_pago_hasta: str | None,
     ) -> tuple[str, list]:
         clauses = ["TRUE"]
-        values: list = [empleado_id]
+        values: list = []
         if cliente_id:
             clauses.append("f.cliente_id::text = %s")
             values.append(cliente_id)

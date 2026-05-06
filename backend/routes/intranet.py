@@ -565,6 +565,7 @@ async def intranet_pagos(
         vencidas_solo=vencidas_solo,
         fecha_pago_desde=fecha_pago_desde.isoformat() if fecha_pago_desde else None,
         fecha_pago_hasta=fecha_pago_hasta.isoformat() if fecha_pago_hasta else None,
+        is_admin=current_user.role == "administrador",
     )
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")

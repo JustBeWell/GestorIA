@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -36,7 +36,7 @@ export class PagosPageComponent implements OnInit {
   errorMsg = signal<string | null>(null);
 
   // ── Datos principales ────────────────────────────────────────────────────
-  resumen = signal<PagosResumen>({ cobrado_mes: 0, pendiente_total: 0, facturas_vencidas: 0 });
+  resumen = signal<PagosResumen>({ cobrado_mes: 0, facturado_mes: 0, facturas_emitidas_mes: 0, pendiente_total: 0, pendiente_count: 0, facturas_vencidas: 0, vencido_total: 0 });
   facturas = signal<FacturaPagoTabItem[]>([]);
   paginacion = signal<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
   clientes = signal<{ cliente_id: string; nombre: string }[]>([]);
@@ -78,6 +78,7 @@ export class PagosPageComponent implements OnInit {
   // ── Modal confirmar anulación ─────────────────────────────────────────────
   showAnularModal = signal(false);
   anulando = signal<string | null>(null);
+  showExportMenu = signal(false);
 
   // ── Computed ──────────────────────────────────────────────────────────────
   isAdmin = computed(() => this.auth.currentUser() !== null);
@@ -364,6 +365,102 @@ export class PagosPageComponent implements OnInit {
     if (!fechaVencimiento) return false;
     if (estado === 'pagada' || estado === 'anulada') return false;
     return new Date(fechaVencimiento) < this.today;
+  }
+
+  kpiBarPct(val: number, ref: number): number {
+    if (ref <= 0) return 0;
+    return Math.min((val / ref) * 100, 100);
+  }
+
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  toggleExportMenu(): void {
+    this.showExportMenu.update((v) => !v);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.export-wrapper')) {
+      this.showExportMenu.set(false);
+    }
+  }
+
+  exportCsv(): void {
+    this.showExportMenu.set(false);
+    const rows = this.facturas();
+    if (!rows.length) return;
+    const headers = ['Nº Factura', 'Cliente', 'Estado', 'Fecha emisión', 'Fecha vencimiento', 'Total', 'Pagado', 'Pendiente'];
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const fmt = (n: number) => n.toFixed(2);
+    const lines = [
+      headers.join(','),
+      ...rows.map((f) =>
+        [
+          escape(f.numero),
+          escape(f.cliente_nombre),
+          escape(this.estadoLabel(f.estado)),
+          escape(f.fecha_emision ? new Date(f.fecha_emision).toLocaleDateString('es-ES') : ''),
+          escape(f.fecha_vencimiento ? new Date(f.fecha_vencimiento).toLocaleDateString('es-ES') : ''),
+          escape(fmt(f.total)),
+          escape(fmt(f.pagado)),
+          escape(fmt(f.pendiente)),
+        ].join(',')
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `facturas_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  exportPdf(): void {
+    this.showExportMenu.set(false);
+    const rows = this.facturas();
+    const fmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+    const date = new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium' });
+    const tableRows = rows
+      .map(
+        (f) => `<tr>
+          <td>${f.numero}</td>
+          <td>${f.cliente_nombre}</td>
+          <td>${this.estadoLabel(f.estado)}</td>
+          <td>${f.fecha_emision ? date.format(new Date(f.fecha_emision)) : '—'}</td>
+          <td>${f.fecha_vencimiento ? date.format(new Date(f.fecha_vencimiento)) : '—'}</td>
+          <td>${fmt.format(f.total)}</td>
+          <td>${fmt.format(f.pagado)}</td>
+          <td>${fmt.format(f.pendiente)}</td>
+        </tr>`
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Facturas — ${new Date().toLocaleDateString('es-ES')}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; }
+        h1 { font-size: 16px; margin-bottom: 4px; }
+        p  { margin: 0 0 12px; color: #64748b; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f172a; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        @media print { @page { margin: 15mm; size: landscape; } }
+      </style></head><body>
+      <h1>Facturas y pagos</h1>
+      <p>Exportado el ${new Date().toLocaleDateString('es-ES')} · ${rows.length} registros</p>
+      <table><thead><tr>
+        <th>Nº Factura</th><th>Cliente</th><th>Estado</th><th>Emisión</th><th>Vencimiento</th>
+        <th>Total</th><th>Pagado</th><th>Pendiente</th>
+      </tr></thead><tbody>${tableRows}</tbody></table>
+      <script>window.onload=()=>{window.print();}<\/script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
   }
 }
 
