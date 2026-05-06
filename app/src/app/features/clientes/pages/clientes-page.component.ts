@@ -81,7 +81,7 @@ export class ClientesPageComponent implements OnInit, OnDestroy {
 
   // ── Computed ───────────────────────────────────────────────────────────────
   protected get isAdmin(): boolean {
-    return this.authState.currentUser() !== null;
+    return this.authState.currentUser()?.role === 'administrador';
   }
 
   protected get filteredClientes(): ClienteTabItem[] {

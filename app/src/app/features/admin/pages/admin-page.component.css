@@ -997,3 +997,196 @@
   color: #64748b;
 }
 
+/* ─── Tab clientes / trabajos ────────────────────────────────── */
+.admin-tab-panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab-panel-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.tab-panel-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: #dce8e0;
+  color: #2d9467;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.tab-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-search {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 220px;
+  outline: none;
+}
+.tab-search:focus { border-color: #2d9467; }
+
+.tab-select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+.tab-select:focus { border-color: #2d9467; }
+
+.tab-refresh-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tab-refresh-btn:hover { background: #f1f5f9; }
+
+.tab-loading, .tab-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.tab-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid #dce8e0; }
+
+.tab-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tab-table th {
+  background: #f8fafc;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #64748b;
+  border-bottom: 1px solid #dce8e0;
+  white-space: nowrap;
+}
+
+.tab-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.tab-table tbody tr:last-child td { border-bottom: none; }
+.tab-table tbody tr:hover td { background: #f8fafc; }
+.tab-table .row-inactivo td { opacity: 0.55; }
+
+.td-mono  { font-family: monospace; font-size: 12px; color: #64748b; }
+.td-bold  { font-weight: 600; color: #0f172a; }
+.td-center { text-align: center; }
+.td-num   { text-align: right; font-variant-numeric: tabular-nums; }
+.td-warn  { color: #dc2626; font-weight: 600; }
+
+.estado-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+.badge-activo   { background: #dcfce7; color: #15803d; }
+.badge-inactivo { background: #fee2e2; color: #b91c1c; }
+
+.estado-badge--pendiente  { background: #eff6ff; color: #3b82f6; }
+.estado-badge--en_curso   { background: #fef9c3; color: #d97706; }
+.estado-badge--bloqueado  { background: #fee2e2; color: #dc2626; }
+.estado-badge--finalizado { background: #dcfce7; color: #15803d; }
+.estado-badge--cancelado  { background: #f1f5f9; color: #94a3b8; }
+
+/* ─── Factura estado badges (pagos tab) ──────────────────────────────────── */
+.factura-badge--borrador       { background: #f1f5f9; color: #64748b; }
+.factura-badge--emitida        { background: #eff6ff; color: #3b82f6; }
+.factura-badge--pagada_parcial { background: #fef9c3; color: #d97706; }
+.factura-badge--pagada         { background: #dcfce7; color: #15803d; }
+.factura-badge--anulada        { background: #f1f5f9; color: #94a3b8; }
+
+/* ─── Pagos tab KPI row ──────────────────────────────────────────────────── */
+.pagos-kpi-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pagos-kpi-card {
+  flex: 1;
+  min-width: 180px;
+  background: #f8fafc;
+  border: 1px solid #dce8e0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pagos-kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #94a3b8;
+}
+
+.pagos-kpi-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.pagos-kpi-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.pagos-kpi-pendiente .pagos-kpi-value { color: #d97706; }
+.pagos-kpi-pendiente .pagos-kpi-label { color: #d97706; }
+.pagos-kpi-vencido { border-color: #fca5a5; }
+.pagos-kpi-vencido .pagos-kpi-value { color: #dc2626; }
+.pagos-kpi-vencido .pagos-kpi-label { color: #dc2626; }

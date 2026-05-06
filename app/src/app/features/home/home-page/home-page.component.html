@@ -121,8 +121,8 @@
             <article class="panel stat-card">
               <p class="panel-title">Clientes activos</p>
               <div class="stat-value">{{ homeData?.clientes?.activos ?? 0 }}</div>
-              @if ((homeData?.clientes?.activos ?? 0) > 0) {
-                <span class="stat-trend">+5</span>
+              @if (clientesDeltaLabel) {
+                <span class="stat-trend" [class.negative]="clientesDelta < 0">{{ clientesDeltaLabel }}</span>
               }
               <div class="mini-chart">
                 <svg class="mini-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
@@ -133,8 +133,8 @@
             <article class="panel stat-card">
               <p class="panel-title">Trabajos · en curso</p>
               <div class="stat-value">{{ homeData?.trabajos?.en_curso ?? 0 }}</div>
-              @if ((homeData?.trabajos?.en_curso ?? 0) > 0) {
-                <span class="stat-trend" style="color: #ef4444">-2 atrasados</span>
+              @if (trabajosBloqueados > 0) {
+                <span class="stat-trend negative">{{ trabajosBloqueados }} bloqueado{{ trabajosBloqueados !== 1 ? 's' : '' }}</span>
               }
               <div class="mini-chart">
                 <svg class="mini-spark orange" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
@@ -145,8 +145,8 @@
             <article class="panel stat-card">
               <p class="panel-title">Pagos · facturado mes</p>
               <div class="stat-value">{{ formatCurrency(homeData?.pagos?.cobrado_mes) }}</div>
-              @if ((homeData?.pagos?.cobrado_mes ?? 0) > 0) {
-                <span class="stat-trend">+12,4%</span>
+              @if (pagosDeltaLabel) {
+                <span class="stat-trend" [class.negative]="!pagosDeltaPositive">{{ pagosDeltaLabel }}</span>
               }
               <div class="mini-chart">
                 <svg class="mini-spark amber" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">

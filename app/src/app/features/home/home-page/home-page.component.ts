@@ -184,6 +184,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    // Clear snapshot so next visit always fetches fresh data
+    localStorage.removeItem(this.snapshotKey);
   }
 
   protected formatDate(value: string | null): string {
@@ -282,6 +284,42 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   protected get fichajeDayDeltaPercent(): number {
     return this.getDayDeltaPercent();
+  }
+
+  /** Delta clientes: diferencia entre último y penúltimo punto de la serie */
+  protected get clientesDelta(): number {
+    const pts = this.clientesSeries;
+    if (pts.length < 2) return 0;
+    return pts[pts.length - 1].value - pts[pts.length - 2].value;
+  }
+
+  protected get clientesDeltaLabel(): string {
+    const d = this.clientesDelta;
+    if (d === 0) return '';
+    return (d > 0 ? '+' : '') + d;
+  }
+
+  /** Trabajos bloqueados (dato real del backend) */
+  protected get trabajosBloqueados(): number {
+    return this.homeData?.trabajos?.bloqueados ?? 0;
+  }
+
+  /** Delta pagos: diferencia porcentual entre último y penúltimo punto de la serie */
+  protected get pagosDeltaLabel(): string {
+    const pts = this.pagosSeries;
+    if (pts.length < 2) return '';
+    const prev = pts[pts.length - 2].value;
+    const curr = pts[pts.length - 1].value;
+    if (prev === 0) return curr > 0 ? '+100%' : '';
+    const pct = ((curr - prev) / prev) * 100;
+    const prefix = pct > 0 ? '+' : '';
+    return `${prefix}${pct.toFixed(1).replace('.', ',')}%`;
+  }
+
+  protected get pagosDeltaPositive(): boolean {
+    const pts = this.pagosSeries;
+    if (pts.length < 2) return true;
+    return pts[pts.length - 1].value >= pts[pts.length - 2].value;
   }
 
   protected get shiftStartLabel(): string {

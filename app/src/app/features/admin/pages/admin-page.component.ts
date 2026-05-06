@@ -3,17 +3,25 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import {
   AdminChartsResponse,
   AdminEmpleadoResumen,
   AdminFichajesResponse,
   AdminResumenResponse,
+  ClienteTabItem,
+  ClientesTabResponse,
+  EstadoFactura,
+  FacturaPagoTabItem,
   FacturacionMensualPoint,
   HorasMensualesPoint,
   TrabajosMensualesPoint,
   ClientesMensualesPoint,
+  PagosResumen,
+  TrabajoTabItem,
+  TrabajosTabResponse,
+  EstadoTrabajo,
 } from '../../../core/models/intranet.models';
 import { UserCreatePayload, UserAdminUpdatePayload } from '../../../core/models/user-admin.models';
 import { IntranetService } from '../../../core/services/intranet.service';
@@ -41,7 +49,71 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   protected readonly charts = signal<AdminChartsResponse | null>(null);
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────
-  protected readonly activeTab = signal<'resumen' | 'fichajes'>('resumen');
+  protected readonly activeTab = signal<'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos'>('resumen');
+
+  // ─── Tab clientes ─────────────────────────────────────────────────────────
+  protected readonly clientesLoading = signal(false);
+  protected adminClientes: ClienteTabItem[] = [];
+  protected clientesSearch = '';
+
+  protected get filteredAdminClientes(): ClienteTabItem[] {
+    const q = this.clientesSearch.trim().toLowerCase();
+    if (!q) return this.adminClientes;
+    return this.adminClientes.filter(
+      (c) => c.nombre_fiscal.toLowerCase().includes(q) || c.cif_nif.toLowerCase().includes(q)
+    );
+  }
+
+  // ─── Tab trabajos ─────────────────────────────────────────────────────────
+  protected readonly trabajosLoading = signal(false);
+  protected adminTrabajos: TrabajoTabItem[] = [];
+  protected trabajosFilterEstado: EstadoTrabajo | '' = '';
+  protected trabajosSearch = '';
+
+  protected get filteredAdminTrabajos(): TrabajoTabItem[] {
+    const q = this.trabajosSearch.trim().toLowerCase();
+    return this.adminTrabajos.filter((t) => {
+      if (this.trabajosFilterEstado && t.estado !== this.trabajosFilterEstado) return false;
+      if (q && !t.titulo.toLowerCase().includes(q) && !t.cliente_nombre.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  readonly estadosTrabajo: { key: EstadoTrabajo; label: string }[] = [
+    { key: 'pendiente',  label: 'Pendiente' },
+    { key: 'en_curso',   label: 'En curso' },
+    { key: 'bloqueado',  label: 'Bloqueado' },
+    { key: 'finalizado', label: 'Finalizado' },
+    { key: 'cancelado',  label: 'Cancelado' },
+  ];
+
+  // ─── Tab pagos ────────────────────────────────────────────────────────────
+  readonly today = new Date();
+  protected readonly pagosLoading = signal(false);
+  protected adminPagosFacturas: FacturaPagoTabItem[] = [];
+  protected adminPagosResumen: PagosResumen = {
+    cobrado_mes: 0, facturado_mes: 0, facturas_emitidas_mes: 0,
+    pendiente_total: 0, pendiente_count: 0, facturas_vencidas: 0, vencido_total: 0,
+  };
+  protected pagosSearch = '';
+  protected pagosFilterEstado: EstadoFactura | '' = '';
+
+  protected get filteredAdminPagos(): FacturaPagoTabItem[] {
+    const q = this.pagosSearch.trim().toLowerCase();
+    return this.adminPagosFacturas.filter((f) => {
+      if (this.pagosFilterEstado && f.estado !== this.pagosFilterEstado) return false;
+      if (q && !f.numero_factura.toLowerCase().includes(q) && !f.cliente_nombre.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  readonly estadosFactura: { key: EstadoFactura; label: string }[] = [
+    { key: 'borrador',       label: 'Borrador' },
+    { key: 'emitida',        label: 'Emitida' },
+    { key: 'pagada_parcial', label: 'Parcial' },
+    { key: 'pagada',         label: 'Pagada' },
+    { key: 'anulada',        label: 'Anulada' },
+  ];
 
   // ─── Vista gráficas ───────────────────────────────────────────────────────
   protected readonly activeChartView = signal<'combined' | 'grid'>('combined');
@@ -57,6 +129,66 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     { key: 'clientes',    name: 'Clientes',     color: '#a855f7', values: () => this.clientesValues() },
     { key: 'horas',       name: 'Horas',        color: '#f59e0b', values: () => this.horasValues() },
   ];
+
+  // ─── Tab clientes ─────────────────────────────────────────────────────────
+  protected loadAdminClientes(): void {
+    this.clientesLoading.set(true);
+    this.intranetService.getClientesTab({ page_size: 200 })
+      .pipe(takeUntil(this.destroy$), finalize(() => this.clientesLoading.set(false)))
+      .subscribe({ next: (res) => { this.adminClientes = res.clientes; } });
+  }
+
+  protected refreshAdminClientes(): void {
+    this.adminClientes = [];
+    this.loadAdminClientes();
+  }
+
+  // ─── Tab trabajos ─────────────────────────────────────────────────────────
+  protected loadAdminTrabajos(): void {
+    this.trabajosLoading.set(true);
+    this.intranetService.getTrabajosTab()
+      .pipe(takeUntil(this.destroy$), finalize(() => this.trabajosLoading.set(false)))
+      .subscribe({ next: (res) => { this.adminTrabajos = res.trabajos; } });
+  }
+
+  protected refreshAdminTrabajos(): void {
+    this.adminTrabajos = [];
+    this.loadAdminTrabajos();
+  }
+
+  protected estadoLabel(estado: EstadoTrabajo): string {
+    const m: Record<EstadoTrabajo, string> = {
+      pendiente: 'Pendiente', en_curso: 'En curso', bloqueado: 'Bloqueado',
+      finalizado: 'Finalizado', cancelado: 'Cancelado',
+    };
+    return m[estado] ?? estado;
+  }
+
+  protected facturaEstadoLabel(estado: string): string {
+    const m: Record<string, string> = {
+      borrador: 'Borrador', emitida: 'Emitida', pagada_parcial: 'Parcial',
+      pagada: 'Pagada', vencida: 'Vencida', anulada: 'Anulada',
+    };
+    return m[estado] ?? estado;
+  }
+
+  // ─── Tab pagos ────────────────────────────────────────────────────────────
+  protected loadAdminPagos(): void {
+    this.pagosLoading.set(true);
+    this.intranetService.getPagosTab({ page_size_facturas: 500 })
+      .pipe(takeUntil(this.destroy$), finalize(() => this.pagosLoading.set(false)))
+      .subscribe({
+        next: (res) => {
+          this.adminPagosFacturas = res.facturas;
+          this.adminPagosResumen = res.resumen;
+        },
+      });
+  }
+
+  protected refreshAdminPagos(): void {
+    this.adminPagosFacturas = [];
+    this.loadAdminPagos();
+  }
 
   // ─── Tab fichajes ─────────────────────────────────────────────────────────
   protected readonly fichajesLoading = signal(false);
@@ -204,10 +336,19 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   }
 
   // ─── Tab navigation ───────────────────────────────────────────────────────
-  protected switchTab(tab: 'resumen' | 'fichajes'): void {
+  protected switchTab(tab: 'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos'): void {
     this.activeTab.set(tab);
     if (tab === 'fichajes' && !this.fichajes) {
       this.loadFichajes();
+    }
+    if (tab === 'clientes' && !this.adminClientes.length) {
+      this.loadAdminClientes();
+    }
+    if (tab === 'trabajos' && !this.adminTrabajos.length) {
+      this.loadAdminTrabajos();
+    }
+    if (tab === 'pagos' && !this.adminPagosFacturas.length) {
+      this.loadAdminPagos();
     }
   }
 

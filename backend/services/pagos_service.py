@@ -90,50 +90,49 @@ class PagosService:
                 SELECT factura_id, COALESCE(SUM(importe), 0) AS pagado
                 FROM pagos_scope
                 GROUP BY factura_id
+            ),
+            cobrado_30d AS (
+                SELECT COALESCE(SUM(importe), 0) AS cobrado_mes
+                FROM pagos_scope
+                WHERE fecha_pago::timestamp >= CURRENT_DATE - INTERVAL '30 days'
+            ),
+            facturas_metrics AS (
+                SELECT
+                    COALESCE(SUM(f.total) FILTER (
+                        WHERE f.fecha_emision::timestamp >= CURRENT_DATE - INTERVAL '30 days'
+                        AND f.estado NOT IN ('borrador', 'anulada')
+                    ), 0) AS facturado_mes,
+                    COUNT(*) FILTER (
+                        WHERE f.fecha_emision::timestamp >= CURRENT_DATE - INTERVAL '30 days'
+                        AND f.estado NOT IN ('borrador', 'anulada')
+                    ) AS facturas_emitidas_mes,
+                    COALESCE(SUM(GREATEST(f.total - COALESCE(ppf.pagado, 0), 0))
+                        FILTER (WHERE f.estado <> 'anulada'), 0) AS pendiente_total,
+                    COUNT(*) FILTER (
+                        WHERE GREATEST(f.total - COALESCE(ppf.pagado, 0), 0) > 0
+                        AND f.estado NOT IN ('anulada', 'borrador')
+                    ) AS pendiente_count,
+                    COUNT(*) FILTER (
+                        WHERE f.estado IN ('emitida', 'pagada_parcial')
+                        AND f.fecha_vencimiento IS NOT NULL
+                        AND f.fecha_vencimiento < CURRENT_DATE
+                    ) AS facturas_vencidas,
+                    COALESCE(SUM(GREATEST(f.total - COALESCE(ppf.pagado, 0), 0)) FILTER (
+                        WHERE f.estado IN ('emitida', 'pagada_parcial')
+                        AND f.fecha_vencimiento IS NOT NULL
+                        AND f.fecha_vencimiento < CURRENT_DATE
+                    ), 0) AS vencido_total
+                FROM facturas_scope f
+                LEFT JOIN pagos_por_factura ppf ON ppf.factura_id = f.id
             )
             SELECT
-                COALESCE(
-                    SUM(ps.importe) FILTER (
-                        WHERE date_trunc('month', ps.fecha_pago::timestamp) = date_trunc('month', CURRENT_DATE::timestamp)
-                    ),
-                    0
-                ) AS cobrado_mes,
-                COALESCE(
-                    SUM(fs.total) FILTER (
-                        WHERE date_trunc('month', fs.fecha_emision::timestamp) = date_trunc('month', CURRENT_DATE::timestamp)
-                        AND fs.estado NOT IN ('borrador', 'anulada')
-                    ),
-                    0
-                ) AS facturado_mes,
-                COUNT(*) FILTER (
-                    WHERE date_trunc('month', fs.fecha_emision::timestamp) = date_trunc('month', CURRENT_DATE::timestamp)
-                    AND fs.estado NOT IN ('borrador', 'anulada')
-                ) AS facturas_emitidas_mes,
-                COALESCE(
-                    SUM(GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0))
-                    FILTER (WHERE fs.estado <> 'anulada'),
-                    0
-                ) AS pendiente_total,
-                COUNT(*) FILTER (
-                    WHERE GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0) > 0
-                    AND fs.estado NOT IN ('anulada', 'borrador')
-                ) AS pendiente_count,
-                COUNT(*) FILTER (
-                    WHERE fs.estado IN ('emitida', 'pagada_parcial')
-                    AND fs.fecha_vencimiento IS NOT NULL
-                    AND fs.fecha_vencimiento < CURRENT_DATE
-                ) AS facturas_vencidas,
-                COALESCE(
-                    SUM(GREATEST(fs.total - COALESCE(ppf.pagado, 0), 0)) FILTER (
-                        WHERE fs.estado IN ('emitida', 'pagada_parcial')
-                        AND fs.fecha_vencimiento IS NOT NULL
-                        AND fs.fecha_vencimiento < CURRENT_DATE
-                    ),
-                    0
-                ) AS vencido_total
-            FROM facturas_scope fs
-            LEFT JOIN pagos_scope ps ON ps.factura_id = fs.id
-            LEFT JOIN pagos_por_factura ppf ON ppf.factura_id = fs.id
+                (SELECT cobrado_mes  FROM cobrado_30d)            AS cobrado_mes,
+                (SELECT facturado_mes FROM facturas_metrics)       AS facturado_mes,
+                (SELECT facturas_emitidas_mes FROM facturas_metrics) AS facturas_emitidas_mes,
+                (SELECT pendiente_total FROM facturas_metrics)     AS pendiente_total,
+                (SELECT pendiente_count FROM facturas_metrics)     AS pendiente_count,
+                (SELECT facturas_vencidas FROM facturas_metrics)   AS facturas_vencidas,
+                (SELECT vencido_total FROM facturas_metrics)       AS vencido_total
             """,
             scope_vals,
         )

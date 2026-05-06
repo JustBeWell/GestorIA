@@ -96,11 +96,11 @@
       <!-- KPI cards -->
       @if (!loading()) {
       <div class="kpi-row">
-        <!-- Card 1: Total facturado mes (dark) -->
+        <!-- Card 1: Cobrado últimos 30 días (dark) -->
         <article class="kpi-card kpi-dark">
-          <div class="kpi-label">TOTAL FACTURADO MES</div>
-          <div class="kpi-value">{{ resumen().facturado_mes | currency:'EUR':'symbol':'1.2-2' }}</div>
-          <div class="kpi-sub">{{ resumen().facturas_emitidas_mes }} factura{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }} emitida{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }}</div>
+          <div class="kpi-label">COBRADO ÚLT. 30 DÍAS</div>
+          <div class="kpi-value">{{ resumen().cobrado_mes | currency:'EUR':'symbol':'1.2-2' }}</div>
+          <div class="kpi-sub">{{ resumen().facturas_emitidas_mes }} factura{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }} emitida{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }} · 30d</div>
           <div class="kpi-bar-track">
             <div class="kpi-bar" [style.width.%]="resumen().facturado_mes > 0 ? 60 : 0"></div>
           </div>
@@ -116,7 +116,7 @@
         </article>
         <!-- Card 3: Vencido (red) -->
         <article class="kpi-card" [class.kpi-vencidas-alert]="resumen().facturas_vencidas > 0">
-          <div class="kpi-label">VENCIDO</div>
+          <div class="kpi-label">VENCIDO SIN COBRAR</div>
           <div class="kpi-value">{{ resumen().vencido_total | currency:'EUR':'symbol':'1.2-2' }}</div>
           <div class="kpi-sub">{{ resumen().facturas_vencidas }} factura{{ resumen().facturas_vencidas !== 1 ? 's' : '' }} · acción requerida</div>
           <div class="kpi-bar-track">

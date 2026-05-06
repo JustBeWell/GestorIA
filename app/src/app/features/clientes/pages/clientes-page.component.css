@@ -156,6 +156,8 @@
   transition: background 0.15s;
 }
 .filter-button:hover { background: #f8fafc; }
+.filter-button-clear { border-color: #fca5a5; color: #dc2626; background: #fff5f5; }
+.filter-button-clear:hover { background: #fef2f2; }
 
 /* ── Table ───────────────────────────────────────────────────────────────── */
 .data-table {

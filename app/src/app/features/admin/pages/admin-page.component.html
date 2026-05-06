@@ -25,6 +25,12 @@
                   (click)="switchTab('resumen')">Resumen</button>
           <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'fichajes'"
                   (click)="switchTab('fichajes')">Fichajes</button>
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'clientes'"
+                  (click)="switchTab('clientes')">Clientes</button>
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'trabajos'"
+                  (click)="switchTab('trabajos')">Trabajos</button>
+          <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'pagos'"
+                  (click)="switchTab('pagos')">Pagos</button>
         </nav>
 
         <!-- ─── TAB: RESUMEN ─────────────────────────────────────── -->
@@ -573,7 +579,208 @@
         </div>
         } <!-- /tab fichajes -->
 
-      }
+        <!-- ─── TAB: CLIENTES ─────────────────────────────────────── -->
+        @if (activeTab() === 'clientes') {
+        <div class="admin-tab-panel">
+          <div class="tab-panel-header">
+            <h2 class="tab-panel-title">Gestión de clientes <span class="tab-panel-badge">{{ filteredAdminClientes.length }}</span></h2>
+            <div class="tab-panel-actions">
+              <input class="tab-search" type="search" placeholder="Buscar por nombre o CIF…"
+                [(ngModel)]="clientesSearch" />
+              <button class="tab-refresh-btn" type="button" (click)="refreshAdminClientes()">↻ Actualizar</button>
+            </div>
+          </div>
+
+          @if (clientesLoading()) {
+            <div class="tab-loading">Cargando clientes…</div>
+          } @else if (!filteredAdminClientes.length) {
+            <div class="tab-empty">No hay clientes registrados.</div>
+          } @else {
+            <div class="tab-table-wrap">
+              <table class="tab-table">
+                <thead>
+                  <tr>
+                    <th>Referencia</th>
+                    <th>Nombre fiscal</th>
+                    <th>CIF/NIF</th>
+                    <th>Tipo</th>
+                    <th>Email</th>
+                    <th>Estado</th>
+                    <th>Trabajos</th>
+                    <th>Pendiente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of filteredAdminClientes; track c.cliente_id) {
+                    <tr [class.row-inactivo]="!c.activo">
+                      <td class="td-mono">{{ c.referencia || '—' }}</td>
+                      <td class="td-bold">{{ c.nombre_fiscal }}</td>
+                      <td class="td-mono">{{ c.cif_nif }}</td>
+                      <td>{{ c.tipo_cliente }}</td>
+                      <td>{{ c.email || '—' }}</td>
+                      <td>
+                        <span class="estado-badge" [class.badge-activo]="c.activo" [class.badge-inactivo]="!c.activo">
+                          {{ c.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                      </td>
+                      <td class="td-center">{{ c.trabajos_abiertos }}</td>
+                      <td class="td-num" [class.td-warn]="c.pendiente_total > 0">
+                        {{ c.pendiente_total | currency:'EUR':'symbol':'1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+        } <!-- /tab clientes -->
+
+        <!-- ─── TAB: TRABAJOS ─────────────────────────────────────── -->
+        @if (activeTab() === 'trabajos') {
+        <div class="admin-tab-panel">
+          <div class="tab-panel-header">
+            <h2 class="tab-panel-title">Gestión de trabajos <span class="tab-panel-badge">{{ filteredAdminTrabajos.length }}</span></h2>
+            <div class="tab-panel-actions">
+              <input class="tab-search" type="search" placeholder="Buscar por título o cliente…"
+                [(ngModel)]="trabajosSearch" />
+              <select class="tab-select" [(ngModel)]="trabajosFilterEstado">
+                <option value="">Todos los estados</option>
+                @for (e of estadosTrabajo; track e.key) {
+                  <option [value]="e.key">{{ e.label }}</option>
+                }
+              </select>
+              <button class="tab-refresh-btn" type="button" (click)="refreshAdminTrabajos()">↻ Actualizar</button>
+            </div>
+          </div>
+
+          @if (trabajosLoading()) {
+            <div class="tab-loading">Cargando trabajos…</div>
+          } @else if (!filteredAdminTrabajos.length) {
+            <div class="tab-empty">No hay trabajos registrados.</div>
+          } @else {
+            <div class="tab-table-wrap">
+              <table class="tab-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Título</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Empleados</th>
+                    <th>Objetivo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of filteredAdminTrabajos; track t.trabajo_id) {
+                    <tr>
+                      <td class="td-mono">{{ t.nro_trabajo }}</td>
+                      <td class="td-bold">{{ t.titulo }}</td>
+                      <td>{{ t.cliente_nombre }}</td>
+                      <td>
+                        <span class="estado-badge estado-badge--{{ t.estado }}">{{ estadoLabel(t.estado) }}</span>
+                      </td>
+                      <td>{{ t.prioridad }}</td>
+                      <td>{{ t.empleados_asignados.length > 0 ? t.empleados_asignados.map(e => e.nombre_completo).join(', ') : '—' }}</td>
+                      <td>{{ t.fecha_objetivo ? (t.fecha_objetivo | date:'dd/MM/yyyy') : '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+        } <!-- /tab trabajos -->
+
+        <!-- ─── TAB: PAGOS ─────────────────────────────────────── -->
+        @if (activeTab() === 'pagos') {
+        <div class="admin-tab-panel">
+
+          <!-- Resumen KPI row -->
+          <div class="pagos-kpi-row">
+            <div class="pagos-kpi-card">
+              <div class="pagos-kpi-label">COBRADO ÚLT. 30d</div>
+              <div class="pagos-kpi-value">{{ adminPagosResumen.cobrado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+              <div class="pagos-kpi-sub">{{ adminPagosResumen.facturas_emitidas_mes }} facturas emitidas</div>
+            </div>
+            <div class="pagos-kpi-card pagos-kpi-pendiente">
+              <div class="pagos-kpi-label">PENDIENTE DE COBRO</div>
+              <div class="pagos-kpi-value">{{ adminPagosResumen.pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+              <div class="pagos-kpi-sub">{{ adminPagosResumen.pendiente_count }} factura{{ adminPagosResumen.pendiente_count !== 1 ? 's' : '' }}</div>
+            </div>
+            <div class="pagos-kpi-card" [class.pagos-kpi-vencido]="adminPagosResumen.facturas_vencidas > 0">
+              <div class="pagos-kpi-label">VENCIDO SIN COBRAR</div>
+              <div class="pagos-kpi-value">{{ adminPagosResumen.vencido_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+              <div class="pagos-kpi-sub">{{ adminPagosResumen.facturas_vencidas }} factura{{ adminPagosResumen.facturas_vencidas !== 1 ? 's' : '' }} vencida{{ adminPagosResumen.facturas_vencidas !== 1 ? 's' : '' }}</div>
+            </div>
+          </div>
+
+          <!-- Header + filtros -->
+          <div class="tab-panel-header">
+            <p class="tab-panel-title">
+              Todas las facturas
+              <span class="tab-panel-badge">{{ filteredAdminPagos.length }}</span>
+            </p>
+            <div class="tab-panel-actions">
+              <input class="tab-search" type="text" placeholder="Buscar nº factura o cliente…" [(ngModel)]="pagosSearch">
+              <select class="tab-select" [(ngModel)]="pagosFilterEstado">
+                <option value="">Todos los estados</option>
+                @for (e of estadosFactura; track e.key) {
+                  <option [value]="e.key">{{ e.label }}</option>
+                }
+              </select>
+              <button class="tab-refresh-btn" type="button" (click)="refreshAdminPagos()">↺ Refrescar</button>
+            </div>
+          </div>
+
+          @if (pagosLoading()) {
+            <div class="tab-loading">Cargando facturas…</div>
+          } @else if (filteredAdminPagos.length === 0) {
+            <div class="tab-empty">No hay facturas que mostrar.</div>
+          } @else {
+            <div class="tab-table-wrap">
+              <table class="tab-table">
+                <thead>
+                  <tr>
+                    <th>Nº Factura</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Emisión</th>
+                    <th>Vencimiento</th>
+                    <th class="td-num">Total</th>
+                    <th class="td-num">Pendiente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (f of filteredAdminPagos; track f.factura_id) {
+                    <tr [class.row-inactivo]="f.estado === 'anulada'">
+                      <td class="td-mono">{{ f.numero_factura }}</td>
+                      <td class="td-bold">{{ f.cliente_nombre }}</td>
+                      <td>
+                        <span class="estado-badge factura-badge--{{ f.estado }}">
+                          {{ facturaEstadoLabel(f.estado) }}
+                        </span>
+                      </td>
+                      <td>{{ f.fecha_emision | date:'dd/MM/yy' }}</td>
+                      <td [class.td-warn]="f.fecha_vencimiento && f.estado !== 'pagada' && f.estado !== 'anulada' && (f.fecha_vencimiento | date:'yyyyMMdd') < (today | date:'yyyyMMdd')">
+                        {{ f.fecha_vencimiento ? (f.fecha_vencimiento | date:'dd/MM/yy') : '—' }}
+                      </td>
+                      <td class="td-num">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</td>
+                      <td class="td-num" [class.td-warn]="f.pendiente > 0 && f.estado !== 'anulada'">
+                        {{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+        </div>
+        } <!-- /tab pagos -->
+
+
     </section>
   </section>
 </main>
