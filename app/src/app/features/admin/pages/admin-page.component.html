@@ -755,7 +755,7 @@
                 <tbody>
                   @for (f of filteredAdminPagos; track f.factura_id) {
                     <tr [class.row-inactivo]="f.estado === 'anulada'">
-                      <td class="td-mono">{{ f.numero_factura }}</td>
+                      <td class="td-mono">{{ f.numero }}</td>
                       <td class="td-bold">{{ f.cliente_nombre }}</td>
                       <td>
                         <span class="estado-badge factura-badge--{{ f.estado }}">
@@ -763,7 +763,7 @@
                         </span>
                       </td>
                       <td>{{ f.fecha_emision | date:'dd/MM/yy' }}</td>
-                      <td [class.td-warn]="f.fecha_vencimiento && f.estado !== 'pagada' && f.estado !== 'anulada' && (f.fecha_vencimiento | date:'yyyyMMdd') < (today | date:'yyyyMMdd')">
+                      <td [class.td-warn]="f.fecha_vencimiento && f.estado !== 'pagada' && f.estado !== 'anulada' && $any(f.fecha_vencimiento | date:'yyyyMMdd') < $any(today | date:'yyyyMMdd')">
                         {{ f.fecha_vencimiento ? (f.fecha_vencimiento | date:'dd/MM/yy') : '—' }}
                       </td>
                       <td class="td-num">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</td>
@@ -780,6 +780,7 @@
         </div>
         } <!-- /tab pagos -->
 
+      } <!-- /@else if (data) -->
 
     </section>
   </section>
