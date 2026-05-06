@@ -4,103 +4,109 @@
 
     <section class="content" [class.panel-open]="showDetailPanel()">
 
-      <!-- TOPBAR -->
+      <!-- Topbar -->
       <header class="topbar">
         <div class="breadcrumbs">Inicio / <strong>Pagos</strong></div>
-        @if (isAdmin()) {
-          <button class="btn-primary" (click)="openCreateFactura()">
-            <span class="btn-icon">+</span> Nueva factura
-          </button>
-        }
       </header>
 
-      <!-- ERROR BANNER -->
+      <!-- Page header -->
+      <section class="page-header">
+        <div>
+          <h1 class="page-title">Gestión de pagos</h1>
+          @if (!loading()) {
+            <p class="page-subtitle">
+              {{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }} ·
+              {{ resumen().facturas_vencidas > 0 ? resumen().facturas_vencidas + ' vencidas' : 'al corriente' }}
+            </p>
+          }
+        </div>
+        <div class="page-header-actions">
+          <div class="filter-row">
+            <select class="filter-select"
+              [value]="filtroEstado()"
+              (change)="onFiltroEstadoChange($any($event.target).value)">
+              <option value="">Todos los estados</option>
+              @for (e of estadosFactura; track e.value) {
+                <option [value]="e.value">{{ e.label }}</option>
+              }
+            </select>
+            <select class="filter-select"
+              [value]="filtroCliente()"
+              (change)="onFiltroClienteChange($any($event.target).value)">
+              <option value="">Todos los clientes</option>
+              @for (c of clientes(); track c.cliente_id) {
+                <option [value]="c.cliente_id">{{ c.nombre }}</option>
+              }
+            </select>
+            <label class="filter-checkbox-label">
+              <input type="checkbox"
+                [checked]="filtroVencidas()"
+                (change)="onFiltroVencidasChange($any($event.target).checked)" />
+              Solo vencidas
+            </label>
+          </div>
+          <button type="button" class="primary-button" (click)="openCreateFactura()">
+            + Nueva factura
+          </button>
+        </div>
+      </section>
+
+      <!-- Error banner -->
       @if (errorMsg()) {
         <div class="error-banner" role="alert">
           <span>{{ errorMsg() }}</span>
-          <button class="error-close" (click)="dismissError()">✕</button>
+          <button class="error-close" type="button" (click)="dismissError()">✕</button>
         </div>
       }
 
-      <!-- KPI CARDS -->
-      <section class="kpi-row">
+      <!-- KPI cards -->
+      <div class="kpi-row">
         <article class="kpi-card kpi-cobrado">
-          <div class="kpi-icon">💶</div>
+          <span class="kpi-icon">💶</span>
           <div class="kpi-body">
             <span class="kpi-label">Cobrado este mes</span>
             <span class="kpi-value">{{ resumen().cobrado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
           </div>
         </article>
         <article class="kpi-card kpi-pendiente">
-          <div class="kpi-icon">⏳</div>
+          <span class="kpi-icon">⏳</span>
           <div class="kpi-body">
             <span class="kpi-label">Pendiente total</span>
             <span class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
           </div>
         </article>
         <article class="kpi-card" [class.kpi-vencidas-alert]="resumen().facturas_vencidas > 0">
-          <div class="kpi-icon">🚨</div>
+          <span class="kpi-icon">🚨</span>
           <div class="kpi-body">
             <span class="kpi-label">Facturas vencidas</span>
             <span class="kpi-value">{{ resumen().facturas_vencidas }}</span>
           </div>
         </article>
-      </section>
+      </div>
 
-      <!-- FILTROS -->
-      <section class="filters-bar">
-        <div class="filter-group">
-          <label class="filter-label">Estado</label>
-          <select class="filter-select"
-            [value]="filtroEstado()"
-            (change)="onFiltroEstadoChange($any($event.target).value)">
-            <option value="">Todos</option>
-            @for (e of estadosFactura; track e.value) {
-              <option [value]="e.value">{{ e.label }}</option>
-            }
-          </select>
-        </div>
+      <!-- Table panel -->
+      <section class="panel table-section">
 
-        <div class="filter-group">
-          <label class="filter-label">Cliente</label>
-          <select class="filter-select"
-            [value]="filtroCliente()"
-            (change)="onFiltroClienteChange($any($event.target).value)">
-            <option value="">Todos</option>
-            @for (c of clientes(); track c.cliente_id) {
-              <option [value]="c.cliente_id">{{ c.nombre }}</option>
-            }
-          </select>
-        </div>
-
-        <label class="filter-checkbox">
-          <input type="checkbox"
-            [checked]="filtroVencidas()"
-            (change)="onFiltroVencidasChange($any($event.target).checked)" />
-          Solo vencidas
-        </label>
-      </section>
-
-      <!-- TABLA FACTURAS -->
-      <section class="table-section">
         @if (loading()) {
-          <div class="skeleton-table">
+          <div class="skeleton-rows">
             @for (i of [1,2,3,4,5]; track i) {
               <div class="skeleton-row"></div>
             }
           </div>
+
         } @else if (facturas().length === 0) {
-          <div class="empty-state">
-            <div class="empty-icon">📄</div>
-            <p class="empty-title">No hay facturas</p>
-            <p class="empty-sub">
+          <div class="state-card">
+            <span class="empty-icon">📄</span>
+            <h2>No hay facturas</h2>
+            <p>
               @if (filtroEstado() || filtroCliente() || filtroVencidas()) {
                 Prueba a cambiar los filtros aplicados.
               } @else {
-                Crea la primera factura usando el botón "Nueva factura".
+                Crea la primera factura con el botón <strong>+ Nueva factura</strong>.
               }
             </p>
           </div>
+
         } @else {
           <table class="facturas-table">
             <thead>
@@ -123,7 +129,7 @@
                   <td class="factura-numero">{{ f.numero }}</td>
                   <td>{{ f.cliente_nombre }}</td>
                   <td>
-                    <span class="estado-badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
+                    <span class="badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
                     @if (isVencida(f)) {
                       <span class="vencida-tag" [title]="diasVencida(f.fecha_vencimiento) + ' días'">
                         +{{ diasVencida(f.fecha_vencimiento) }}d
@@ -147,7 +153,7 @@
             </tbody>
           </table>
 
-          <!-- PAGINACIÓN -->
+          <!-- Paginación -->
           @if (paginacion().total_pages > 1) {
             <nav class="pagination">
               <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">‹</button>
@@ -158,42 +164,39 @@
             </nav>
           }
 
-          <p class="table-total-info">{{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }}</p>
+          <p class="table-info">{{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }}</p>
         }
       </section>
 
     </section><!-- /content -->
 
-    <!-- PANEL LATERAL DETALLE -->
+    <!-- Panel lateral detalle -->
     @if (showDetailPanel()) {
       <aside class="detail-panel">
         <div class="detail-header">
           <h2 class="detail-title">Detalle factura</h2>
-          <button class="detail-close" (click)="closeDetail()" aria-label="Cerrar">✕</button>
+          <button class="icon-button" type="button" (click)="closeDetail()" aria-label="Cerrar">✕</button>
         </div>
 
         @if (loadingDetail()) {
           <div class="detail-skeleton">
-            @for (i of [1,2,3]; track i) { <div class="sk-line"></div> }
+            @for (i of [1,2,3,4]; track i) { <div class="sk-line"></div> }
           </div>
         } @else if (selectedFactura(); as f) {
           <div class="detail-body">
 
-            <!-- Número + estado -->
-            <div class="detail-row-header">
+            <div class="detail-row-top">
               <span class="detail-numero">{{ f.numero }}</span>
-              <span class="estado-badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
+              <span class="badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
             </div>
 
             <p class="detail-cliente">{{ f.cliente_nombre }}</p>
 
-            <!-- Concepto -->
             @if (f.concepto) {
               <p class="detail-concepto">{{ f.concepto }}</p>
             }
 
-            <!-- Importes -->
-            <div class="detail-importes">
+            <div class="importe-block">
               <div class="importe-row">
                 <span>Base imponible</span>
                 <span class="font-mono">{{ f.base_imponible | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
@@ -206,18 +209,17 @@
                 <span>Total</span>
                 <span class="font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
               </div>
-              <div class="importe-row importe-pagado">
+              <div class="importe-row">
                 <span>Pagado</span>
-                <span class="font-mono text-success">{{ f.pagado | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                <span class="font-mono color-success">{{ f.pagado | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
               </div>
-              <div class="importe-row importe-pendiente" [class.text-danger]="f.pendiente > 0">
-                <span>Pendiente</span>
-                <span class="font-mono">{{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              <div class="importe-row" [class.text-danger]="f.pendiente > 0">
+                <strong>Pendiente</strong>
+                <span class="font-mono"><strong>{{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</strong></span>
               </div>
             </div>
 
-            <!-- Fechas -->
-            <div class="detail-fechas">
+            <div class="fechas-block">
               <div class="fecha-row">
                 <span class="fecha-label">Emisión</span>
                 <span>{{ f.fecha_emision | date:'dd/MM/yyyy' }}</span>
@@ -232,33 +234,30 @@
               }
             </div>
 
-            <!-- Barra de progreso cobro -->
             @if (f.total > 0) {
               <div class="cobro-progress">
-                <div class="cobro-bar-track">
-                  <div class="cobro-bar-fill" [style.width.%]="(f.pagado / f.total) * 100"></div>
+                <div class="cobro-track">
+                  <div class="cobro-fill" [style.width.%]="(f.pagado / f.total) * 100"></div>
                 </div>
-                <span class="cobro-pct">{{ ((f.pagado / f.total) * 100) | number:'1.0-0' }}% cobrado</span>
+                <span class="cobro-pct">{{ ((f.pagado / f.total) * 100) | number:'1.0-0' }}%</span>
               </div>
             }
 
-            <!-- Notas -->
             @if (f.notas) {
-              <div class="detail-notas">
+              <div class="notas-block">
                 <span class="notas-label">Notas</span>
                 <p>{{ f.notas }}</p>
               </div>
             }
 
-            <!-- Historial de pagos -->
             @if (f.pagos.length > 0) {
-              <div class="pagos-historial">
-                <h3 class="historial-title">Pagos registrados</h3>
+              <div class="historial-block">
+                <h3 class="panel-title">Pagos registrados</h3>
                 @for (p of f.pagos; track p.pago_id) {
                   <div class="pago-item">
-                    <div class="pago-main">
+                    <div class="pago-top">
                       <span class="pago-importe">{{ p.importe | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
-                      <span class="metodo-badge metodo-{{ p.metodo_pago }}">{{ p.metodo_pago }}</span>
+                      <span class="badge">{{ p.metodo_pago }}</span>
                     </div>
                     <div class="pago-meta">
                       <span>{{ p.fecha_pago | date:'dd/MM/yyyy' }}</span>
@@ -270,26 +269,24 @@
               </div>
             }
 
-            <!-- Acciones -->
-            @if (isAdmin()) {
-              <div class="detail-actions">
-                @if (f.estado !== 'pagada' && f.estado !== 'anulada') {
-                  <button class="btn-primary btn-full" (click)="openPagoModal()">
-                    Registrar pago
-                  </button>
-                }
-                @if (f.estado === 'borrador' || f.estado === 'emitida') {
-                  <button class="btn-secondary btn-full" (click)="openEditFactura(f)">
-                    Editar factura
-                  </button>
-                }
-                @if (f.estado !== 'anulada' && f.pagos.length === 0) {
-                  <button class="btn-danger btn-full" (click)="confirmAnular(f.factura_id)">
-                    Anular factura
-                  </button>
-                }
-              </div>
-            }
+            <div class="detail-actions">
+              @if (f.estado !== 'pagada' && f.estado !== 'anulada') {
+                <button type="button" class="primary-button btn-block" (click)="openPagoModal()">
+                  Registrar pago
+                </button>
+              }
+              @if (f.estado === 'borrador' || f.estado === 'emitida') {
+                <button type="button" class="secondary-button btn-block" (click)="openEditFactura(f)">
+                  Editar factura
+                </button>
+              }
+              @if (f.estado !== 'anulada' && f.pagos.length === 0) {
+                <button type="button" class="btn-danger btn-block" (click)="confirmAnular(f.factura_id)">
+                  Anular factura
+                </button>
+              }
+            </div>
+
           </div>
         }
       </aside>
@@ -298,13 +295,13 @@
   </section><!-- /intranet-shell -->
 </main>
 
-<!-- ── MODAL NUEVA / EDITAR FACTURA ─────────────────────────────────────── -->
+<!-- Modal nueva / editar factura -->
 @if (showFacturaModal()) {
   <div class="modal-overlay" (click)="closeFacturaModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ isEditMode() ? 'Editar factura' : 'Nueva factura' }}</h2>
-        <button class="modal-close" (click)="closeFacturaModal()">✕</button>
+        <button type="button" class="icon-button" (click)="closeFacturaModal()">✕</button>
       </div>
       <div class="modal-body">
 
@@ -343,8 +340,8 @@
           </div>
         </div>
 
-        <div class="form-total-preview">
-          Total: <strong>{{ totalImporte() | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
+        <div class="total-preview">
+          Total estimado: <strong>{{ totalImporte() | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
         </div>
 
         <div class="form-row-2">
@@ -378,11 +375,11 @@
           [value]="facturaForm().notas ?? ''"
           (input)="updateFacturaFormField('notas', $any($event.target).value || null)"
           placeholder="Notas opcionales..."></textarea>
-
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeFacturaModal()">Cancelar</button>
-        <button class="btn-primary" [disabled]="saving() || !facturaForm().cliente_id || !facturaForm().concepto || !facturaForm().base_imponible"
+        <button type="button" class="secondary-button" (click)="closeFacturaModal()">Cancelar</button>
+        <button type="button" class="primary-button"
+          [disabled]="saving() || !facturaForm().cliente_id || !facturaForm().concepto || !facturaForm().base_imponible"
           (click)="saveFactura()">
           {{ saving() ? 'Guardando…' : (isEditMode() ? 'Guardar cambios' : 'Crear factura') }}
         </button>
@@ -391,16 +388,16 @@
   </div>
 }
 
-<!-- ── MODAL REGISTRAR PAGO ──────────────────────────────────────────────── -->
+<!-- Modal registrar pago -->
 @if (showPagoModal()) {
   <div class="modal-overlay" (click)="closePagoModal()">
     <div class="modal modal-sm" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Registrar pago</h2>
-        <button class="modal-close" (click)="closePagoModal()">✕</button>
+        <button type="button" class="icon-button" (click)="closePagoModal()">✕</button>
       </div>
       <div class="modal-body">
-        <p class="pago-factura-ref">
+        <p class="pago-ref-info">
           Factura <strong>{{ selectedFactura()?.numero }}</strong> —
           pendiente <strong>{{ selectedFactura()?.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
         </p>
@@ -436,8 +433,9 @@
           (input)="updatePagoFormField('notas', $any($event.target).value || null)"></textarea>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="closePagoModal()">Cancelar</button>
-        <button class="btn-primary" [disabled]="saving() || !pagoForm().importe || pagoForm().importe <= 0"
+        <button type="button" class="secondary-button" (click)="closePagoModal()">Cancelar</button>
+        <button type="button" class="primary-button"
+          [disabled]="saving() || !pagoForm().importe || pagoForm().importe <= 0"
           (click)="savePago()">
           {{ saving() ? 'Registrando…' : 'Registrar pago' }}
         </button>
@@ -446,25 +444,23 @@
   </div>
 }
 
-<!-- ── MODAL CONFIRMAR ANULACIÓN ─────────────────────────────────────────── -->
+<!-- Modal confirmar anulación -->
 @if (showAnularModal()) {
   <div class="modal-overlay" (click)="cancelAnular()">
-    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Anular factura</h2>
-        <button class="modal-close" (click)="cancelAnular()">✕</button>
+        <button type="button" class="icon-button" (click)="cancelAnular()">✕</button>
       </div>
       <div class="modal-body">
         <p>¿Estás seguro de que quieres anular esta factura? Esta acción no se puede deshacer.</p>
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="cancelAnular()">Cancelar</button>
-        <button class="btn-danger" [disabled]="saving()" (click)="executeAnular()">
+        <button type="button" class="secondary-button" (click)="cancelAnular()">Cancelar</button>
+        <button type="button" class="btn-danger" [disabled]="saving()" (click)="executeAnular()">
           {{ saving() ? 'Anulando…' : 'Sí, anular' }}
         </button>
       </div>
     </div>
   </div>
 }
-
-
