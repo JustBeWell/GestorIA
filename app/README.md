@@ -1,30 +1,41 @@
-# LoginDesktop (Angular + Electron)
+# GestorIA — App Angular + Electron
 
-Módulo de escritorio para login de GestorIA.
+Aplicación de escritorio (Electron) y web (Angular 17+) para la gestión de la gestoría.
 
 ## Arquitectura aplicada (Angular profesional)
 
-La implementación de login está organizada por capas:
+La implementación está organizada por capas:
 
-- `src/app/core/models`: contratos tipados (`LoginRequest`, `LoginResponse`, `AuthUser`)
-- `src/app/core/services`: servicio HTTP (`AuthApiService`) y sesión (`SessionStorageService`)
+- `src/app/core/models`: contratos tipados (`LoginRequest`, `AuthUser`, `IntranetModels`, …)
+- `src/app/core/services`: servicios HTTP (`AuthApiService`, `IntranetService`)
 - `src/app/core/interceptors`: `authInterceptor` para adjuntar token Bearer
-- `src/app/features/auth/pages`: `LoginPageComponent` (UI y flujo de login)
-- `src/app/app.routes.ts`: routing por feature usando `loadComponent` (lazy)
-- `src/app/app.ts`: shell limpio con `router-outlet`
+- `src/app/core/guards`: guards de autenticación y de rol admin
+- `src/app/features/`: módulos funcionales por área de negocio
+- `src/app/app.routes.ts`: routing por feature con `loadComponent` (lazy)
 
 Buenas prácticas aplicadas:
 
 - tipado fuerte en requests/responses
 - separación de responsabilidades (UI vs API vs almacenamiento)
 - componentes standalone + lazy loading
-- estado local de UI con `signal`
+- estado local de UI con `signal` / `computed`
 - configuración centralizada de API en `environment`
+
+## Módulos funcionales implementados
+
+| Sprint | Módulo | Descripción |
+|--------|--------|-------------|
+| S1 | Auth | Login JWT, 2FA OTP, guards |
+| S1 | Home | Dashboard de resumen |
+| S1 | Fichaje | Registro de eventos de entrada/salida |
+| S2 | Clientes | Listado de clientes |
+| S2 | Trabajos | Kanban de trabajos por estado/prioridad |
+| S3 | Pagos | Facturación y pagos — lista, detalle, crear/editar/anular facturas, registrar pagos |
 
 ## Requisitos
 
 - Node.js 20+
-- Backend `user-service` corriendo en `http://127.0.0.1:8008`
+- Backend `gestoria-backend` corriendo en `http://127.0.0.1:8008`
 
 ## Configuración API
 

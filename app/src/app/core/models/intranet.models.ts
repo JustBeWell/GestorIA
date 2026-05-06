@@ -350,3 +350,109 @@ export interface TrabajoComentario {
   created_at: string;
 }
 
+// ── Pagos / Facturas ──────────────────────────────────────────────────────────
+
+export type EstadoFactura = 'borrador' | 'emitida' | 'pagada_parcial' | 'pagada' | 'anulada';
+export type MetodoPago = 'transferencia' | 'efectivo' | 'tarjeta' | 'domiciliacion' | 'otro';
+
+export interface FacturaPagoTabItem {
+  factura_id: string;
+  numero: string;
+  cliente_id: string;
+  cliente_nombre: string;
+  estado: EstadoFactura;
+  fecha_emision: string;
+  fecha_vencimiento: string | null;
+  total: number;
+  pagado: number;
+  pendiente: number;
+}
+
+export interface PagoRecienteTabItem {
+  pago_id: string;
+  factura_id: string;
+  factura_numero: string;
+  cliente_nombre: string;
+  fecha_pago: string;
+  importe: number;
+  metodo_pago: MetodoPago;
+}
+
+export interface PagosTabResponse {
+  usuario: IntranetUsuarioResumen;
+  resumen: PagosResumen;
+  facturas: FacturaPagoTabItem[];
+  pagos_recientes: PagoRecienteTabItem[];
+  paginacion_facturas: PaginationMeta;
+  paginacion_pagos: PaginationMeta;
+}
+
+export interface PagoEnFactura {
+  pago_id: string;
+  fecha_pago: string;
+  importe: number;
+  metodo_pago: MetodoPago;
+  referencia: string | null;
+  notas: string | null;
+}
+
+export interface FacturaDetailItem {
+  factura_id: string;
+  numero: string;
+  cliente_id: string;
+  cliente_nombre: string;
+  estado: EstadoFactura;
+  concepto: string | null;
+  notas: string | null;
+  base_imponible: number;
+  porcentaje_iva: number;
+  importe_iva: number;
+  total: number;
+  pagado: number;
+  pendiente: number;
+  fecha_emision: string;
+  fecha_vencimiento: string | null;
+  created_at: string;
+  pagos: PagoEnFactura[];
+}
+
+export interface FacturaCreate {
+  cliente_id: string;
+  concepto: string;
+  base_imponible: number;
+  porcentaje_iva?: number;
+  fecha_emision?: string | null;
+  fecha_vencimiento?: string | null;
+  notas?: string | null;
+}
+
+export interface FacturaUpdate {
+  concepto?: string;
+  base_imponible?: number;
+  porcentaje_iva?: number;
+  fecha_emision?: string | null;
+  fecha_vencimiento?: string | null;
+  estado?: EstadoFactura;
+  notas?: string | null;
+}
+
+export interface PagoCreate {
+  importe: number;
+  metodo_pago?: MetodoPago;
+  fecha_pago?: string | null;
+  referencia?: string | null;
+  notas?: string | null;
+}
+
+export interface PagoDetailItem {
+  pago_id: string;
+  factura_id: string;
+  factura_numero: string;
+  cliente_nombre: string;
+  fecha_pago: string;
+  importe: number;
+  metodo_pago: MetodoPago;
+  referencia: string | null;
+  notas: string | null;
+}
+

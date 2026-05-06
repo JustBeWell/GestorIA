@@ -312,3 +312,263 @@ class PagosService:
             clauses.append("p.fecha_pago <= %s")
             values.append(fecha_pago_hasta)
         return " AND ".join(clauses), values
+
+    # ── Escritura facturas ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def _get_next_numero_factura(cursor: RealDictCursor) -> str:
+        """Genera el siguiente número correlativo de factura con formato F-YYYY-XXXX."""
+        from datetime import date as _date
+        year = _date.today().year
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM facturas
+            WHERE EXTRACT(YEAR FROM fecha_emision) = %s
+            """,
+            (year,),
+        )
+        row = cursor.fetchone() or {}
+        seq = int(row.get("total") or 0) + 1
+        return f"F-{year}-{seq:04d}"
+
+    @staticmethod
+    def create_factura(payload, user_id: str) -> dict:
+        """Crea una nueva factura. Devuelve el detalle completo."""
+        from models import FacturaCreate
+        assert isinstance(payload, FacturaCreate)
+
+        # Verificar que el cliente existe
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute("SELECT id, nombre_fiscal FROM clientes WHERE id = %s AND activo = TRUE", (payload.cliente_id,))
+                cliente = cur.fetchone()
+                if not cliente:
+                    raise ValueError("Cliente no encontrado o inactivo")
+
+                numero = PagosService._get_next_numero_factura(cur)
+
+                cur.execute(
+                    """
+                    INSERT INTO facturas
+                        (cliente_id, numero, concepto, base_imponible, porcentaje_iva,
+                         fecha_emision, fecha_vencimiento, notas, estado)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'borrador')
+                    RETURNING id::text AS factura_id
+                    """,
+                    (
+                        payload.cliente_id,
+                        numero,
+                        payload.concepto,
+                        payload.base_imponible,
+                        payload.porcentaje_iva,
+                        payload.fecha_emision,
+                        payload.fecha_vencimiento,
+                        payload.notas,
+                    ),
+                )
+                row = cur.fetchone()
+                factura_id = row["factura_id"]
+                conn.commit()
+
+        return PagosService.get_factura_detail(factura_id)
+
+    @staticmethod
+    def update_factura(factura_id: str, payload) -> dict | None:
+        """Actualiza datos editables de una factura (solo en estado borrador o emitida)."""
+        from models import FacturaUpdate
+        assert isinstance(payload, FacturaUpdate)
+
+        updates: list[str] = []
+        values: list = []
+
+        if payload.concepto is not None:
+            updates.append("concepto = %s"); values.append(payload.concepto)
+        if payload.base_imponible is not None:
+            updates.append("base_imponible = %s"); values.append(payload.base_imponible)
+        if payload.porcentaje_iva is not None:
+            updates.append("porcentaje_iva = %s"); values.append(payload.porcentaje_iva)
+        if payload.fecha_emision is not None:
+            updates.append("fecha_emision = %s"); values.append(payload.fecha_emision)
+        if payload.fecha_vencimiento is not None:
+            updates.append("fecha_vencimiento = %s"); values.append(payload.fecha_vencimiento)
+        if payload.estado is not None:
+            updates.append("estado = %s"); values.append(payload.estado)
+        if payload.notas is not None:
+            updates.append("notas = %s"); values.append(payload.notas)
+
+        if not updates:
+            return PagosService.get_factura_detail(factura_id)
+
+        values.append(factura_id)
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    f"UPDATE facturas SET {', '.join(updates)} WHERE id = %s RETURNING id",
+                    values,
+                )
+                if not cur.fetchone():
+                    return None
+                conn.commit()
+
+        return PagosService.get_factura_detail(factura_id)
+
+    @staticmethod
+    def delete_factura(factura_id: str) -> bool:
+        """Anula (estado='anulada') una factura si no tiene pagos."""
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT COUNT(*) AS cnt FROM pagos WHERE factura_id = %s",
+                    (factura_id,),
+                )
+                row = cur.fetchone() or {}
+                if int(row.get("cnt") or 0) > 0:
+                    raise ValueError("No se puede anular una factura con pagos registrados")
+
+                cur.execute(
+                    "UPDATE facturas SET estado = 'anulada' WHERE id = %s AND estado <> 'anulada' RETURNING id",
+                    (factura_id,),
+                )
+                updated = cur.fetchone()
+                conn.commit()
+        return bool(updated)
+
+    @staticmethod
+    def get_factura_detail(factura_id: str) -> dict | None:
+        """Devuelve el detalle completo de una factura con sus pagos."""
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    WITH pagos_agg AS (
+                        SELECT factura_id, COALESCE(SUM(importe), 0) AS pagado
+                        FROM pagos
+                        GROUP BY factura_id
+                    )
+                    SELECT
+                        f.id::text AS factura_id,
+                        f.numero,
+                        c.id::text AS cliente_id,
+                        c.nombre_fiscal AS cliente_nombre,
+                        f.estado::text AS estado,
+                        f.concepto,
+                        f.notas,
+                        f.base_imponible,
+                        f.porcentaje_iva,
+                        f.importe_iva,
+                        f.total,
+                        COALESCE(pa.pagado, 0) AS pagado,
+                        GREATEST(f.total - COALESCE(pa.pagado, 0), 0) AS pendiente,
+                        f.fecha_emision,
+                        f.fecha_vencimiento,
+                        f.created_at
+                    FROM facturas f
+                    JOIN clientes c ON c.id = f.cliente_id
+                    LEFT JOIN pagos_agg pa ON pa.factura_id = f.id
+                    WHERE f.id = %s
+                    """,
+                    (factura_id,),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+
+                # Pagos de esta factura
+                cur.execute(
+                    """
+                    SELECT
+                        p.id::text AS pago_id,
+                        p.fecha_pago,
+                        p.importe,
+                        p.metodo_pago::text AS metodo_pago,
+                        p.referencia,
+                        p.notas
+                    FROM pagos p
+                    WHERE p.factura_id = %s
+                    ORDER BY p.fecha_pago DESC, p.created_at DESC
+                    """,
+                    (factura_id,),
+                )
+                pagos = [
+                    {**dict(p), "importe": float(p["importe"] or 0)}
+                    for p in cur.fetchall()
+                ]
+
+        result = {
+            **dict(row),
+            "base_imponible": float(row["base_imponible"] or 0),
+            "porcentaje_iva": float(row["porcentaje_iva"] or 0),
+            "importe_iva": float(row["importe_iva"] or 0),
+            "total": float(row["total"] or 0),
+            "pagado": float(row["pagado"] or 0),
+            "pendiente": float(row["pendiente"] or 0),
+            "pagos": pagos,
+        }
+        return result
+
+    # ── Escritura pagos ────────────────────────────────────────────────────────
+
+    @staticmethod
+    def create_pago(factura_id: str, payload) -> dict:
+        """Registra un pago sobre una factura. El trigger de DB actualiza el estado automáticamente."""
+        from models import PagoCreate
+        assert isinstance(payload, PagoCreate)
+
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Verificar que la factura existe y no está anulada ni ya pagada
+                cur.execute(
+                    "SELECT id, estado::text AS estado, total FROM facturas WHERE id = %s",
+                    (factura_id,),
+                )
+                factura = cur.fetchone()
+                if not factura:
+                    raise ValueError("Factura no encontrada")
+                if factura["estado"] == "anulada":
+                    raise ValueError("No se puede registrar pagos en una factura anulada")
+                if factura["estado"] == "pagada":
+                    raise ValueError("La factura ya está completamente pagada")
+
+                cur.execute(
+                    """
+                    INSERT INTO pagos (factura_id, fecha_pago, importe, metodo_pago, referencia, notas)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id::text AS pago_id
+                    """,
+                    (
+                        factura_id,
+                        payload.fecha_pago or __import__('datetime').date.today(),
+                        payload.importe,
+                        payload.metodo_pago,
+                        payload.referencia,
+                        payload.notas,
+                    ),
+                )
+                row = cur.fetchone()
+                pago_id = row["pago_id"]
+                conn.commit()
+
+                # Obtener detalle del pago creado
+                cur.execute(
+                    """
+                    SELECT
+                        p.id::text AS pago_id,
+                        p.factura_id::text AS factura_id,
+                        f.numero AS factura_numero,
+                        c.nombre_fiscal AS cliente_nombre,
+                        p.fecha_pago,
+                        p.importe,
+                        p.metodo_pago::text AS metodo_pago,
+                        p.referencia,
+                        p.notas
+                    FROM pagos p
+                    JOIN facturas f ON f.id = p.factura_id
+                    JOIN clientes c ON c.id = f.cliente_id
+                    WHERE p.id = %s
+                    """,
+                    (pago_id,),
+                )
+                pago_row = cur.fetchone()
+
+        return {**dict(pago_row), "importe": float(pago_row["importe"] or 0)}

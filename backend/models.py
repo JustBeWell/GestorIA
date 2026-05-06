@@ -544,3 +544,89 @@ class AdminCorreccionResponse(BaseModel):
 	origen: str
 	observaciones: str | None = None
 
+
+# ── Facturas / Pagos (escritura) ──────────────────────────────────────────────
+
+ESTADOS_FACTURA_VALIDOS = {'borrador', 'emitida', 'pagada_parcial', 'pagada', 'anulada'}
+METODOS_PAGO_VALIDOS = {'transferencia', 'efectivo', 'tarjeta', 'domiciliacion', 'otro'}
+
+
+class FacturaCreate(BaseModel):
+	cliente_id: str
+	concepto: str = Field(..., min_length=2, max_length=1000)
+	base_imponible: float = Field(..., gt=0)
+	porcentaje_iva: float = Field(default=21.0, ge=0, le=100)
+	fecha_emision: date | None = None
+	fecha_vencimiento: date | None = None
+	notas: str | None = None
+
+	model_config = ConfigDict(str_strip_whitespace=True)
+
+
+class FacturaUpdate(BaseModel):
+	concepto: str | None = Field(default=None, min_length=2, max_length=1000)
+	base_imponible: float | None = Field(default=None, gt=0)
+	porcentaje_iva: float | None = Field(default=None, ge=0, le=100)
+	fecha_emision: date | None = None
+	fecha_vencimiento: date | None = None
+	estado: str | None = None
+	notas: str | None = None
+
+	model_config = ConfigDict(str_strip_whitespace=True)
+
+	@field_validator('estado')
+	@classmethod
+	def validate_estado(cls, v: str | None) -> str | None:
+		if v is not None and v not in ESTADOS_FACTURA_VALIDOS:
+			raise ValueError(f'Estado inválido. Valores permitidos: {ESTADOS_FACTURA_VALIDOS}')
+		return v
+
+
+class FacturaDetailItem(BaseModel):
+	factura_id: str
+	numero: str
+	cliente_id: str
+	cliente_nombre: str
+	estado: str
+	concepto: str | None
+	notas: str | None
+	base_imponible: float
+	porcentaje_iva: float
+	importe_iva: float
+	total: float
+	pagado: float
+	pendiente: float
+	fecha_emision: date
+	fecha_vencimiento: date | None = None
+	created_at: datetime
+	pagos: list[dict] = []
+
+
+class PagoCreate(BaseModel):
+	importe: float = Field(..., gt=0)
+	metodo_pago: str = Field(default='transferencia')
+	fecha_pago: date | None = None
+	referencia: str | None = Field(default=None, max_length=100)
+	notas: str | None = None
+
+	model_config = ConfigDict(str_strip_whitespace=True)
+
+	@field_validator('metodo_pago')
+	@classmethod
+	def validate_metodo(cls, v: str) -> str:
+		if v not in METODOS_PAGO_VALIDOS:
+			raise ValueError(f'Método de pago inválido. Valores permitidos: {METODOS_PAGO_VALIDOS}')
+		return v
+
+
+class PagoDetailItem(BaseModel):
+	pago_id: str
+	factura_id: str
+	factura_numero: str
+	cliente_nombre: str
+	fecha_pago: date
+	importe: float
+	metodo_pago: str
+	referencia: str | None
+	notas: str | None
+

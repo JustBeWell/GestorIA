@@ -17,10 +17,15 @@ from models import (
     ClienteDetailItem,
     ClientesTabResponse,
     ClienteUpdate,
+    FacturaCreate,
+    FacturaDetailItem,
+    FacturaUpdate,
     FichajeRegistroRequest,
     FichajeRegistroResponse,
     FichajeUndoResponse,
     FichajeTabResponse,
+    PagoCreate,
+    PagoDetailItem,
     PagosTabResponse,
     PortalIntranetHomeResponse,
     QuarterSeriesResponse,
@@ -578,6 +583,88 @@ async def intranet_pagos(
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.post("/facturas", response_model=FacturaDetailItem, status_code=status.HTTP_201_CREATED)
+async def intranet_facturas_create(
+    payload: FacturaCreate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        result = PagosService.create_factura(payload, current_user.user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    return result
+
+
+@router.get("/facturas/{factura_id}", response_model=FacturaDetailItem)
+async def intranet_facturas_detail(
+    factura_id: str,
+    current_user=Depends(get_current_user),
+):
+    result = PagosService.get_factura_detail(factura_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    return result
+
+
+@router.put("/facturas/{factura_id}", response_model=FacturaDetailItem)
+async def intranet_facturas_update(
+    factura_id: str,
+    payload: FacturaUpdate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        result = PagosService.update_factura(factura_id, payload)
+    except PsycopgError as exc:
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    if not result:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    return result
+
+
+@router.delete("/facturas/{factura_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def intranet_facturas_delete(
+    factura_id: str,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        deleted = PagosService.delete_factura(factura_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except PsycopgError as exc:
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Factura no encontrada o ya anulada")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/facturas/{factura_id}/pagos", response_model=PagoDetailItem, status_code=status.HTTP_201_CREATED)
+async def intranet_facturas_pago(
+    factura_id: str,
+    payload: PagoCreate,
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    try:
+        result = PagosService.create_pago(factura_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except PsycopgError as exc:
+        detail = exc.pgerror or str(exc)
+        if "sobrepago" in detail.lower() or "excede" in detail.lower():
+            raise HTTPException(status_code=409, detail="El importe supera el pendiente de la factura") from exc
+        raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    return result
 
 
 @router.get("/admin/resumen", response_model=AdminResumenResponse)

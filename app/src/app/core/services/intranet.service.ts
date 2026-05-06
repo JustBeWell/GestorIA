@@ -13,11 +13,17 @@ import {
   ClienteDetailItem,
   ClientesTabResponse,
   ClienteUpdate,
+  FacturaCreate,
+  FacturaDetailItem,
+  FacturaUpdate,
   FichajeRegistroRequest,
   FichajeRegistroResponse,
   FichajeTabResponse,
   FichajeUndoResponse,
   IntranetHomeResponse,
+  PagoCreate,
+  PagoDetailItem,
+  PagosTabResponse,
   QuarterSeriesResponse,
   TrabajoComentario,
   TrabajoCreate,
@@ -279,5 +285,61 @@ export class IntranetService {
 
   getEmpleadosList(): Observable<{ id: string; nombre: string; apellidos: string; activo: boolean }[]> {
     return this.http.get<{ id: string; nombre: string; apellidos: string; activo: boolean }[]>(`${this.apiUrl}/users/`);
+  }
+
+  // ── Pagos tab ─────────────────────────────────────────────────────────────
+
+  getPagosTab(params: {
+    page_facturas?: number;
+    page_size_facturas?: number;
+    page_pagos?: number;
+    page_size_pagos?: number;
+    estado_factura?: string;
+    cliente_id?: string;
+    vencidas_solo?: boolean;
+    fecha_pago_desde?: string;
+    fecha_pago_hasta?: string;
+  } = {}): Observable<PagosTabResponse> {
+    const sp = new URLSearchParams();
+    if (params.page_facturas)      sp.set('page_facturas', String(params.page_facturas));
+    if (params.page_size_facturas) sp.set('page_size_facturas', String(params.page_size_facturas));
+    if (params.page_pagos)         sp.set('page_pagos', String(params.page_pagos));
+    if (params.page_size_pagos)    sp.set('page_size_pagos', String(params.page_size_pagos));
+    if (params.estado_factura)     sp.set('estado_factura', params.estado_factura);
+    if (params.cliente_id)         sp.set('cliente_id', params.cliente_id);
+    if (params.vencidas_solo)      sp.set('vencidas_solo', 'true');
+    if (params.fecha_pago_desde)   sp.set('fecha_pago_desde', params.fecha_pago_desde);
+    if (params.fecha_pago_hasta)   sp.set('fecha_pago_hasta', params.fecha_pago_hasta);
+    const q = sp.toString();
+    return this.http.get<PagosTabResponse>(
+      `${this.apiUrl}/intranet/pagos${q ? '?' + q : ''}`
+    );
+  }
+
+  // ── Facturas CRUD ─────────────────────────────────────────────────────────
+
+  getFacturaDetail(facturaId: string): Observable<FacturaDetailItem> {
+    return this.http.get<FacturaDetailItem>(`${this.apiUrl}/intranet/facturas/${facturaId}`);
+  }
+
+  createFactura(payload: FacturaCreate): Observable<FacturaDetailItem> {
+    return this.http.post<FacturaDetailItem>(`${this.apiUrl}/intranet/facturas`, payload);
+  }
+
+  updateFactura(facturaId: string, payload: FacturaUpdate): Observable<FacturaDetailItem> {
+    return this.http.put<FacturaDetailItem>(`${this.apiUrl}/intranet/facturas/${facturaId}`, payload);
+  }
+
+  deleteFactura(facturaId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/intranet/facturas/${facturaId}`);
+  }
+
+  // ── Pagos sobre factura ───────────────────────────────────────────────────
+
+  createPago(facturaId: string, payload: PagoCreate): Observable<PagoDetailItem> {
+    return this.http.post<PagoDetailItem>(
+      `${this.apiUrl}/intranet/facturas/${facturaId}/pagos`,
+      payload
+    );
   }
 }

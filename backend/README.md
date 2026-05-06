@@ -102,6 +102,14 @@ Todo lo demás (`/auth/token`, `/auth/logout`, `/users/*`, `/intranet/*`).
 - `GET /intranet/trabajos`
 - `GET /intranet/pagos`
 
+#### Facturas (M6 — Sprint 3)
+
+- `POST /intranet/facturas` (solo `administrador`) — crear factura
+- `GET /intranet/facturas/{factura_id}` — detalle con historial de pagos
+- `PUT /intranet/facturas/{factura_id}` (solo `administrador`) — editar factura
+- `DELETE /intranet/facturas/{factura_id}` (solo `administrador`) — anular factura (204)
+- `POST /intranet/facturas/{factura_id}/pagos` (solo `administrador`) — registrar pago
+
 ## Filtros y paginación
 
 ### `GET /intranet/fichaje`
@@ -154,6 +162,30 @@ Response incluye:
 - `pagos_recientes`
 - `paginacion_facturas`
 - `paginacion_pagos`
+
+### `POST /intranet/facturas`
+
+Body: `{ cliente_id, concepto, base_imponible, porcentaje_iva?, fecha_emision?, fecha_vencimiento?, notas? }`
+
+Genera número correlativo `F-YYYY-XXXX`. Devuelve `FacturaDetailItem`.
+
+### `GET /intranet/facturas/{factura_id}`
+
+Devuelve detalle completo con lista de `pagos[]` embebidos.
+
+### `PUT /intranet/facturas/{factura_id}`
+
+Actualización parcial. Campos: `concepto`, `base_imponible`, `porcentaje_iva`, `fecha_emision`, `fecha_vencimiento`, `estado`, `notas`.
+
+### `DELETE /intranet/facturas/{factura_id}`
+
+Cambia el estado a `anulada`. Retorna 204. Lanza 409 si la factura ya tiene pagos.
+
+### `POST /intranet/facturas/{factura_id}/pagos`
+
+Body: `{ importe, metodo_pago?, fecha_pago?, referencia?, notas? }`
+
+Trigger de DB actualiza automáticamente el estado de la factura. Devuelve 409 si el importe supera el pendiente.
 
 ## Alcance de datos por empleado
 

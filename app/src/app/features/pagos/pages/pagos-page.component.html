@@ -2,26 +2,469 @@
   <section class="intranet-shell">
     <app-intranet-sidebar />
 
-    <section class="content">
+    <section class="content" [class.panel-open]="showDetailPanel()">
+
+      <!-- TOPBAR -->
       <header class="topbar">
         <div class="breadcrumbs">Inicio / <strong>Pagos</strong></div>
+        @if (isAdmin()) {
+          <button class="btn-primary" (click)="openCreateFactura()">
+            <span class="btn-icon">+</span> Nueva factura
+          </button>
+        }
       </header>
 
-      <section class="page-header">
-        <div>
-          <h1 class="page-title">Pagos</h1>
-          <p class="page-subtitle">Modulo en desarrollo</p>
+      <!-- ERROR BANNER -->
+      @if (errorMsg()) {
+        <div class="error-banner" role="alert">
+          <span>{{ errorMsg() }}</span>
+          <button class="error-close" (click)="dismissError()">✕</button>
         </div>
-      </section>
+      }
 
-      <section class="module-container">
-        <article class="wip-card">
-          <h2 class="wip-title">Pagos</h2>
-          <p class="wip-badge">Work in progress</p>
-          <p class="wip-description">Esta sección está en desarrollo y se activará en la siguiente iteración.</p>
-          <a routerLink="/home">Volver al panel principal</a>
+      <!-- KPI CARDS -->
+      <section class="kpi-row">
+        <article class="kpi-card kpi-cobrado">
+          <div class="kpi-icon">💶</div>
+          <div class="kpi-body">
+            <span class="kpi-label">Cobrado este mes</span>
+            <span class="kpi-value">{{ resumen().cobrado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+          </div>
+        </article>
+        <article class="kpi-card kpi-pendiente">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-body">
+            <span class="kpi-label">Pendiente total</span>
+            <span class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+          </div>
+        </article>
+        <article class="kpi-card" [class.kpi-vencidas-alert]="resumen().facturas_vencidas > 0">
+          <div class="kpi-icon">🚨</div>
+          <div class="kpi-body">
+            <span class="kpi-label">Facturas vencidas</span>
+            <span class="kpi-value">{{ resumen().facturas_vencidas }}</span>
+          </div>
         </article>
       </section>
-    </section>
-  </section>
+
+      <!-- FILTROS -->
+      <section class="filters-bar">
+        <div class="filter-group">
+          <label class="filter-label">Estado</label>
+          <select class="filter-select"
+            [value]="filtroEstado()"
+            (change)="onFiltroEstadoChange($any($event.target).value)">
+            <option value="">Todos</option>
+            @for (e of estadosFactura; track e.value) {
+              <option [value]="e.value">{{ e.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Cliente</label>
+          <select class="filter-select"
+            [value]="filtroCliente()"
+            (change)="onFiltroClienteChange($any($event.target).value)">
+            <option value="">Todos</option>
+            @for (c of clientes(); track c.cliente_id) {
+              <option [value]="c.cliente_id">{{ c.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        <label class="filter-checkbox">
+          <input type="checkbox"
+            [checked]="filtroVencidas()"
+            (change)="onFiltroVencidasChange($any($event.target).checked)" />
+          Solo vencidas
+        </label>
+      </section>
+
+      <!-- TABLA FACTURAS -->
+      <section class="table-section">
+        @if (loading()) {
+          <div class="skeleton-table">
+            @for (i of [1,2,3,4,5]; track i) {
+              <div class="skeleton-row"></div>
+            }
+          </div>
+        } @else if (facturas().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p class="empty-title">No hay facturas</p>
+            <p class="empty-sub">
+              @if (filtroEstado() || filtroCliente() || filtroVencidas()) {
+                Prueba a cambiar los filtros aplicados.
+              } @else {
+                Crea la primera factura usando el botón "Nueva factura".
+              }
+            </p>
+          </div>
+        } @else {
+          <table class="facturas-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Emisión</th>
+                <th>Vencimiento</th>
+                <th class="text-right">Total</th>
+                <th class="text-right">Pendiente</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of facturas(); track f.factura_id) {
+                <tr class="factura-row"
+                  [class.row-selected]="selectedFactura()?.factura_id === f.factura_id"
+                  [class.row-vencida]="isVencida(f)"
+                  (click)="openDetail(f)">
+                  <td class="factura-numero">{{ f.numero }}</td>
+                  <td>{{ f.cliente_nombre }}</td>
+                  <td>
+                    <span class="estado-badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
+                    @if (isVencida(f)) {
+                      <span class="vencida-tag" [title]="diasVencida(f.fecha_vencimiento) + ' días'">
+                        +{{ diasVencida(f.fecha_vencimiento) }}d
+                      </span>
+                    }
+                  </td>
+                  <td>{{ f.fecha_emision | date:'dd/MM/yyyy' }}</td>
+                  <td>
+                    @if (f.fecha_vencimiento) {
+                      <span [class.text-danger]="isVencida(f)">{{ f.fecha_vencimiento | date:'dd/MM/yyyy' }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                  <td class="text-right font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</td>
+                  <td class="text-right font-mono" [class.text-danger]="f.pendiente > 0 && f.estado !== 'anulada'">
+                    {{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <!-- PAGINACIÓN -->
+          @if (paginacion().total_pages > 1) {
+            <nav class="pagination">
+              <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">‹</button>
+              @for (p of paginasArray(); track p) {
+                <button class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(p)">{{ p }}</button>
+              }
+              <button class="page-btn" [disabled]="currentPage() === paginacion().total_pages" (click)="goToPage(currentPage() + 1)">›</button>
+            </nav>
+          }
+
+          <p class="table-total-info">{{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }}</p>
+        }
+      </section>
+
+    </section><!-- /content -->
+
+    <!-- PANEL LATERAL DETALLE -->
+    @if (showDetailPanel()) {
+      <aside class="detail-panel">
+        <div class="detail-header">
+          <h2 class="detail-title">Detalle factura</h2>
+          <button class="detail-close" (click)="closeDetail()" aria-label="Cerrar">✕</button>
+        </div>
+
+        @if (loadingDetail()) {
+          <div class="detail-skeleton">
+            @for (i of [1,2,3]; track i) { <div class="sk-line"></div> }
+          </div>
+        } @else if (selectedFactura(); as f) {
+          <div class="detail-body">
+
+            <!-- Número + estado -->
+            <div class="detail-row-header">
+              <span class="detail-numero">{{ f.numero }}</span>
+              <span class="estado-badge estado-{{ f.estado }}">{{ estadoLabel(f.estado) }}</span>
+            </div>
+
+            <p class="detail-cliente">{{ f.cliente_nombre }}</p>
+
+            <!-- Concepto -->
+            @if (f.concepto) {
+              <p class="detail-concepto">{{ f.concepto }}</p>
+            }
+
+            <!-- Importes -->
+            <div class="detail-importes">
+              <div class="importe-row">
+                <span>Base imponible</span>
+                <span class="font-mono">{{ f.base_imponible | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              </div>
+              <div class="importe-row">
+                <span>IVA ({{ f.porcentaje_iva }}%)</span>
+                <span class="font-mono">{{ f.importe_iva | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              </div>
+              <div class="importe-row importe-total">
+                <span>Total</span>
+                <span class="font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              </div>
+              <div class="importe-row importe-pagado">
+                <span>Pagado</span>
+                <span class="font-mono text-success">{{ f.pagado | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              </div>
+              <div class="importe-row importe-pendiente" [class.text-danger]="f.pendiente > 0">
+                <span>Pendiente</span>
+                <span class="font-mono">{{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+              </div>
+            </div>
+
+            <!-- Fechas -->
+            <div class="detail-fechas">
+              <div class="fecha-row">
+                <span class="fecha-label">Emisión</span>
+                <span>{{ f.fecha_emision | date:'dd/MM/yyyy' }}</span>
+              </div>
+              @if (f.fecha_vencimiento) {
+                <div class="fecha-row">
+                  <span class="fecha-label">Vencimiento</span>
+                  <span [class.text-danger]="isVencidaByDate(f.fecha_vencimiento, f.estado)">
+                    {{ f.fecha_vencimiento | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+              }
+            </div>
+
+            <!-- Barra de progreso cobro -->
+            @if (f.total > 0) {
+              <div class="cobro-progress">
+                <div class="cobro-bar-track">
+                  <div class="cobro-bar-fill" [style.width.%]="(f.pagado / f.total) * 100"></div>
+                </div>
+                <span class="cobro-pct">{{ ((f.pagado / f.total) * 100) | number:'1.0-0' }}% cobrado</span>
+              </div>
+            }
+
+            <!-- Notas -->
+            @if (f.notas) {
+              <div class="detail-notas">
+                <span class="notas-label">Notas</span>
+                <p>{{ f.notas }}</p>
+              </div>
+            }
+
+            <!-- Historial de pagos -->
+            @if (f.pagos.length > 0) {
+              <div class="pagos-historial">
+                <h3 class="historial-title">Pagos registrados</h3>
+                @for (p of f.pagos; track p.pago_id) {
+                  <div class="pago-item">
+                    <div class="pago-main">
+                      <span class="pago-importe">{{ p.importe | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                      <span class="metodo-badge metodo-{{ p.metodo_pago }}">{{ p.metodo_pago }}</span>
+                    </div>
+                    <div class="pago-meta">
+                      <span>{{ p.fecha_pago | date:'dd/MM/yyyy' }}</span>
+                      @if (p.referencia) { <span class="pago-ref">{{ p.referencia }}</span> }
+                    </div>
+                    @if (p.notas) { <p class="pago-notas">{{ p.notas }}</p> }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Acciones -->
+            @if (isAdmin()) {
+              <div class="detail-actions">
+                @if (f.estado !== 'pagada' && f.estado !== 'anulada') {
+                  <button class="btn-primary btn-full" (click)="openPagoModal()">
+                    Registrar pago
+                  </button>
+                }
+                @if (f.estado === 'borrador' || f.estado === 'emitida') {
+                  <button class="btn-secondary btn-full" (click)="openEditFactura(f)">
+                    Editar factura
+                  </button>
+                }
+                @if (f.estado !== 'anulada' && f.pagos.length === 0) {
+                  <button class="btn-danger btn-full" (click)="confirmAnular(f.factura_id)">
+                    Anular factura
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </aside>
+    }
+
+  </section><!-- /intranet-shell -->
 </main>
+
+<!-- ── MODAL NUEVA / EDITAR FACTURA ─────────────────────────────────────── -->
+@if (showFacturaModal()) {
+  <div class="modal-overlay" (click)="closeFacturaModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode() ? 'Editar factura' : 'Nueva factura' }}</h2>
+        <button class="modal-close" (click)="closeFacturaModal()">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <label class="form-label">Cliente *</label>
+        @if (isEditMode()) {
+          <input class="form-input" readonly [value]="selectedFactura()?.cliente_nombre ?? facturaForm().cliente_id" />
+        } @else {
+          <select class="form-input"
+            [value]="facturaForm().cliente_id"
+            (change)="updateFacturaFormField('cliente_id', $any($event.target).value)">
+            <option value="">Selecciona un cliente...</option>
+            @for (c of clientes(); track c.cliente_id) {
+              <option [value]="c.cliente_id">{{ c.nombre }}</option>
+            }
+          </select>
+        }
+
+        <label class="form-label">Concepto *</label>
+        <textarea class="form-input form-textarea" rows="3"
+          [value]="facturaForm().concepto"
+          (input)="updateFacturaFormField('concepto', $any($event.target).value)"
+          placeholder="Descripción del servicio..."></textarea>
+
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">Base imponible (€) *</label>
+            <input class="form-input" type="number" min="0" step="0.01"
+              [value]="facturaForm().base_imponible"
+              (input)="updateFacturaFormField('base_imponible', +$any($event.target).value)" />
+          </div>
+          <div>
+            <label class="form-label">IVA (%)</label>
+            <input class="form-input" type="number" min="0" max="100" step="0.5"
+              [value]="facturaForm().porcentaje_iva"
+              (input)="updateFacturaFormField('porcentaje_iva', +$any($event.target).value)" />
+          </div>
+        </div>
+
+        <div class="form-total-preview">
+          Total: <strong>{{ totalImporte() | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
+        </div>
+
+        <div class="form-row-2">
+          <div>
+            <label class="form-label">Fecha emisión</label>
+            <input class="form-input" type="date"
+              [value]="facturaForm().fecha_emision ?? ''"
+              (change)="updateFacturaFormField('fecha_emision', $any($event.target).value || null)" />
+          </div>
+          <div>
+            <label class="form-label">Fecha vencimiento</label>
+            <input class="form-input" type="date"
+              [value]="facturaForm().fecha_vencimiento ?? ''"
+              (change)="updateFacturaFormField('fecha_vencimiento', $any($event.target).value || null)" />
+          </div>
+        </div>
+
+        @if (isEditMode()) {
+          <label class="form-label">Estado</label>
+          <select class="form-input"
+            [value]="facturaForm().estado ?? ''"
+            (change)="updateFacturaFormField('estado', $any($event.target).value)">
+            @for (e of estadosFactura; track e.value) {
+              <option [value]="e.value">{{ e.label }}</option>
+            }
+          </select>
+        }
+
+        <label class="form-label">Notas internas</label>
+        <textarea class="form-input form-textarea" rows="2"
+          [value]="facturaForm().notas ?? ''"
+          (input)="updateFacturaFormField('notas', $any($event.target).value || null)"
+          placeholder="Notas opcionales..."></textarea>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeFacturaModal()">Cancelar</button>
+        <button class="btn-primary" [disabled]="saving() || !facturaForm().cliente_id || !facturaForm().concepto || !facturaForm().base_imponible"
+          (click)="saveFactura()">
+          {{ saving() ? 'Guardando…' : (isEditMode() ? 'Guardar cambios' : 'Crear factura') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── MODAL REGISTRAR PAGO ──────────────────────────────────────────────── -->
+@if (showPagoModal()) {
+  <div class="modal-overlay" (click)="closePagoModal()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Registrar pago</h2>
+        <button class="modal-close" (click)="closePagoModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="pago-factura-ref">
+          Factura <strong>{{ selectedFactura()?.numero }}</strong> —
+          pendiente <strong>{{ selectedFactura()?.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
+        </p>
+
+        <label class="form-label">Importe (€) *</label>
+        <input class="form-input" type="number" min="0.01" step="0.01"
+          [value]="pagoForm().importe"
+          (input)="updatePagoFormField('importe', +$any($event.target).value)" />
+
+        <label class="form-label">Método de pago</label>
+        <select class="form-input"
+          [value]="pagoForm().metodo_pago"
+          (change)="updatePagoFormField('metodo_pago', $any($event.target).value)">
+          @for (m of metodosPago; track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+
+        <label class="form-label">Fecha de pago</label>
+        <input class="form-input" type="date"
+          [value]="pagoForm().fecha_pago ?? ''"
+          (change)="updatePagoFormField('fecha_pago', $any($event.target).value || null)" />
+
+        <label class="form-label">Referencia</label>
+        <input class="form-input" type="text" maxlength="100"
+          [value]="pagoForm().referencia ?? ''"
+          (input)="updatePagoFormField('referencia', $any($event.target).value || null)"
+          placeholder="Nº de transferencia, recibo…" />
+
+        <label class="form-label">Notas</label>
+        <textarea class="form-input form-textarea" rows="2"
+          [value]="pagoForm().notas ?? ''"
+          (input)="updatePagoFormField('notas', $any($event.target).value || null)"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closePagoModal()">Cancelar</button>
+        <button class="btn-primary" [disabled]="saving() || !pagoForm().importe || pagoForm().importe <= 0"
+          (click)="savePago()">
+          {{ saving() ? 'Registrando…' : 'Registrar pago' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── MODAL CONFIRMAR ANULACIÓN ─────────────────────────────────────────── -->
+@if (showAnularModal()) {
+  <div class="modal-overlay" (click)="cancelAnular()">
+    <div class="modal modal-confirm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Anular factura</h2>
+        <button class="modal-close" (click)="cancelAnular()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que quieres anular esta factura? Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="cancelAnular()">Cancelar</button>
+        <button class="btn-danger" [disabled]="saving()" (click)="executeAnular()">
+          {{ saving() ? 'Anulando…' : 'Sí, anular' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+
