@@ -1,7 +1,7 @@
 import { Component, NgZone, OnInit, OnDestroy, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, finalize, takeUntil, timer } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { IntranetService } from '../../../core/services/intranet.service';
@@ -113,13 +113,6 @@ export class PagosPageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadData();
     this.loadClientes();
-
-    // Fallback: si los datos no cargan en 3 segundos, recargar la página
-    timer(3000).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      if (this.loading()) {
-        window.location.reload();
-      }
-    });
   }
 
   ngOnDestroy(): void {

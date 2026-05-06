@@ -269,6 +269,7 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
           }
           this.addEmpleadoId = '';
           this.refreshCardEmpleados(this.selectedTrabajo!.trabajo_id, res.empleados);
+          this.loadData();
         },
         error: (err: HttpErrorResponse) => {
           alert(err.error?.detail ?? 'Error al asignar empleado');
@@ -285,6 +286,7 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
           this.selectedTrabajo = { ...this.selectedTrabajo, empleados_asignados: updated };
           this.refreshCardEmpleados(this.selectedTrabajo.trabajo_id, updated);
         }
+        this.loadData();
       },
     });
   }

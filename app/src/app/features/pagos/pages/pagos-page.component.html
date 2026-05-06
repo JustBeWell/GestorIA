@@ -94,6 +94,7 @@
       }
 
       <!-- KPI cards -->
+      @if (!loading()) {
       <div class="kpi-row">
         <!-- Card 1: Total facturado mes (dark) -->
         <article class="kpi-card kpi-dark">
@@ -123,6 +124,7 @@
           </div>
         </article>
       </div>
+      }
 
       <!-- Table panel -->
       <section class="panel table-section">
