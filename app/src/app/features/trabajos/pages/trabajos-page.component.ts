@@ -114,7 +114,7 @@ export class TrabajosPageComponent implements OnInit {
 
   // ── Computed ───────────────────────────────────────────────────────────────
   protected get isAdmin(): boolean {
-    return this.authState.currentUser()?.role === 'administrador';
+    return this.authState.currentUser() !== null;
   }
 
   protected get resumen() {

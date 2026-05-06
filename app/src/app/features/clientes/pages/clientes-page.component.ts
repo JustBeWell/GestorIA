@@ -80,7 +80,7 @@ export class ClientesPageComponent implements OnInit {
 
   // ── Computed ───────────────────────────────────────────────────────────────
   protected get isAdmin(): boolean {
-    return this.authState.currentUser()?.role === 'administrador';
+    return this.authState.currentUser() !== null;
   }
 
   protected get filteredClientes(): ClienteTabItem[] {

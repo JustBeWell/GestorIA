@@ -384,8 +384,6 @@ async def intranet_clientes_update(
     payload: ClienteUpdate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         data = ClientesService.update_cliente(cliente_id, payload)
     except PsycopgError as exc:
@@ -403,8 +401,6 @@ async def intranet_clientes_delete(
     cliente_id: str,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     deleted = ClientesService.delete_cliente(cliente_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Cliente no encontrado o ya inactivo")
@@ -442,8 +438,6 @@ async def intranet_trabajos_create(
     payload: TrabajoCreate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         result = TrabajosService.create_trabajo(payload, current_user.user_id)
     except ValueError as exc:
@@ -470,8 +464,6 @@ async def intranet_trabajos_update(
     payload: TrabajoUpdate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     result = TrabajosService.update_trabajo(trabajo_id, payload)
     if not result:
         raise HTTPException(status_code=404, detail="Trabajo no encontrado")
@@ -483,8 +475,6 @@ async def intranet_trabajos_delete(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     deleted = TrabajosService.delete_trabajo(trabajo_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Trabajo no encontrado o ya inactivo")
@@ -506,8 +496,6 @@ async def intranet_trabajos_asignar_empleado(
     payload: TrabajoEmpleadoRequest,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         result = TrabajosService.assign_empleado(trabajo_id, payload.empleado_id)
     except ValueError as exc:
@@ -526,8 +514,6 @@ async def intranet_trabajos_desasignar_empleado(
     empleado_id: str,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     removed = TrabajosService.unassign_empleado(trabajo_id, empleado_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Asignación no encontrada")
@@ -590,8 +576,6 @@ async def intranet_facturas_create(
     payload: FacturaCreate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         result = PagosService.create_factura(payload, current_user.user_id)
     except ValueError as exc:
@@ -618,8 +602,6 @@ async def intranet_facturas_update(
     payload: FacturaUpdate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         result = PagosService.update_factura(factura_id, payload)
     except PsycopgError as exc:
@@ -634,8 +616,6 @@ async def intranet_facturas_delete(
     factura_id: str,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         deleted = PagosService.delete_factura(factura_id)
     except ValueError as exc:
@@ -653,8 +633,6 @@ async def intranet_facturas_pago(
     payload: PagoCreate,
     current_user=Depends(get_current_user),
 ):
-    if current_user.role != "administrador":
-        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
         result = PagosService.create_pago(factura_id, payload)
     except ValueError as exc:

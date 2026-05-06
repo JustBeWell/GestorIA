@@ -5,7 +5,7 @@ import { finalize } from 'rxjs';
 
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { IntranetService } from '../../../core/services/intranet.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 import {
   FacturaPagoTabItem,
   FacturaDetailItem,
@@ -27,7 +27,7 @@ import {
 })
 export class PagosPageComponent implements OnInit {
   private readonly svc = inject(IntranetService);
-  private readonly auth = inject(AuthService);
+  private readonly auth = inject(AuthStateService);
 
   // ── Estado de carga ───────────────────────────────────────────────────────
   loading = signal(true);
@@ -80,7 +80,7 @@ export class PagosPageComponent implements OnInit {
   anulando = signal<string | null>(null);
 
   // ── Computed ──────────────────────────────────────────────────────────────
-  isAdmin = computed(() => this.auth.currentUser()?.role === 'administrador');
+  isAdmin = computed(() => this.auth.currentUser() !== null);
 
   totalImporte = computed(() => {
     const f = this.facturaForm();
