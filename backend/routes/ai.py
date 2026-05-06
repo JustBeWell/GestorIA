@@ -403,7 +403,7 @@ class ChatResponse(BaseModel):
     reply: str
 
 @router.post("/chat", response_model=ChatResponse)
-async def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
+def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
     if not settings.openai_api_key:
         raise HTTPException(
             status_code=503,

@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import {
@@ -70,9 +70,10 @@ const MONTH_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'se
   templateUrl: './trabajos-page.component.html',
   styleUrl: './trabajos-page.component.css',
 })
-export class TrabajosPageComponent implements OnInit {
+export class TrabajosPageComponent implements OnInit, OnDestroy {
   private readonly intranetService = inject(IntranetService);
   private readonly authState = inject(AuthStateService);
+  private readonly destroy$ = new Subject<void>();
 
   // ── State ──────────────────────────────────────────────────────────────────
   protected readonly loading = signal(true);
@@ -147,11 +148,16 @@ export class TrabajosPageComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   protected loadData(): void {
     this.loading.set(true);
     this.errorMessage.set('');
     this.intranetService.getTrabajosTab({ page_size: 200 })
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(takeUntil(this.destroy$), finalize(() => this.loading.set(false)))
       .subscribe({
         next: (data) => { this.tabData = data; },
         error: (err: HttpErrorResponse) => {
@@ -163,7 +169,7 @@ export class TrabajosPageComponent implements OnInit {
   }
 
   private loadEmpleados(): void {
-    this.intranetService.getEmpleadosList().subscribe({
+    this.intranetService.getEmpleadosList().pipe(takeUntil(this.destroy$)).subscribe({
       next: (list) => {
         this.empleadosList = list
           .filter((u: any) => u.activo)
@@ -179,7 +185,7 @@ export class TrabajosPageComponent implements OnInit {
   }
 
   private loadClientes(): void {
-    this.intranetService.getClientesTab({ page_size: 200 }).subscribe({
+    this.intranetService.getClientesTab({ page_size: 200 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.clientesList = data.clientes.filter((c) => c.activo).map((c) => ({
           cliente_id: c.cliente_id,

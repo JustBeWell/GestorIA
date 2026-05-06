@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { finalize, forkJoin, of, retry } from 'rxjs';
+import { Subject, finalize, forkJoin, of, retry, takeUntil } from 'rxjs';
 
 import { EmpleadoModel } from '../../../core/models/empleado.model';
 import {
@@ -62,7 +62,7 @@ interface HomeSnapshot {
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.css',
 })
-export class HomePageComponent implements OnInit {
+export class HomePageComponent implements OnInit, OnDestroy {
   private readonly snapshotKey = 'home_snapshot';
   private readonly minActionDelayMs = 1000;
 
@@ -73,6 +73,7 @@ export class HomePageComponent implements OnInit {
   private readonly router = inject(Router);
 
   private pendingReloadAt: number | null = null;
+  private readonly destroy$ = new Subject<void>();
 
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal('');
@@ -131,11 +132,14 @@ export class HomePageComponent implements OnInit {
       trabajosSeries: this.intranetService.getTrabajosQuarterSeries(),
       pagosSeries: this.intranetService.getPagosQuarterSeries(),
     })
-      .pipe(finalize(() => {
-        if (!hasSnapshot && !pendingReloadAt) {
-          this.loading.set(false);
-        }
-      }))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          if (!hasSnapshot && !pendingReloadAt) {
+            this.loading.set(false);
+          }
+        }),
+      )
       .subscribe({
         next: ({ empleado, home, fichaje, fichajeSeries, clientesSeries, trabajosSeries, pagosSeries }) => {
           this.empleado = empleado;
@@ -175,6 +179,11 @@ export class HomePageComponent implements OnInit {
           this.finishReloadWithDelay();
         },
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   protected formatDate(value: string | null): string {

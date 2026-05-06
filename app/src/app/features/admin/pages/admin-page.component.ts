@@ -1,8 +1,9 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 
 import {
   AdminChartsResponse,
@@ -26,10 +27,11 @@ import { SessionStorageService } from '../../../core/services/session-storage.se
   templateUrl: './admin-page.component.html',
   styleUrl: './admin-page.component.css',
 })
-export class AdminPageComponent implements OnInit {
+export class AdminPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly intranetService = inject(IntranetService);
   private readonly sessionStorageService = inject(SessionStorageService);
+  private readonly destroy$ = new Subject<void>();
 
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal('');
@@ -106,8 +108,13 @@ export class AdminPageComponent implements OnInit {
     this.loadData();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadData(): void {
-    this.intranetService.getAdminResumen().subscribe({
+    this.intranetService.getAdminResumen().pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => {
         this.data = res;
         this.loading.set(false);
@@ -119,7 +126,7 @@ export class AdminPageComponent implements OnInit {
       },
     });
 
-    this.intranetService.getAdminCharts().subscribe({
+    this.intranetService.getAdminCharts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => { this.charts.set(res); },
       error: () => { /* charts are optional, fail silently */ },
     });

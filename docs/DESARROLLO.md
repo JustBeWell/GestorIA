@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-05-04 (Sprint 2 — M5 Gestion de trabajos completo)
+Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de navegacion resuelto)
 
 ---
 
@@ -97,18 +97,26 @@ Ultima revision: 2026-05-04 (Sprint 2 — M5 Gestion de trabajos completo)
 
 ---
 
-### M6 · Facturacion y pagos — PENDIENTE (backend parcial, UI placeholder)
+### M6 · Facturacion y pagos — EN CURSO (Sprint 3 · iniciado 2026-05-06)
 - [x] Endpoint `GET /intranet/pagos` — listado facturas y pagos con filtros
 - [x] Series trimestrales de pagos cobrados
 - [x] Modelos `facturas` y `pagos` en BD con triggers de validacion
 - [x] Vista `v_deuda_por_cliente` en BD
-- [ ] **UI: pantalla de pagos** — actualmente muestra "Work in progress"
-- [ ] Formulario de alta de factura
-- [ ] Registro de pago parcial o total
-- [ ] Vista de deuda viva por cliente
-- [ ] Listado de facturas vencidas con alerta visual
-- [ ] Endpoints de escritura: `POST`, `PUT` facturas y pagos (no existen en backend)
-- [ ] Exportacion de listado de deuda/facturas a CSV
+- [x] **UI: pantalla de pagos completa** — KPIs (Total facturado, Pendiente de cobro, Vencido), tabla de facturas, filtros, paginacion
+- [x] KPIs enriquecidos: `cobrado_mes`, `facturado_mes`, `facturas_emitidas_mes`, `pendiente_total`, `pendiente_count`, `facturas_vencidas`, `vencido_total`
+- [x] Bypass `is_admin` en backend — admin ve todas las facturas; empleado solo las de sus clientes
+- [x] Export CSV desde frontend (descarga directa del listado visible)
+- [x] Export PDF desde frontend (impresion via `window.print()`)
+- [x] Tabla siempre renderizada; estado vacio como `<tr colspan>` dentro del `<tbody>`
+- [x] `withInMemoryScrolling` en router (`scrollPositionRestoration: 'top'`) para corregir renderizado al navegar
+- [x] `OnDestroy` + `takeUntil(destroy$)` en suscripciones HTTP del componente de pagos
+- [ ] Endpoints de escritura: `POST /intranet/facturas`, `PUT /intranet/facturas/{id}` (PENDIENTE)
+- [ ] Endpoints de escritura: `POST /intranet/pagos`, `PUT /intranet/pagos/{id}` (PENDIENTE)
+- [ ] Formulario de alta de factura en UI (PENDIENTE — requiere endpoint POST)
+- [ ] Modal de registro de pago parcial/total (PENDIENTE — requiere endpoint POST pagos)
+- [ ] Vista de deuda viva por cliente (tab o panel, datos de `v_deuda_por_cliente`) (PENDIENTE)
+- [ ] Listado de facturas vencidas con alerta visual reforzada (PENDIENTE)
+- [ ] Endpoint backend `GET /intranet/facturas/export/csv` con filtros (PENDIENTE)
 
 ---
 
@@ -119,15 +127,19 @@ Ultima revision: 2026-05-04 (Sprint 2 — M5 Gestion de trabajos completo)
 - [x] Series trimestrales para todas las metricas del dashboard
 - [x] Calendario visual de fichajes del mes con detalle por dia
 - [x] Panel de administracion con KPIs, graficas historicas 12 meses y gestion de empleados y fichajes
-- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)- [x] Gráfica combinada histórica: 6 series normalizadas, hover con tooltip, toggle de series y toggle Combinada/Individual- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
+- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)
+- [x] Grafica combinada historica: 6 series normalizadas, hover con tooltip, toggle de series y toggle Combinada/Individual
+- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
 
 ---
 
 ### M8 · Exportaciones — PARCIAL
 - [x] Exportacion CSV de fichaje por rango de fechas
 - [x] Exportacion PDF de fichaje mensual (fpdf2, endpoint GET /intranet/fichaje/export/pdf)
-- [ ] Exportacion de listado de facturas/deuda a CSV
-- [ ] Generacion de documento mensual de cierre
+- [x] Exportacion CSV de facturas desde frontend (descarga del listado visible con headers en espanol)
+- [x] Exportacion PDF de facturas desde frontend (impresion via window.print)
+- [ ] Endpoint backend `GET /intranet/facturas/export/csv` con filtros y UTF-8 BOM
+- [ ] Generacion de documento mensual de cierre (PDF con fpdf2)
 
 ---
 
@@ -153,13 +165,26 @@ Ultima revision: 2026-05-04 (Sprint 2 — M5 Gestion de trabajos completo)
 - [ ] Estado global de usuario (actualmente cada pagina lee de `sessionStorage` directamente)
 - [ ] Manejo de errores HTTP centralizado (el interceptor de auth existe pero no cubre errores de negocio)
 - [x] Feedback de carga en modulo de clientes (loading signal + estado vacio)
-- [ ] Feedback de carga en modulos de trabajos/pagos (pendiente Sprint 2/3)
+- [x] Feedback de carga en modulo de pagos (skeleton + tabla siempre visible)
+- [x] `withInMemoryScrolling` en router (`scrollPositionRestoration: 'top'`) — corrige renderizado al navegar entre paginas
+- [x] `OnDestroy` + `takeUntil(destroy$)` en suscripciones HTTP de pagos — evita memory leaks
+- [x] `OnDestroy` + `takeUntil(destroy$)` extendido a todos los pages (home, fichaje, clientes, trabajos, admin) — cancelacion de peticiones al navegar
+- [x] `NgZone.run()` en actualizaciones de signals de pagos — garantiza change detection fuera del contexto de navegacion
+- [x] Timer de 3s como fallback de recarga en pagos (se cancela si los datos cargan antes)
+- [x] `withFetch()` en `provideHttpClient` — sustituye XMLHttpRequest por Fetch API, elimina limite de 6 conexiones HTTP/1.1
+- [x] `registerLocaleData(localeEs)` + `{ provide: LOCALE_ID, useValue: 'es' }` — evita NG0701 en CurrencyPipe
+- [x] Parametro `'es'` eliminado de todos los pipes `currency` del template de pagos (13 ocurrencias) — locale ya global
+- [x] Paleta de colores global migrada a verde bosque (tono banner `#1a3528`) en todos los modulos CSS
+- [ ] Feedback de carga en modulos de trabajos (kanban usa carga parcial, sin skeleton global)
 - [ ] Tests unitarios en componentes Angular (solo existe `app.spec.ts`)
 
 ### Backend
 - [x] Endpoints de escritura para clientes (POST/PUT/DELETE — Sprint 1)
-- [ ] Endpoints de escritura para trabajos, facturas y pagos (pendiente Sprints 2/3)
+- [x] Endpoints de escritura para trabajos (POST/PUT/DELETE, asignaciones, comentarios — Sprint 2)
+- [ ] Endpoints de escritura para facturas (POST/PUT — pendiente Sprint 3)
+- [ ] Endpoints de escritura para pagos (POST/PUT — pendiente Sprint 3)
 - [x] Paginacion en endpoint de clientes (page_size hasta 200, default 50)
+- [x] Route handlers convertidos de `async def` a `def` en todos los routers (intranet, auth, users, ai) — psycopg2 sincrono bloqueaba el event loop; FastAPI ahora los ejecuta en thread pool concurrente
 - [x] Validacion de formato NIF/CIF en backend (Pydantic field_validator con regex)
 - [ ] Rate limiting en endpoints de autenticacion
 - [ ] Tests de integracion para escritura (los tests existentes cubren solo lectura)
@@ -174,15 +199,25 @@ Ultima revision: 2026-05-04 (Sprint 2 — M5 Gestion de trabajos completo)
 
 ---
 
+## Electron / Desktop
+
+- [x] App empaquetada como Electron con `app://localhost` CORS
+- [x] Splash screen rediseñada: `app-banner.png` como fondo pantalla completa (`object-fit: cover`), barra de progreso en overlay inferior semitransparente
+- [x] Splash window ampliada a 700x440 px
+- [x] Funciones `updateProgress(pct, text)`, `showDone()`, `showError(msg)` preservadas para integración con `main.cjs`
+
+---
+
 ## Proximos pasos recomendados (orden de prioridad)
 
 > Plan detallado en `docs/PLAN_SPRINTS.md`
 
 1. ~~**UI y endpoints de gestion de clientes**~~ — **COMPLETADO** en Sprint 1 (2026-05-04)
-2. **Sprint 2 — UI y endpoints de gestion de trabajos** — backend GET listo, falta escritura y UI
-3. **Sprint 3 — UI y endpoints de facturacion/pagos**
-4. **Sprint 4 — Auditoria** — conectar eventos de escritura con `auditoria_eventos` + UI
-5. **Sprint 5 — Herramientas** — Calendario fiscal, Documentos, Ajustes + deuda tecnica
+2. ~~**Sprint 2 — UI y endpoints de gestion de trabajos**~~ — **COMPLETADO** en Sprint 2 (2026-05-04)
+3. **Sprint 3 (en curso) — Endpoints de escritura de facturas y pagos** — `POST/PUT /intranet/facturas` y `POST/PUT /intranet/pagos`
+4. **Sprint 3 (en curso) — Formularios en UI** — modal alta de factura + modal registro de pago + tab deuda viva
+5. **Sprint 4 — Auditoria** — conectar eventos de escritura con `auditoria_eventos` + UI
+6. **Sprint 5 — Herramientas** — Calendario fiscal, Documentos, Ajustes + deuda tecnica
 
 ---
 

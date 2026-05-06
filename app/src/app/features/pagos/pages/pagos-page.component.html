@@ -98,7 +98,7 @@
         <!-- Card 1: Total facturado mes (dark) -->
         <article class="kpi-card kpi-dark">
           <div class="kpi-label">TOTAL FACTURADO MES</div>
-          <div class="kpi-value">{{ resumen().facturado_mes | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-value">{{ resumen().facturado_mes | currency:'EUR':'symbol':'1.2-2' }}</div>
           <div class="kpi-sub">{{ resumen().facturas_emitidas_mes }} factura{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }} emitida{{ resumen().facturas_emitidas_mes !== 1 ? 's' : '' }}</div>
           <div class="kpi-bar-track">
             <div class="kpi-bar" [style.width.%]="resumen().facturado_mes > 0 ? 60 : 0"></div>
@@ -107,7 +107,7 @@
         <!-- Card 2: Pendiente de cobro (orange) -->
         <article class="kpi-card kpi-pendiente">
           <div class="kpi-label">PENDIENTE DE COBRO</div>
-          <div class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-value">{{ resumen().pendiente_total | currency:'EUR':'symbol':'1.2-2' }}</div>
           <div class="kpi-sub">{{ resumen().pendiente_count }} factura{{ resumen().pendiente_count !== 1 ? 's' : '' }} · vencimiento próximo</div>
           <div class="kpi-bar-track">
             <div class="kpi-bar" [style.width.%]="kpiBarPct(resumen().pendiente_total, resumen().facturado_mes)"></div>
@@ -116,7 +116,7 @@
         <!-- Card 3: Vencido (red) -->
         <article class="kpi-card" [class.kpi-vencidas-alert]="resumen().facturas_vencidas > 0">
           <div class="kpi-label">VENCIDO</div>
-          <div class="kpi-value">{{ resumen().vencido_total | currency:'EUR':'symbol':'1.2-2':'es' }}</div>
+          <div class="kpi-value">{{ resumen().vencido_total | currency:'EUR':'symbol':'1.2-2' }}</div>
           <div class="kpi-sub">{{ resumen().facturas_vencidas }} factura{{ resumen().facturas_vencidas !== 1 ? 's' : '' }} · acción requerida</div>
           <div class="kpi-bar-track">
             <div class="kpi-bar" [style.width.%]="kpiBarPct(resumen().vencido_total, resumen().facturado_mes)"></div>
@@ -188,9 +188,9 @@
                       <span class="text-muted">—</span>
                     }
                   </td>
-                  <td class="text-right font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</td>
+                  <td class="text-right font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2' }}</td>
                   <td class="text-right font-mono" [class.text-danger]="f.pendiente > 0 && f.estado !== 'anulada'">
-                    {{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}
+                    {{ f.pendiente | currency:'EUR':'symbol':'1.2-2' }}
                   </td>
                 </tr>
               }
@@ -245,23 +245,23 @@
             <div class="importe-block">
               <div class="importe-row">
                 <span>Base imponible</span>
-                <span class="font-mono">{{ f.base_imponible | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                <span class="font-mono">{{ f.base_imponible | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
               <div class="importe-row">
                 <span>IVA ({{ f.porcentaje_iva }}%)</span>
-                <span class="font-mono">{{ f.importe_iva | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                <span class="font-mono">{{ f.importe_iva | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
               <div class="importe-row importe-total">
                 <span>Total</span>
-                <span class="font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                <span class="font-mono">{{ f.total | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
               <div class="importe-row">
                 <span>Pagado</span>
-                <span class="font-mono color-success">{{ f.pagado | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                <span class="font-mono color-success">{{ f.pagado | currency:'EUR':'symbol':'1.2-2' }}</span>
               </div>
               <div class="importe-row" [class.text-danger]="f.pendiente > 0">
                 <strong>Pendiente</strong>
-                <span class="font-mono"><strong>{{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</strong></span>
+                <span class="font-mono"><strong>{{ f.pendiente | currency:'EUR':'symbol':'1.2-2' }}</strong></span>
               </div>
             </div>
 
@@ -302,7 +302,7 @@
                 @for (p of f.pagos; track p.pago_id) {
                   <div class="pago-item">
                     <div class="pago-top">
-                      <span class="pago-importe">{{ p.importe | currency:'EUR':'symbol':'1.2-2':'es' }}</span>
+                      <span class="pago-importe">{{ p.importe | currency:'EUR':'symbol':'1.2-2' }}</span>
                       <span class="badge">{{ p.metodo_pago }}</span>
                     </div>
                     <div class="pago-meta">
@@ -387,7 +387,7 @@
         </div>
 
         <div class="total-preview">
-          Total estimado: <strong>{{ totalImporte() | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
+          Total estimado: <strong>{{ totalImporte() | currency:'EUR':'symbol':'1.2-2' }}</strong>
         </div>
 
         <div class="form-row-2">
@@ -445,7 +445,7 @@
       <div class="modal-body">
         <p class="pago-ref-info">
           Factura <strong>{{ selectedFactura()?.numero }}</strong> —
-          pendiente <strong>{{ selectedFactura()?.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}</strong>
+          pendiente <strong>{{ selectedFactura()?.pendiente | currency:'EUR':'symbol':'1.2-2' }}</strong>
         </p>
 
         <label class="form-label">Importe (€) *</label>

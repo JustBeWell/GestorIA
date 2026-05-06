@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { FichajeEventoItem, FichajeTabResponse } from '../../../core/models/intranet.models';
@@ -65,12 +65,13 @@ interface FichajeSnapshot {
   templateUrl: './fichaje-page.component.html',
   styleUrl: './fichaje-page.component.css',
 })
-export class FichajePageComponent implements OnInit {
+export class FichajePageComponent implements OnInit, OnDestroy {
   private readonly snapshotKey = 'fichaje_snapshot';
   private readonly minActionDelayMs = 1000;
   private pendingReloadAt: number | null = null;
   private readonly router = inject(Router);
   private readonly empleadoService = inject(EmpleadoService);
+  private readonly destroy$ = new Subject<void>();
   private readonly intranetService = inject(IntranetService);
   private readonly sessionStorageService = inject(SessionStorageService);
   private readonly authApiService = inject(AuthApiService);
@@ -101,6 +102,10 @@ export class FichajePageComponent implements OnInit {
     this.loadFichaje();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   protected get nextTipoEvento(): 'entrada' | 'salida' {
     return this.fichajeData?.resumen?.turno_activo ? 'salida' : 'entrada';
@@ -296,16 +301,19 @@ export class FichajePageComponent implements OnInit {
         fecha_desde: monthRange.start,
         fecha_hasta: monthRange.end,
       })
-      .pipe(finalize(() => {
-        if (this.pendingReloadAt !== null) {
-          this.finishReloadWithDelay();
-          return;
-        }
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          if (this.pendingReloadAt !== null) {
+            this.finishReloadWithDelay();
+            return;
+          }
 
-        if (shouldShowLoader) {
-          this.loading.set(false);
-        }
-      }))
+          if (shouldShowLoader) {
+            this.loading.set(false);
+          }
+        }),
+      )
       .subscribe({
         next: (data) => {
           this.fichajeData = data;

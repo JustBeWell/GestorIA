@@ -1,8 +1,8 @@
 # Plan de Sprints — GestorIA MVP
 
 **Generado:** 2026-05-04  
-**Última revisión:** 2026-05-04  
-**Estado global:** 🟢 Sprint 2 completado — pendiente aprobación Sprint 3
+**Última revisión:** 2026-05-06  
+**Estado global:** 🟡 Sprint 3 en curso — UI de pagos operativa y bug de navegación resuelto; pendiente endpoints de escritura y formularios
 
 ---
 
@@ -342,7 +342,7 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 
 ---
 
-## Sprint 3 — Facturación y Pagos (M6)
+## Sprint 3 — Facturación y Pagos (M6) 🔄 EN CURSO (iniciado 2026-05-06)
 
 **Objetivo del sprint:** módulo de facturación completo con alta de facturas, registro de pagos, deuda viva y alertas de vencimiento.
 
@@ -371,6 +371,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - [ ] Total calculado correctamente.
 - [ ] Tests pasan.
 
+> ⏳ **PENDIENTE** — no implementado aún.
+
 ---
 
 ### HU-M6-02 · Endpoints de escritura de pagos (backend)
@@ -392,6 +394,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - [ ] Deuda viva calculada correctamente en BD.
 - [ ] Tests pasan.
 
+> ⏳ **PENDIENTE** — no implementado aún.
+
 ---
 
 ### HU-M6-03 · Pantalla de listado de facturas (UI)
@@ -408,9 +412,17 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Conectar con `GET /intranet/pagos`.
 
 **Definición de hecho:**
-- [ ] Lista con datos reales.
-- [ ] Facturas vencidas marcadas con badge o fila en color ámbar/rojo.
-- [ ] Columna "Pendiente" calculada correctamente.
+- [x] Pantalla completa con KPIs (Total facturado, Pendiente de cobro, Vencido) con barras de progreso.
+- [x] Tabla de facturas siempre renderizada; estado vacío como fila `<tr colspan>` dentro del `<tbody>`.
+- [x] Facturas vencidas con badge de alerta visual en la tabla.
+- [x] Filtros por estado, cliente y rango de fechas.
+- [x] Skeleton de carga durante petición.
+- [x] Admin ve todas las facturas; empleado ve solo las de sus clientes asignados (`is_admin` bypass en backend).
+- [x] Resumen enriquecido: `cobrado_mes`, `facturado_mes`, `facturas_emitidas_mes`, `pendiente_total`, `pendiente_count`, `facturas_vencidas`, `vencido_total`.
+
+> ✅ **COMPLETADO** (2026-05-06)
+
+> **Correcciones adicionales (2026-05-06):** bug de navegación resuelto — `async def` → `def` en todos los route handlers del backend (FastAPI thread pool), `withFetch()` + locale `'es'` registrado en frontend, `takeUntil(destroy$)` en todos los page components, `NgZone.run()` en pagos para change detection robusta.
 
 ---
 
@@ -429,6 +441,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 **Definición de hecho:**
 - [ ] Total calculado reactivamente al cambiar base/IVA.
 - [ ] Factura creada y visible en listado.
+
+> ⏳ **PENDIENTE** — requiere HU-M6-01 (endpoint POST facturas).
 
 ---
 
@@ -450,6 +464,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - [ ] Sobrepago bloqueado con mensaje claro.
 - [ ] Estado de factura refrescado tras pago exitoso.
 
+> ⏳ **PENDIENTE** — requiere HU-M6-02 (endpoint POST pagos).
+
 ---
 
 ### HU-M6-06 · Vista de deuda viva por cliente (UI)
@@ -469,6 +485,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - [ ] Ordenación funcional.
 - [ ] Enlace a ficha de cliente.
 
+> ⏳ **PENDIENTE**
+
 ---
 
 ### HU-M6-07 · Exportación CSV de facturas y deuda (M8 parcial)
@@ -483,9 +501,13 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Botones "Exportar CSV" en la UI de facturas y deuda, análogos a los ya existentes en fichaje.
 
 **Definición de hecho:**
-- [ ] CSV descargable desde la UI.
-- [ ] Columnas limpias con cabeceras en español.
-- [ ] Encoding UTF-8 con BOM para compatibilidad con Excel español.
+- [x] Botones "Exportar CSV" y "Exportar PDF" visibles en la UI (dropdown en cabecera de pagos).
+- [x] CSV generado en frontend con columnas en español y descarga directa.
+- [x] PDF generado vía `window.print()` con estilos de impresión.
+- [ ] Endpoint backend `GET /intranet/facturas/export/csv` con filtros (para export completo con datos del servidor).
+- [ ] Encoding UTF-8 con BOM para compatibilidad con Excel español (pendiente endpoint backend).
+
+> 🔶 **PARCIALMENTE COMPLETADO** — export frontend ✅, export backend ⏳
 
 ---
 
@@ -813,7 +835,10 @@ El MVP se considera **COMPLETO** cuando:
 - [x] Fichaje con exportación CSV y PDF (M3 ✓).
 - [ ] Clientes: CRUD completo + UI (S1).
 - [ ] Trabajos: CRUD + asignaciones + comentarios (S2).
-- [ ] Facturas + pagos + deuda viva (S3).
+- [x] Pantalla de pagos con KPIs, tabla de facturas, filtros y export frontend (S3 parcial).
+- [ ] Endpoints de escritura de facturas y pagos (S3 pendiente).
+- [ ] Formularios de alta de factura y registro de pago (S3 pendiente).
+- [ ] Vista de deuda viva por cliente (S3 pendiente).
 - [ ] Exportaciones CSV facturas/deuda y PDF cierre mensual (S3 + S4).
 - [ ] Auditoría registra y muestra acciones críticas (S4).
 - [ ] Herramientas: Calendario fiscal, Documentos, Ajustes (S5).
@@ -846,7 +871,7 @@ El MVP se considera **COMPLETO** cuando:
 |--------|-------------------|-----------------|---------------|
 | Plan completo | 2026-05-04 | 2026-05-04 | Aprobado — arrancado inmediatamente |
 | Sprint 1 | 2026-05-04 | 2026-05-04 | ✅ Completado — commit cbb4b56 |
-| Sprint 2 | 2026-05-04 | Full stack trabajos: Kanban board, CRUD, comentarios, asignación de empleados | ✅ |
-| Sprint 3 | — | — | — |
+| Sprint 2 | 2026-05-04 | 2026-05-04 | Full stack trabajos: Kanban board, CRUD, comentarios, asignación de empleados ✅ — commit cbb4b56 |
+| Sprint 3 | 2026-05-06 | — | 🔄 En curso — UI pagos+KPIs+export entregados y bug navegación resuelto; pendiente escritura backend y formularios |
 | Sprint 4 | — | — | — |
 | Sprint 5 | — | — | — |

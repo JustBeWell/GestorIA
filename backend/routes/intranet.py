@@ -50,7 +50,7 @@ router = APIRouter(prefix="/intranet", tags=["intranet"])
 
 
 @router.get("/home", response_model=PortalIntranetHomeResponse)
-async def intranet_home(current_user=Depends(get_current_user)):
+def intranet_home(current_user=Depends(get_current_user)):
     data = HomeService.get_home(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -58,7 +58,7 @@ async def intranet_home(current_user=Depends(get_current_user)):
 
 
 @router.get("/series/fichaje", response_model=QuarterSeriesResponse)
-async def intranet_series_fichaje(current_user=Depends(get_current_user)):
+def intranet_series_fichaje(current_user=Depends(get_current_user)):
     data = SeriesService.get_fichaje_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -66,7 +66,7 @@ async def intranet_series_fichaje(current_user=Depends(get_current_user)):
 
 
 @router.get("/series/clientes", response_model=QuarterSeriesResponse)
-async def intranet_series_clientes(current_user=Depends(get_current_user)):
+def intranet_series_clientes(current_user=Depends(get_current_user)):
     data = SeriesService.get_clientes_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -74,7 +74,7 @@ async def intranet_series_clientes(current_user=Depends(get_current_user)):
 
 
 @router.get("/series/trabajos", response_model=QuarterSeriesResponse)
-async def intranet_series_trabajos(current_user=Depends(get_current_user)):
+def intranet_series_trabajos(current_user=Depends(get_current_user)):
     data = SeriesService.get_trabajos_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -82,7 +82,7 @@ async def intranet_series_trabajos(current_user=Depends(get_current_user)):
 
 
 @router.get("/series/pagos", response_model=QuarterSeriesResponse)
-async def intranet_series_pagos(current_user=Depends(get_current_user)):
+def intranet_series_pagos(current_user=Depends(get_current_user)):
     data = SeriesService.get_pagos_quarter_series(current_user.user_id)
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -90,7 +90,7 @@ async def intranet_series_pagos(current_user=Depends(get_current_user)):
 
 
 @router.get("/fichaje", response_model=FichajeTabResponse)
-async def intranet_fichaje(
+def intranet_fichaje(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     tipo_evento: str | None = Query(default=None),
@@ -112,7 +112,7 @@ async def intranet_fichaje(
 
 
 @router.post("/fichaje/registrar", response_model=FichajeRegistroResponse, status_code=status.HTTP_201_CREATED)
-async def intranet_fichaje_registrar(
+def intranet_fichaje_registrar(
     payload: FichajeRegistroRequest,
     current_user=Depends(get_current_user),
 ):
@@ -131,7 +131,7 @@ async def intranet_fichaje_registrar(
 
 
 @router.post("/fichaje/ultimo/eliminar", response_model=FichajeUndoResponse)
-async def intranet_fichaje_eliminar_ultimo(current_user=Depends(get_current_user)):
+def intranet_fichaje_eliminar_ultimo(current_user=Depends(get_current_user)):
     try:
         data = FichajeService.delete_last_fichaje(current_user.user_id)
     except PsycopgError as exc:
@@ -143,7 +143,7 @@ async def intranet_fichaje_eliminar_ultimo(current_user=Depends(get_current_user
 
 
 @router.get("/fichaje/export")
-async def intranet_fichaje_export(
+def intranet_fichaje_export(
     fecha_desde: date | None = Query(default=None),
     fecha_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
@@ -177,7 +177,7 @@ async def intranet_fichaje_export(
 
 
 @router.get("/fichaje/export/pdf")
-async def intranet_fichaje_export_pdf(
+def intranet_fichaje_export_pdf(
     fecha_desde: date | None = Query(default=None),
     fecha_hasta: date | None = Query(default=None),
     current_user=Depends(get_current_user),
@@ -341,7 +341,7 @@ def _pdf_today() -> str:
 
 
 @router.get("/clientes", response_model=ClientesTabResponse)
-async def intranet_clientes(
+def intranet_clientes(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
     current_user=Depends(get_current_user),
@@ -354,7 +354,7 @@ async def intranet_clientes(
 
 
 @router.get("/clientes/{cliente_id}", response_model=ClienteDetailItem)
-async def intranet_cliente_detail(
+def intranet_cliente_detail(
     cliente_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -365,7 +365,7 @@ async def intranet_cliente_detail(
 
 
 @router.post("/clientes", response_model=ClienteDetailItem, status_code=status.HTTP_201_CREATED)
-async def intranet_clientes_create(
+def intranet_clientes_create(
     payload: ClienteCreate,
     current_user=Depends(get_current_user),
 ):
@@ -379,7 +379,7 @@ async def intranet_clientes_create(
 
 
 @router.put("/clientes/{cliente_id}", response_model=ClienteDetailItem)
-async def intranet_clientes_update(
+def intranet_clientes_update(
     cliente_id: str,
     payload: ClienteUpdate,
     current_user=Depends(get_current_user),
@@ -397,7 +397,7 @@ async def intranet_clientes_update(
 
 
 @router.delete("/clientes/{cliente_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def intranet_clientes_delete(
+def intranet_clientes_delete(
     cliente_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -408,7 +408,7 @@ async def intranet_clientes_delete(
 
 
 @router.get("/trabajos", response_model=TrabajosTabResponse)
-async def intranet_trabajos(
+def intranet_trabajos(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=500),
     estado: str | None = Query(default=None),
@@ -434,7 +434,7 @@ async def intranet_trabajos(
 
 
 @router.post("/trabajos", response_model=TrabajoDetailItem, status_code=status.HTTP_201_CREATED)
-async def intranet_trabajos_create(
+def intranet_trabajos_create(
     payload: TrabajoCreate,
     current_user=Depends(get_current_user),
 ):
@@ -448,7 +448,7 @@ async def intranet_trabajos_create(
 
 
 @router.get("/trabajos/{trabajo_id}", response_model=TrabajoDetailItem)
-async def intranet_trabajo_detail(
+def intranet_trabajo_detail(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -459,7 +459,7 @@ async def intranet_trabajo_detail(
 
 
 @router.put("/trabajos/{trabajo_id}", response_model=TrabajoDetailItem)
-async def intranet_trabajos_update(
+def intranet_trabajos_update(
     trabajo_id: str,
     payload: TrabajoUpdate,
     current_user=Depends(get_current_user),
@@ -471,7 +471,7 @@ async def intranet_trabajos_update(
 
 
 @router.delete("/trabajos/{trabajo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def intranet_trabajos_delete(
+def intranet_trabajos_delete(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -482,7 +482,7 @@ async def intranet_trabajos_delete(
 
 
 @router.get("/trabajos/{trabajo_id}/empleados")
-async def intranet_trabajos_empleados(
+def intranet_trabajos_empleados(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -491,7 +491,7 @@ async def intranet_trabajos_empleados(
 
 
 @router.post("/trabajos/{trabajo_id}/empleados", status_code=status.HTTP_201_CREATED)
-async def intranet_trabajos_asignar_empleado(
+def intranet_trabajos_asignar_empleado(
     trabajo_id: str,
     payload: TrabajoEmpleadoRequest,
     current_user=Depends(get_current_user),
@@ -509,7 +509,7 @@ async def intranet_trabajos_asignar_empleado(
 
 
 @router.delete("/trabajos/{trabajo_id}/empleados/{empleado_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def intranet_trabajos_desasignar_empleado(
+def intranet_trabajos_desasignar_empleado(
     trabajo_id: str,
     empleado_id: str,
     current_user=Depends(get_current_user),
@@ -521,7 +521,7 @@ async def intranet_trabajos_desasignar_empleado(
 
 
 @router.get("/trabajos/{trabajo_id}/comentarios", response_model=list[TrabajoComentarioItem])
-async def intranet_trabajos_comentarios(
+def intranet_trabajos_comentarios(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -529,7 +529,7 @@ async def intranet_trabajos_comentarios(
 
 
 @router.post("/trabajos/{trabajo_id}/comentarios", response_model=TrabajoComentarioItem, status_code=status.HTTP_201_CREATED)
-async def intranet_trabajos_add_comentario(
+def intranet_trabajos_add_comentario(
     trabajo_id: str,
     payload: TrabajoComentarioCreate,
     current_user=Depends(get_current_user),
@@ -542,7 +542,7 @@ async def intranet_trabajos_add_comentario(
 
 
 @router.get("/pagos", response_model=PagosTabResponse)
-async def intranet_pagos(
+def intranet_pagos(
     page_facturas: int = Query(default=1, ge=1),
     page_size_facturas: int = Query(default=20, ge=1, le=100),
     page_pagos: int = Query(default=1, ge=1),
@@ -573,7 +573,7 @@ async def intranet_pagos(
 
 
 @router.post("/facturas", response_model=FacturaDetailItem, status_code=status.HTTP_201_CREATED)
-async def intranet_facturas_create(
+def intranet_facturas_create(
     payload: FacturaCreate,
     current_user=Depends(get_current_user),
 ):
@@ -587,7 +587,7 @@ async def intranet_facturas_create(
 
 
 @router.get("/facturas/{factura_id}", response_model=FacturaDetailItem)
-async def intranet_facturas_detail(
+def intranet_facturas_detail(
     factura_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -598,7 +598,7 @@ async def intranet_facturas_detail(
 
 
 @router.put("/facturas/{factura_id}", response_model=FacturaDetailItem)
-async def intranet_facturas_update(
+def intranet_facturas_update(
     factura_id: str,
     payload: FacturaUpdate,
     current_user=Depends(get_current_user),
@@ -613,7 +613,7 @@ async def intranet_facturas_update(
 
 
 @router.delete("/facturas/{factura_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def intranet_facturas_delete(
+def intranet_facturas_delete(
     factura_id: str,
     current_user=Depends(get_current_user),
 ):
@@ -629,7 +629,7 @@ async def intranet_facturas_delete(
 
 
 @router.post("/facturas/{factura_id}/pagos", response_model=PagoDetailItem, status_code=status.HTTP_201_CREATED)
-async def intranet_facturas_pago(
+def intranet_facturas_pago(
     factura_id: str,
     payload: PagoCreate,
     current_user=Depends(get_current_user),
@@ -647,14 +647,14 @@ async def intranet_facturas_pago(
 
 
 @router.get("/admin/resumen", response_model=AdminResumenResponse)
-async def intranet_admin_resumen(current_user=Depends(get_current_user)):
+def intranet_admin_resumen(current_user=Depends(get_current_user)):
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
     return AdminService.get_admin_resumen()
 
 
 @router.get("/admin/charts", response_model=AdminChartsResponse)
-async def intranet_admin_charts(
+def intranet_admin_charts(
     months: int = Query(default=12, ge=3, le=24),
     current_user=Depends(get_current_user),
 ):
@@ -664,7 +664,7 @@ async def intranet_admin_charts(
 
 
 @router.get("/admin/fichajes", response_model=AdminFichajesResponse)
-async def intranet_admin_fichajes(
+def intranet_admin_fichajes(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=30, ge=1, le=100),
     empleado_id: str | None = Query(default=None),
@@ -686,7 +686,7 @@ async def intranet_admin_fichajes(
 
 
 @router.post("/admin/fichajes/correccion", response_model=AdminCorreccionResponse, status_code=status.HTTP_201_CREATED)
-async def intranet_admin_fichajes_correccion(
+def intranet_admin_fichajes_correccion(
     payload: AdminCorreccionRequest,
     current_user=Depends(get_current_user),
 ):

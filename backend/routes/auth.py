@@ -11,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
 @limiter.limit("10/minute")
-async def login(request: Request, payload: LoginRequest):
+def login(request: Request, payload: LoginRequest):
     current_user = authenticate_user(payload.dni, payload.password)
 
     # Si Twilio está configurado, comprobar si el usuario tiene 2FA activo y teléfono
@@ -62,7 +62,7 @@ async def login(request: Request, payload: LoginRequest):
 
 @router.post("/otp/verify", response_model=LoginResponse)
 @limiter.limit("10/minute")
-async def verify_otp(request: Request, payload: OtpVerifyRequest):
+def verify_otp(request: Request, payload: OtpVerifyRequest):
     """Valida el código OTP y devuelve el JWT completo si es correcto."""
     user_id = TwoFactorService.verify_otp(payload.session_id, payload.code)
 
@@ -92,7 +92,7 @@ async def verify_otp(request: Request, payload: OtpVerifyRequest):
     )
 
 @router.get("/token")
-async def get_token(current_user=Depends(get_current_user)):
+def get_token(current_user=Depends(get_current_user)):
     token, expires_at = TokenService.create_access_token(
         user_id=current_user.user_id,
         nombre_usuario=current_user.nombre_usuario,
@@ -105,7 +105,7 @@ async def get_token(current_user=Depends(get_current_user)):
     }
 
 @router.post("/logout")
-async def logout(
+def logout(
     current_user=Depends(get_current_user),
     authorization: str | None = Header(default=None),
 ):
@@ -119,6 +119,6 @@ async def logout(
 
 
 @router.post("/logout/all")
-async def logout_all(current_user=Depends(get_current_user)):
+def logout_all(current_user=Depends(get_current_user)):
     TokenService.revoke_all_user_tokens(current_user.user_id)
     return {"message": f"Todas las sesiones cerradas para {current_user.nombre_usuario}"}

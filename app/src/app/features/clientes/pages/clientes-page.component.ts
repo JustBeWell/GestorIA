@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import {
@@ -52,9 +52,10 @@ const AVATAR_COLORS = [
   templateUrl: './clientes-page.component.html',
   styleUrl: './clientes-page.component.css',
 })
-export class ClientesPageComponent implements OnInit {
+export class ClientesPageComponent implements OnInit, OnDestroy {
   private readonly intranetService = inject(IntranetService);
   private readonly authState = inject(AuthStateService);
+  private readonly destroy$ = new Subject<void>();
 
   // ── State ──────────────────────────────────────────────────────────────────
   protected readonly loading = signal(true);
@@ -205,13 +206,18 @@ export class ClientesPageComponent implements OnInit {
     this.loadClientes();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   // ── Load ───────────────────────────────────────────────────────────────────
   protected loadClientes(): void {
     this.loading.set(true);
     this.errorMessage.set('');
     this.intranetService
       .getClientesTab({ page: 1, page_size: 200 })
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(takeUntil(this.destroy$), finalize(() => this.loading.set(false)))
       .subscribe({
         next: (data) => { this.tabData = data; },
         error: (err: HttpErrorResponse) => {

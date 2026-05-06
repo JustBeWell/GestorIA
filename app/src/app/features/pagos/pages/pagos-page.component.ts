@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, HostListener, signal, computed, inject } from '@angular/core';
+import { Component, NgZone, OnInit, OnDestroy, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, finalize, takeUntil } from 'rxjs';
+import { Subject, finalize, takeUntil, timer } from 'rxjs';
 
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { IntranetService } from '../../../core/services/intranet.service';
@@ -29,6 +29,7 @@ export class PagosPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly svc = inject(IntranetService);
   private readonly auth = inject(AuthStateService);
+  private readonly ngZone = inject(NgZone);
 
   // ── Estado de carga ───────────────────────────────────────────────────────
   loading = signal(true);
@@ -112,6 +113,13 @@ export class PagosPageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadData();
     this.loadClientes();
+
+    // Fallback: si los datos no cargan en 3 segundos, recargar la página
+    timer(3000).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      if (this.loading()) {
+        window.location.reload();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -132,20 +140,24 @@ export class PagosPageComponent implements OnInit, OnDestroy {
       })
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => this.loading.set(false))
+        finalize(() => this.ngZone.run(() => this.loading.set(false)))
       )
       .subscribe({
         next: (data) => {
-          this.resumen.set(data.resumen);
-          this.facturas.set(data.facturas);
-          this.paginacion.set(data.paginacion_facturas);
-          this.currentPage.set(page);
+          this.ngZone.run(() => {
+            this.resumen.set(data.resumen);
+            this.facturas.set(data.facturas);
+            this.paginacion.set(data.paginacion_facturas);
+            this.currentPage.set(page);
+          });
         },
         error: (err) => {
-          const detail = err?.error?.detail;
-          this.errorMsg.set(
-            typeof detail === 'string' ? detail : 'Error al cargar los datos de pagos'
-          );
+          this.ngZone.run(() => {
+            const detail = err?.error?.detail;
+            this.errorMsg.set(
+              typeof detail === 'string' ? detail : 'Error al cargar los datos de pagos'
+            );
+          });
         },
       });
   }
@@ -157,6 +169,7 @@ export class PagosPageComponent implements OnInit, OnDestroy {
           data.clientes.map((c) => ({ cliente_id: c.cliente_id, nombre: c.nombre_fiscal }))
         );
       },
+      error: () => { /* clientes son opcionales para los filtros */ },
     });
   }
 

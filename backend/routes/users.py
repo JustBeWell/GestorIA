@@ -9,12 +9,12 @@ router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_cu
 
 
 @router.get("/")
-async def list_users(_current_user=Depends(get_current_user)):
+def list_users(_current_user=Depends(get_current_user)):
     return UserService.list_users()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(payload: UserCreateRequest, current_user=Depends(get_current_user)):
+def create_user(payload: UserCreateRequest, current_user=Depends(get_current_user)):
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
@@ -24,7 +24,7 @@ async def create_user(payload: UserCreateRequest, current_user=Depends(get_curre
 
 
 @router.get("/me")
-async def get_me(current_user=Depends(get_current_user)):
+def get_me(current_user=Depends(get_current_user)):
     user = UserService.get(current_user.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -32,7 +32,7 @@ async def get_me(current_user=Depends(get_current_user)):
 
 
 @router.put("/me")
-async def update_me(payload: UserUpdateRequest, current_user=Depends(get_current_user)):
+def update_me(payload: UserUpdateRequest, current_user=Depends(get_current_user)):
     updated = UserService.update_self(current_user.user_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -40,12 +40,12 @@ async def update_me(payload: UserUpdateRequest, current_user=Depends(get_current
 
 
 @router.delete("/me")
-async def delete_me(current_user=Depends(get_current_user)):
+def delete_me(current_user=Depends(get_current_user)):
     return {"deleted": UserService.delete(current_user.user_id)}
 
 
 @router.get("/{user_id}")
-async def get_user_by_id(user_id: str, _current_user=Depends(get_current_user)):
+def get_user_by_id(user_id: str, _current_user=Depends(get_current_user)):
     user = UserService.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -53,12 +53,12 @@ async def get_user_by_id(user_id: str, _current_user=Depends(get_current_user)):
 
 
 @router.get("/{user_id}/exists")
-async def user_exists(user_id: str):
+def user_exists(user_id: str):
     return {"exists": UserService.exists(user_id)}
 
 
 @router.put("/{user_id}/admin")
-async def admin_update_user(user_id: str, payload: UserAdminUpdateRequest, _current_user=Depends(get_current_user)):
+def admin_update_user(user_id: str, payload: UserAdminUpdateRequest, _current_user=Depends(get_current_user)):
     if _current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     if not UserService.is_valid_user_id(user_id):
@@ -70,7 +70,7 @@ async def admin_update_user(user_id: str, payload: UserAdminUpdateRequest, _curr
 
 
 @router.delete("/{user_id}")
-async def admin_delete_user(user_id: str, _current_user=Depends(get_current_user)):
+def admin_delete_user(user_id: str, _current_user=Depends(get_current_user)):
     if _current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     return {"deleted": UserService.delete(user_id)}
