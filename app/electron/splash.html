@@ -9,49 +9,31 @@
 
     html, body {
       width: 100%; height: 100%;
-      background: #f6f7f8;
+      background: #2d5a45;
       font-family: "Plus Jakarta Sans", "Segoe UI", -apple-system, sans-serif;
-      color: #0f172a;
       user-select: none;
       overflow: hidden;
       -webkit-app-region: drag;
     }
 
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      padding: 36px 52px 32px;
+    /* ── Banner ocupa todo el fondo ─────────── */
+    .banner {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center;
     }
 
-    /* ── Logo ────────────────────────────────── */
-    .logo {
-      width: 60px;
-      height: 60px;
-      object-fit: contain;
-      margin-bottom: 14px;
+    /* ── Overlay en la zona inferior ─────────── */
+    .footer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0 36px 28px;
+      background: linear-gradient(to top, rgba(15,27,45,0.72) 0%, transparent 100%);
     }
 
-    /* ── Title ───────────────────────────────── */
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      margin-bottom: 3px;
-      color: #0f1b2d;
-    }
-
-    .tagline {
-      color: #64748b;
-      font-size: 12px;
-      margin-bottom: 32px;
-    }
-
-    /* ── Progress area ───────────────────────── */
     .progress-header {
-      width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -59,50 +41,41 @@
     }
 
     .status {
-      font-size: 12px;
-      color: #475569;
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
       transition: color 0.2s;
     }
-    .status.error { color: #ef4444; }
+    .status.error { color: #f87171; }
 
     .percent {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      color: #0f1b2d;
+      color: rgba(255,255,255,0.9);
     }
 
     .progress-wrap {
       width: 100%;
-      height: 6px;
-      background: #e2e8f0;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
       border-radius: 99px;
       overflow: hidden;
     }
 
     .progress-bar {
       height: 100%;
-      background: linear-gradient(90deg, #0f1b2d, #3b82f6);
+      background: linear-gradient(90deg, #a8c5b0, #ffffff);
       border-radius: 99px;
       width: 0%;
       transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ── Version ─────────────────────────────── */
-    .version {
-      position: absolute;
-      bottom: 14px;
-      font-size: 10px;
-      color: #cbd5e1;
-    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img class="logo" src="../public/app-logo.png" alt="GestorIA"
-         onerror="this.style.display='none'" />
-    <h1>GestorIA</h1>
-    <p class="tagline">Gestión inteligente para tu asesoría</p>
+  <img class="banner" src="../public/app-banner.png" alt=""
+       onerror="document.body.style.background='#2d5a45'" />
 
+  <div class="footer">
     <div class="progress-header">
       <span class="status" id="status">Iniciando…</span>
       <span class="percent" id="percent">0%</span>
@@ -111,7 +84,6 @@
       <div class="progress-bar" id="bar"></div>
     </div>
   </div>
-  <p class="version">v1.0</p>
 
   <script>
     const bar     = document.getElementById('bar');
@@ -126,14 +98,14 @@
     }
 
     function showDone() {
-      bar.style.background = 'linear-gradient(90deg, #16a34a, #4ade80)';
+      bar.style.background = 'linear-gradient(90deg, #4ade80, #bbf7d0)';
       bar.style.width = '100%';
       percent.textContent = '100%';
       status.textContent = '¡Todo listo!';
     }
 
     function showError(msg) {
-      bar.style.background = '#ef4444';
+      bar.style.background = '#f87171';
       bar.style.width = '100%';
       status.classList.add('error');
       status.textContent = msg;

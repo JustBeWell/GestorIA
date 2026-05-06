@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 24px;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 70%, #2563eb 100%);
+  background: linear-gradient(135deg, #0f2919 0%, #1a4a36 70%, #2d6a47 100%);
   border-radius: 0;
   border: 0;
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.22);
@@ -82,7 +82,7 @@ h1 {
 
 .nav-link {
   text-decoration: none;
-  color: #1e293b;
+  color: #1e3428;
   font-size: 16px;
   font-weight: 700;
   padding: 18px 14px;

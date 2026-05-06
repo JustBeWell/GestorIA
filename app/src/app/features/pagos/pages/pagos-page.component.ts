@@ -1,7 +1,7 @@
-import { Component, OnInit, HostListener, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { IntranetService } from '../../../core/services/intranet.service';
@@ -25,7 +25,8 @@ import {
   templateUrl: './pagos-page.component.html',
   styleUrl: './pagos-page.component.css',
 })
-export class PagosPageComponent implements OnInit {
+export class PagosPageComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   private readonly svc = inject(IntranetService);
   private readonly auth = inject(AuthStateService);
 
@@ -113,6 +114,11 @@ export class PagosPageComponent implements OnInit {
     this.loadClientes();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   protected loadData(page = 1): void {
     this.loading.set(true);
     this.errorMsg.set(null);
@@ -124,7 +130,10 @@ export class PagosPageComponent implements OnInit {
         cliente_id: this.filtroCliente() || undefined,
         vencidas_solo: this.filtroVencidas() || undefined,
       })
-      .pipe(finalize(() => this.loading.set(false)))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.loading.set(false))
+      )
       .subscribe({
         next: (data) => {
           this.resumen.set(data.resumen);
@@ -142,7 +151,7 @@ export class PagosPageComponent implements OnInit {
   }
 
   private loadClientes(): void {
-    this.svc.getClientesTab({ page_size: 200 }).subscribe({
+    this.svc.getClientesTab({ page_size: 200 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.clientes.set(
           data.clientes.map((c) => ({ cliente_id: c.cliente_id, nombre: c.nombre_fiscal }))

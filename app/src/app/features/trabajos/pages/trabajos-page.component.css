@@ -21,20 +21,20 @@
   height: 36px;
   padding: 0 10px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #fff;
   font-size: 13px;
   color: #374151;
   cursor: pointer;
   outline: none;
 }
-.filter-select:focus { border-color: #6366f1; }
+.filter-select:focus { border-color: #2d9467; }
 
 .clear-filters-btn {
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #fff;
   font-size: 13px;
   color: #64748b;
@@ -55,7 +55,7 @@
   white-space: nowrap;
   transition: background 0.15s;
 }
-.primary-button:hover:not(:disabled) { background: #1e293b; }
+.primary-button:hover:not(:disabled) { background: #1e3428; }
 .primary-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Kanban board ─────────────────────────────────────────────────────────── */
@@ -93,7 +93,7 @@
 .col-title {
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1e3428;
   flex: 1;
 }
 
@@ -101,7 +101,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #64748b;
-  background: #e2e8f0;
+  background: #dce8e0;
   border-radius: 999px;
   padding: 1px 8px;
 }
@@ -122,7 +122,7 @@
 /* ── Work card ────────────────────────────────────────────────────────────── */
 .trabajo-card {
   background: #fff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 10px;
   padding: 12px 13px;
   cursor: pointer;
@@ -164,7 +164,7 @@
 /* Progress bar */
 .progress-track {
   height: 4px;
-  background: #e2e8f0;
+  background: #dce8e0;
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 8px;
@@ -185,7 +185,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #2d9467;
   color: #fff;
   font-size: 9px;
   font-weight: 700;
@@ -245,7 +245,7 @@
 .skeleton-col-header {
   height: 20px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, #dce8e0 25%, #f1f5f9 50%, #dce8e0 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite;
   margin-bottom: 14px;
@@ -253,7 +253,7 @@
 .skeleton-card {
   height: 90px;
   border-radius: 10px;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, #dce8e0 25%, #f1f5f9 50%, #dce8e0 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite;
   margin-bottom: 10px;
@@ -272,7 +272,7 @@
 .board-empty-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1e3428;
   margin: 0;
 }
 .board-empty-sub {
@@ -334,8 +334,8 @@
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #6366f1;
+  border: 3px solid #dce8e0;
+  border-top-color: #2d9467;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -459,7 +459,7 @@
 }
 .info-value {
   font-size: 13px;
-  color: #1e293b;
+  color: #1e3428;
   font-weight: 500;
 }
 .info-desc {
@@ -504,7 +504,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #2d9467;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -513,7 +513,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.emp-name { font-size: 13px; color: #1e293b; flex: 1; }
+.emp-name { font-size: 13px; color: #1e3428; flex: 1; }
 .emp-remove {
   background: none;
   border: none;
@@ -536,7 +536,7 @@
   padding: 0 14px;
   border-radius: 8px;
   border: none;
-  background: #6366f1;
+  background: #2d9467;
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -570,7 +570,7 @@
   gap: 8px;
   margin-bottom: 2px;
 }
-.comment-meta strong { font-size: 12px; color: #1e293b; }
+.comment-meta strong { font-size: 12px; color: #1e3428; }
 .comment-meta time { font-size: 11px; color: #94a3b8; }
 .comment-text { font-size: 13px; color: #475569; margin: 0; line-height: 1.4; }
 
@@ -581,7 +581,7 @@
 }
 .comment-textarea {
   flex: 1;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
@@ -589,7 +589,7 @@
   outline: none;
   font-family: inherit;
 }
-.comment-textarea:focus { border-color: #6366f1; }
+.comment-textarea:focus { border-color: #2d9467; }
 
 /* Panel actions */
 .panel-actions {
@@ -603,7 +603,7 @@
   flex: 1;
   height: 36px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #fff;
   color: #374151;
   font-size: 13px;
@@ -691,17 +691,17 @@
 .form-field input,
 .form-field select,
 .form-field textarea {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
-  color: #1e293b;
+  color: #1e3428;
   outline: none;
   font-family: inherit;
 }
 .form-field input:focus,
 .form-field select:focus,
-.form-field textarea:focus { border-color: #6366f1; }
+.form-field textarea:focus { border-color: #2d9467; }
 
 .form-row {
   display: grid;

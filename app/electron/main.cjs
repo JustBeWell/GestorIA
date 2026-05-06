@@ -99,8 +99,8 @@ function createWindow() {
 /** Open the splash window and resolve when its DOM is ready */
 function createSplashWindow() {
   const splash = new BrowserWindow({
-    width: 480,
-    height: 300,
+    width: 700,
+    height: 440,
     frame: false,
     resizable: false,
     center: true,

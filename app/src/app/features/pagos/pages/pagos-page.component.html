@@ -134,19 +134,6 @@
             }
           </div>
 
-        } @else if (facturas().length === 0) {
-          <div class="state-card">
-            <span class="empty-icon">📄</span>
-            <h2>No hay facturas</h2>
-            <p>
-              @if (filtroEstado() || filtroCliente() || filtroVencidas()) {
-                Prueba a cambiar los filtros aplicados.
-              } @else {
-                Crea la primera factura con el botón <strong>+ Nueva factura</strong>.
-              }
-            </p>
-          </div>
-
         } @else {
           <table class="facturas-table">
             <thead>
@@ -161,6 +148,23 @@
               </tr>
             </thead>
             <tbody>
+              @if (facturas().length === 0) {
+                <tr>
+                  <td colspan="7">
+                    <div class="state-card">
+                      <span class="empty-icon">📄</span>
+                      <h2>No hay facturas</h2>
+                      <p>
+                        @if (filtroEstado() || filtroCliente() || filtroVencidas()) {
+                          Prueba a cambiar los filtros aplicados.
+                        } @else {
+                          Crea la primera factura con el botón <strong>+ Emitir factura</strong>.
+                        }
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              }
               @for (f of facturas(); track f.factura_id) {
                 <tr class="factura-row"
                   [class.row-selected]="selectedFactura()?.factura_id === f.factura_id"
@@ -204,7 +208,9 @@
             </nav>
           }
 
-          <p class="table-info">{{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }}</p>
+          @if (paginacion().total > 0) {
+            <p class="table-info">{{ paginacion().total }} factura{{ paginacion().total !== 1 ? 's' : '' }}</p>
+          }
         }
       </section>
 

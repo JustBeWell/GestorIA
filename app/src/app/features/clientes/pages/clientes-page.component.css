@@ -23,7 +23,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #ffffff;
   color: #374151;
   transition: background 0.15s, border-color 0.15s;
@@ -41,7 +41,7 @@
   right: 0;
   min-width: 170px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
   overflow: hidden;
@@ -85,7 +85,7 @@
   padding: 7px 12px;
   border-radius: 10px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   min-width: 220px;
   color: #94a3b8;
   cursor: text;
@@ -146,7 +146,7 @@
   gap: 6px;
   padding: 7px 14px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #ffffff;
   font-size: 13px;
   font-weight: 500;
@@ -253,7 +253,7 @@
   font-weight: 500;
   background: #f1f5f9;
   color: #475569;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
 }
 
 /* ── Estado badge ────────────────────────────────────────────────────────── */
@@ -309,7 +309,7 @@
 .modal-card {
   background: #ffffff;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
   width: 100%;
   max-height: 90vh;
@@ -428,7 +428,7 @@
 
 .form-input {
   padding: 9px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 10px;
   font-size: 13px;
   color: #0f172a;
@@ -437,7 +437,7 @@
   transition: border-color 0.15s, box-shadow 0.15s;
   appearance: none;
 }
-.form-input:focus       { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.form-input:focus       { border-color: #3aaa7a; box-shadow: 0 0 0 3px rgba(58,170,122,0.15); }
 .form-input.input-error { border-color: #ef4444; }
 .form-input.mono        { font-family: 'Fira Code', 'Courier New', monospace; letter-spacing: 0.04em; }
 
@@ -480,8 +480,8 @@
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #3b82f6;
+  border: 3px solid #dce8e0;
+  border-top-color: #3aaa7a;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

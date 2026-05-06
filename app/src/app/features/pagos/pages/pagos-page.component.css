@@ -30,7 +30,7 @@
   height: 36px;
   padding: 0 10px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #fff;
   font-size: 13px;
   color: #374151;
@@ -38,7 +38,7 @@
   outline: none;
   min-width: 140px;
 }
-.filter-select:focus { border-color: #6366f1; }
+.filter-select:focus { border-color: #2d9467; }
 
 .filter-checkbox-label {
   display: flex;
@@ -49,7 +49,7 @@
   cursor: pointer;
   padding: 0 4px;
 }
-.filter-checkbox-label input { accent-color: #6366f1; }
+.filter-checkbox-label input { accent-color: #2d9467; }
 
 /* ── Error banner ─────────────────────────────────────────────────────── */
 .error-banner {
@@ -77,7 +77,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #ffffff;
   color: #374151;
   transition: background 0.15s, border-color 0.15s;
@@ -90,7 +90,7 @@
   right: 0;
   min-width: 170px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(15,23,42,.1);
   overflow: hidden;
@@ -123,7 +123,7 @@
 .kpi-card {
   background: #fff;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   padding: 22px 24px 18px;
   display: flex;
   flex-direction: column;
@@ -180,10 +180,10 @@
 .kpi-bar {
   height: 100%;
   border-radius: 4px;
-  background: #6366f1;
+  background: #2d9467;
   transition: width 0.4s ease;
 }
-.kpi-dark .kpi-bar { background: #6366f1; }
+.kpi-dark .kpi-bar { background: #2d9467; }
 .kpi-pendiente .kpi-bar { background: #d97706; }
 .kpi-vencidas-alert .kpi-bar { background: #dc2626; }
 
@@ -199,7 +199,7 @@
 .skeleton-row {
   height: 40px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #f1f5f9 25%, #dce8e0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -233,7 +233,7 @@
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #dce8e0;
 }
 .facturas-table thead th.text-right { text-align: right; }
 
@@ -279,7 +279,7 @@
 .pagination { display: flex; align-items: center; gap: 4px; padding: 12px 14px 8px; }
 .page-btn {
   padding: 4px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   background: #fff;
   border-radius: 6px;
   font-size: 12px;
@@ -299,7 +299,7 @@
   right: 0; top: 0; bottom: 0;
   width: 380px;
   background: #fff;
-  border-left: 1px solid #e2e8f0;
+  border-left: 1px solid #dce8e0;
   display: flex;
   flex-direction: column;
   box-shadow: -6px 0 24px rgba(15,23,42,.08);
@@ -313,7 +313,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #dce8e0;
   flex-shrink: 0;
 }
 .detail-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0; }
@@ -322,7 +322,7 @@
 .sk-line {
   height: 18px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #f1f5f9 25%, #dce8e0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -350,15 +350,15 @@
   gap: 7px;
 }
 .importe-row { display: flex; justify-content: space-between; font-size: 13px; color: #374151; }
-.importe-total { border-top: 1px solid #e2e8f0; padding-top: 7px; font-size: 14px; }
+.importe-total { border-top: 1px solid #dce8e0; padding-top: 7px; font-size: 14px; }
 
 .fechas-block { display: flex; flex-direction: column; gap: 6px; }
 .fecha-row { display: flex; justify-content: space-between; font-size: 13px; color: #374151; }
 .fecha-label { color: #94a3b8; font-weight: 500; }
 
 .cobro-progress { display: flex; align-items: center; gap: 10px; }
-.cobro-track { flex: 1; height: 7px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
-.cobro-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #818cf8); border-radius: 999px; transition: width 0.4s ease; }
+.cobro-track { flex: 1; height: 7px; background: #dce8e0; border-radius: 999px; overflow: hidden; }
+.cobro-fill { height: 100%; background: linear-gradient(90deg, #2d9467, #5bbf8c); border-radius: 999px; transition: width 0.4s ease; }
 .cobro-pct { font-size: 11px; color: #64748b; white-space: nowrap; }
 
 .notas-block {
@@ -374,7 +374,7 @@
 
 .pago-item {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 8px;
   padding: 10px 12px;
   display: flex;
@@ -387,7 +387,7 @@
 .pago-ref { font-style: italic; }
 .pago-notas { margin: 0; font-size: 11px; color: #94a3b8; }
 
-.detail-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid #e2e8f0; }
+.detail-actions { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid #dce8e0; }
 .btn-block { width: 100%; justify-content: center; }
 
 /* ── Modals ───────────────────────────────────────────────────────────── */
@@ -420,7 +420,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #dce8e0;
 }
 .modal-header h2 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
 
@@ -437,7 +437,7 @@
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #dce8e0;
   flex-shrink: 0;
 }
 
@@ -453,7 +453,7 @@
 .form-input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8e0;
   border-radius: 8px;
   font-size: 13px;
   color: #0f172a;
@@ -462,7 +462,7 @@
   box-sizing: border-box;
   font-family: inherit;
 }
-.form-input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+.form-input:focus { outline: none; border-color: #2d9467; box-shadow: 0 0 0 2px rgba(45,148,103,.15); }
 .form-input[readonly] { background: #f8fafc; color: #64748b; }
 .form-textarea { resize: vertical; min-height: 64px; }
 .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

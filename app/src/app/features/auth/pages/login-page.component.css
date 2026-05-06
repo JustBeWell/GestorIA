@@ -68,7 +68,7 @@
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, rgba(37, 99, 235, 0) 70%);
+  background: radial-gradient(circle, rgba(45, 148, 103, 0.12) 0%, rgba(45, 148, 103, 0) 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -129,9 +129,9 @@ input {
 
 input:focus {
   outline: none;
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-  background: #f8fbff;
+  border-color: #3aaa7a;
+  box-shadow: 0 0 0 3px rgba(45, 148, 103, 0.15);
+  background: #f3f7f4;
 }
 
 .field-error {
@@ -145,7 +145,7 @@ button {
   padding: 10px;
   border: 0;
   border-radius: 8px;
-  background: #2563eb;
+  background: #2d6a47;
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -154,7 +154,7 @@ button {
 
 button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 18px rgba(45, 148, 103, 0.25);
 }
 
 button:disabled {
@@ -281,7 +281,7 @@ button:disabled {
   display: block;
   margin-top: 14px;
   background: transparent;
-  color: #2563eb;
+  color: #2d6a47;
   font-size: 13px;
   font-weight: 500;
   text-align: center;
