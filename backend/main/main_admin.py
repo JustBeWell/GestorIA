@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app_factory import create_app
+from backend.main.app_factory import create_app
 from routes.intranet.admin import router as admin_router
 
 _intranet = APIRouter(prefix="/intranet")

@@ -1,4 +1,4 @@
-from app_factory import create_app
+from backend.main.app_factory import create_app
 from routes.ai import router as ai_router
 
 app = create_app("ai-service")
