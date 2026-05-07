@@ -144,9 +144,7 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadData();
     this.loadClientes();
-    if (this.isAdmin) {
-      this.loadEmpleados();
-    }
+    this.loadEmpleados();
   }
 
   ngOnDestroy(): void {

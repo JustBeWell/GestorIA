@@ -40,11 +40,6 @@
               </button>
             }
           </div>
-          @if (isAdmin) {
-            <button type="button" class="primary-button" (click)="openCreate()">
-              + Nuevo trabajo
-            </button>
-          }
           <div class="export-wrapper">
             <button type="button" class="export-button" (click)="toggleExportMenu()"
               [disabled]="!allTrabajos.length">
@@ -80,6 +75,9 @@
               </div>
             }
           </div>
+          <button type="button" class="primary-button" (click)="openCreate()">
+            + Nuevo trabajo
+          </button>
         </div>
       </section>
 
