@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
@@ -80,6 +80,19 @@ export class FichajePageComponent implements OnInit, OnDestroy {
   protected readonly saving = signal(false);
   protected readonly exporting = signal(false);
   protected readonly exportingPDF = signal(false);
+  protected readonly showExportMenu = signal(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.export-wrapper')) {
+      this.showExportMenu.set(false);
+    }
+  }
+
+  protected toggleExportMenu(): void {
+    this.showExportMenu.update((v) => !v);
+  }
   protected readonly errorMessage = signal('');
   protected readonly actionErrorMessage = signal('');
 
