@@ -1,6 +1,6 @@
 import RevealWrapper from './RevealWrapper';
 
-const RELEASES_URL = 'https://github.com/JustBeWell/GestorIA/releases';
+const RELEASES_URL = 'https://github.com/JustBeWell/GestorIA/';
 
 const PLATFORMS = [
   {
