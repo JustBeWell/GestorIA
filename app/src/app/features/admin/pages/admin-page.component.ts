@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, finalize, takeUntil } from 'rxjs';
@@ -397,6 +397,176 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   }
 
   protected readonly cierreDownloading = signal(false);
+
+  // ── Export menus ────────────────────────────────────────────
+  protected readonly showFichajesExportMenu = signal(false);
+  protected readonly showTrabajosExportMenu = signal(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.export-wrapper')) {
+      this.showFichajesExportMenu.set(false);
+      this.showTrabajosExportMenu.set(false);
+    }
+  }
+
+  protected toggleFichajesExportMenu(): void {
+    this.showFichajesExportMenu.update((v) => !v);
+    this.showTrabajosExportMenu.set(false);
+  }
+
+  protected toggleTrabajosExportMenu(): void {
+    this.showTrabajosExportMenu.update((v) => !v);
+    this.showFichajesExportMenu.set(false);
+  }
+
+  protected exportFichajesCsv(): void {
+    this.showFichajesExportMenu.set(false);
+    const rows = this.fichajes?.fichajes ?? [];
+    if (!rows.length) return;
+    const headers = ['Empleado', 'Tipo evento', 'Fecha y hora', 'Origen', 'Observaciones'];
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      headers.join(','),
+      ...rows.map((f) =>
+        [
+          escape(f.nombre_completo),
+          escape(this.tipoEventoLabel(f.tipo_evento)),
+          escape(new Date(f.fecha_hora).toLocaleString('es-ES')),
+          escape(f.origen),
+          escape(f.observaciones ?? ''),
+        ].join(',')
+      ),
+    ];
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fichajes_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected exportFichajesPdf(): void {
+    this.showFichajesExportMenu.set(false);
+    const rows = this.fichajes?.fichajes ?? [];
+    const tableRows = rows
+      .map(
+        (f) => `<tr>
+          <td>${f.nombre_completo}</td>
+          <td>${this.tipoEventoLabel(f.tipo_evento)}</td>
+          <td>${new Date(f.fecha_hora).toLocaleString('es-ES')}</td>
+          <td>${f.origen}</td>
+          <td>${f.observaciones ?? '—'}</td>
+        </tr>`
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Fichajes — ${new Date().toLocaleDateString('es-ES')}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; }
+        h1 { font-size: 16px; margin-bottom: 4px; }
+        p  { margin: 0 0 12px; color: #64748b; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f172a; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        @media print { @page { margin: 15mm; size: landscape; } }
+      </style></head><body>
+      <h1>Fichajes</h1>
+      <p>Exportado el ${new Date().toLocaleDateString('es-ES')} · ${rows.length} registros</p>
+      <table><thead><tr>
+        <th>Empleado</th><th>Tipo evento</th><th>Fecha y hora</th><th>Origen</th><th>Observaciones</th>
+      </tr></thead><tbody>${tableRows}</tbody></table>
+      <script>window.onload=()=>{window.print();}<\/script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    w?.document.write(html);
+    w?.document.close();
+  }
+
+  protected exportTrabajosCsv(): void {
+    this.showTrabajosExportMenu.set(false);
+    const rows = this.filteredAdminTrabajos;
+    if (!rows.length) return;
+    const headers = ['#', 'Título', 'Cliente', 'Estado', 'Prioridad', 'Empleados', 'Fecha inicio', 'Fecha objetivo', 'Fecha cierre'];
+    const escape = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString('es-ES') : '';
+    const lines = [
+      headers.join(','),
+      ...rows.map((t) =>
+        [
+          escape(t.nro_trabajo),
+          escape(t.titulo),
+          escape(t.cliente_nombre),
+          escape(this.estadoLabel(t.estado)),
+          escape(t.prioridad),
+          escape(t.empleados_asignados.map((e) => e.nombre_completo).join('; ')),
+          escape(fmtDate(t.fecha_inicio)),
+          escape(fmtDate(t.fecha_objetivo)),
+          escape(fmtDate(t.fecha_cierre)),
+        ].join(',')
+      ),
+    ];
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `trabajos_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected exportTrabajosPdf(): void {
+    this.showTrabajosExportMenu.set(false);
+    const rows = this.filteredAdminTrabajos;
+    const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString('es-ES') : '—';
+    const tableRows = rows
+      .map(
+        (t) => `<tr>
+          <td>${t.nro_trabajo}</td>
+          <td>${t.titulo}</td>
+          <td>${t.cliente_nombre}</td>
+          <td>${this.estadoLabel(t.estado)}</td>
+          <td>${t.prioridad}</td>
+          <td>${t.empleados_asignados.map((e) => e.nombre_completo).join(', ') || '—'}</td>
+          <td>${fmtDate(t.fecha_inicio)}</td>
+          <td>${fmtDate(t.fecha_objetivo)}</td>
+          <td>${fmtDate(t.fecha_cierre)}</td>
+        </tr>`
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Trabajos — ${new Date().toLocaleDateString('es-ES')}</title>
+      <style>
+        body { font-family: Arial, sans-serif; font-size: 11px; color: #0f172a; margin: 20px; }
+        h1 { font-size: 16px; margin-bottom: 4px; }
+        p  { margin: 0 0 12px; color: #64748b; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0f172a; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+        td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        @media print { @page { margin: 15mm; size: landscape; } }
+      </style></head><body>
+      <h1>Gestión de trabajos</h1>
+      <p>Exportado el ${new Date().toLocaleDateString('es-ES')} · ${rows.length} registros</p>
+      <table><thead><tr>
+        <th>#</th><th>Título</th><th>Cliente</th><th>Estado</th><th>Prioridad</th>
+        <th>Empleados</th><th>Inicio</th><th>Objetivo</th><th>Cierre</th>
+      </tr></thead><tbody>${tableRows}</tbody></table>
+      <script>window.onload=()=>{window.print();}<\/script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    w?.document.write(html);
+    w?.document.close();
+  }
 
   get cierreYear(): number { return new Date().getFullYear(); }
   get cierreMonth(): number { return new Date().getMonth() + 1; }
