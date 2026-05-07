@@ -943,7 +943,7 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
     pdf.set_y(34)
     pdf.set_text_color(*C_PRIMARY)
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 6, f"Resumen — {titulo_periodo}", ln=True)
+    pdf.cell(0, 6, f"Resumen - {titulo_periodo}", ln=True)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(100, 116, 139)
     pdf.cell(0, 4, f"Generado el {_pdf_today()}", ln=True)
@@ -952,8 +952,8 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
     # Tabla resumen KPIs
     resumen = data.get("resumen", {})
     kpis = [
-        ("Facturado", f"{resumen.get('total_facturado', 0):,.2f} €"),
-        ("Cobrado", f"{resumen.get('total_cobrado', 0):,.2f} €"),
+        ("Facturado", f"{resumen.get('total_facturado', 0):,.2f} EUR"),
+        ("Cobrado", f"{resumen.get('total_cobrado', 0):,.2f} EUR"),
         ("Trabajos nuevos", str(resumen.get("trabajos_nuevos", 0))),
         ("Trabajos cerrados", str(resumen.get("trabajos_cerrados", 0))),
         ("Clientes nuevos", str(resumen.get("clientes_nuevos", 0))),
@@ -982,7 +982,7 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
         pdf.set_text_color(*C_PRIMARY)
         pdf.cell(0, 6, "Facturas emitidas en el periodo", ln=True)
         pdf.ln(2)
-        headers_f = ["Número", "Cliente", "Estado", "Total", "Pendiente"]
+        headers_f = ["Numero", "Cliente", "Estado", "Total EUR", "Pendiente EUR"]
         col_widths_f = [28, 65, 24, 22, 22]
         pdf.set_fill_color(*C_HEADER_BG)
         pdf.set_font("Helvetica", "B", 8)
