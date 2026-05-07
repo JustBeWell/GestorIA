@@ -184,8 +184,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    // Clear snapshot so next visit always fetches fresh data
-    localStorage.removeItem(this.snapshotKey);
   }
 
   protected formatDate(value: string | null): string {
@@ -378,6 +376,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   protected logout(): void {
+    localStorage.removeItem(this.snapshotKey);
     this.empleadoService.clearCachedEmpleado();
     this.authApiService.logout();
   }

@@ -130,21 +130,37 @@ class TrabajosService:
         return TrabajosService.get_trabajo_detail(trabajo_id)
 
     @staticmethod
-    def delete_trabajo(trabajo_id: str) -> bool:
-        """Baja lógica: cancela el trabajo (no elimina físicamente)."""
+    def delete_trabajo(trabajo_id: str, is_admin: bool = False) -> bool:
+        """Baja lógica: cancela el trabajo (no elimina físicamente).
+        Admin puede cancelar cualquier trabajo excepto los ya cancelados.
+        Empleado solo puede cancelar trabajos no terminales."""
         with db_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE trabajos
-                    SET estado = 'cancelado', fecha_cierre = CURRENT_DATE, updated_at = NOW()
-                    WHERE id = %s AND estado NOT IN ('cancelado', 'finalizado')
-                    """,
-                    (trabajo_id,),
-                )
-                affected = cursor.rowcount
-                connection.commit()
-                return affected > 0
+                if is_admin:
+                    cursor.execute(
+                        """
+                        UPDATE trabajos
+                        SET estado = 'cancelado', fecha_cierre = COALESCE(fecha_cierre, CURRENT_DATE), updated_at = NOW()
+                        WHERE id = %s AND estado <> 'cancelado'
+                        RETURNING id
+                        """,
+                        (trabajo_id,),
+                    )
+                    updated = cursor.fetchone()
+                    connection.commit()
+                    return bool(updated)
+                else:
+                    cursor.execute(
+                        """
+                        UPDATE trabajos
+                        SET estado = 'cancelado', fecha_cierre = CURRENT_DATE, updated_at = NOW()
+                        WHERE id = %s AND estado NOT IN ('cancelado', 'finalizado')
+                        """,
+                        (trabajo_id,),
+                    )
+                    affected = cursor.rowcount
+                    connection.commit()
+                    return affected > 0
 
     @staticmethod
     def get_trabajo_detail(trabajo_id: str) -> dict | None:

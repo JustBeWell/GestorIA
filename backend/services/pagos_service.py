@@ -473,17 +473,20 @@ class PagosService:
         return PagosService.get_factura_detail(factura_id)
 
     @staticmethod
-    def delete_factura(factura_id: str) -> bool:
-        """Anula (estado='anulada') una factura si no tiene pagos."""
+    def delete_factura(factura_id: str, is_admin: bool = False) -> bool:
+        """Anula (estado='anulada') una factura.
+        Admin puede anular cualquier factura no anulada, incluso con pagos.
+        Empleado solo puede anular facturas sin pagos."""
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    "SELECT COUNT(*) AS cnt FROM pagos WHERE factura_id = %s",
-                    (factura_id,),
-                )
-                row = cur.fetchone() or {}
-                if int(row.get("cnt") or 0) > 0:
-                    raise ValueError("No se puede anular una factura con pagos registrados")
+                if not is_admin:
+                    cur.execute(
+                        "SELECT COUNT(*) AS cnt FROM pagos WHERE factura_id = %s",
+                        (factura_id,),
+                    )
+                    row = cur.fetchone() or {}
+                    if int(row.get("cnt") or 0) > 0:
+                        raise ValueError("No se puede anular una factura con pagos registrados")
 
                 cur.execute(
                     "UPDATE facturas SET estado = 'anulada' WHERE id = %s AND estado <> 'anulada' RETURNING id",

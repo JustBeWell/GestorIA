@@ -2,29 +2,27 @@ const FOOTER_COLS = [
   {
     title: 'Producto',
     links: [
-      { label: 'Características', href: '#features' },
+      { label: 'Funciones', href: '#features' },
       { label: 'Módulos', href: '#modulos' },
-      { label: 'Descarga', href: '#download' },
-      { label: 'Actualizaciones', href: '#' },
-      { label: 'Hoja de ruta', href: '#' },
+      { label: 'Descargar', href: '#download' },
     ],
   },
   {
-    title: 'Empresa',
+    title: 'Recursos',
     links: [
-      { label: 'Sobre GestorIA', href: '#' },
-      { label: 'Blog', href: '#' },
-      { label: 'Prensa', href: '#' },
-      { label: 'Trabaja con nosotros', href: '#' },
+      { label: 'Documentación', href: '#' },
+      { label: 'Preguntas frecuentes', href: '#faq' },
+      { label: 'Changelog', href: '#' },
+      { label: 'Soporte', href: 'mailto:soporte@gestoria.app' },
     ],
   },
   {
-    title: 'Soporte',
+    title: 'Legal',
     links: [
-      { label: 'Centro de ayuda', href: '#' },
-      { label: 'Contacto', href: 'mailto:hola@gestoria.app' },
-      { label: 'Estado del servicio', href: '#' },
-      { label: 'Comunidad', href: '#' },
+      { label: 'Privacidad', href: '#' },
+      { label: 'Términos', href: '#' },
+      { label: 'Cookies', href: '#' },
+      { label: 'Licencia', href: '#' },
     ],
   },
 ];
@@ -33,7 +31,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer__inner">
-        <div className="footer__top">
+        <div className="footer__top footer__top--4col">
           {/* Brand column */}
           <div>
             <div className="footer__brand">
@@ -41,10 +39,10 @@ export default function Footer() {
               GestorIA
             </div>
             <p className="footer__tag">
-              El software de gestión diseñado para gestorías y asesorías que quieren trabajar más inteligente, no más duro.
+              Automatiza, acompaña. La gestoría que se gestiona sola.
             </p>
-            <a href="#download" className="btn btn--outline-cream" style={{ marginTop: '8px' }}>
-              Descargar gratis
+            <a href="https://github.com/JustBeWell/GestorIA/releases" target="_blank" rel="noopener noreferrer" className="btn btn--outline-cream" style={{ marginTop: '8px' }}>
+              Descargar
             </a>
           </div>
 
@@ -63,12 +61,11 @@ export default function Footer() {
         </div>
 
         <div className="footer__bottom">
-          <span>© {new Date().getFullYear()} GestorIA. Todos los derechos reservados.</span>
+          <span>© 2026 GestorIA. Hecho en España.</span>
           <nav className="footer__bottom-nav">
             <a href="#">Privacidad</a>
             <a href="#">Términos</a>
             <a href="#">Cookies</a>
-            <a href="#">Accesibilidad</a>
           </nav>
         </div>
       </div>
@@ -90,3 +87,5 @@ function LogoIcon() {
     </svg>
   );
 }
+
+

@@ -11,7 +11,7 @@ export default function Showcase() {
   const [active, setActive] = useState<Tab>('Dashboard');
 
   return (
-    <section className="showcase">
+    <section className="showcase" id="showcase">
       <div className="wrap">
         <RevealWrapper>
           <div className="section-head">

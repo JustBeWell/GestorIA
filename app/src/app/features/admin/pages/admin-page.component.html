@@ -608,6 +608,7 @@
                     <th>Estado</th>
                     <th>Trabajos</th>
                     <th>Pendiente</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -626,6 +627,14 @@
                       <td class="td-center">{{ c.trabajos_abiertos }}</td>
                       <td class="td-num" [class.td-warn]="c.pendiente_total > 0">
                         {{ c.pendiente_total | currency:'EUR':'symbol':'1.2-2' }}
+                      </td>
+                      <td class="td-actions">
+                        @if (c.activo) {
+                          <button type="button" class="btn-row-danger" title="Dar de baja"
+                            (click)="openDeleteConfirm('cliente', c.cliente_id, c.nombre_fiscal)">
+                            Dar de baja
+                          </button>
+                        }
                       </td>
                     </tr>
                   }
@@ -670,6 +679,7 @@
                     <th>Prioridad</th>
                     <th>Empleados</th>
                     <th>Objetivo</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -684,6 +694,14 @@
                       <td>{{ t.prioridad }}</td>
                       <td>{{ t.empleados_asignados.length > 0 ? t.empleados_asignados.map(e => e.nombre_completo).join(', ') : '—' }}</td>
                       <td>{{ t.fecha_objetivo ? (t.fecha_objetivo | date:'dd/MM/yyyy') : '—' }}</td>
+                      <td class="td-actions">
+                        @if (t.estado !== 'cancelado') {
+                          <button type="button" class="btn-row-danger" title="Eliminar trabajo"
+                            (click)="openDeleteConfirm('trabajo', t.trabajo_id, t.titulo)">
+                            Eliminar
+                          </button>
+                        }
+                      </td>
                     </tr>
                   }
                 </tbody>
@@ -750,6 +768,7 @@
                     <th>Vencimiento</th>
                     <th class="td-num">Total</th>
                     <th class="td-num">Pendiente</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -769,6 +788,14 @@
                       <td class="td-num">{{ f.total | currency:'EUR':'symbol':'1.2-2':'es' }}</td>
                       <td class="td-num" [class.td-warn]="f.pendiente > 0 && f.estado !== 'anulada'">
                         {{ f.pendiente | currency:'EUR':'symbol':'1.2-2':'es' }}
+                      </td>
+                      <td class="td-actions">
+                        @if (f.estado !== 'anulada') {
+                          <button type="button" class="btn-row-danger" title="Anular factura"
+                            (click)="openDeleteConfirm('factura', f.factura_id, f.numero)">
+                            Anular
+                          </button>
+                        }
                       </td>
                     </tr>
                   }
@@ -939,6 +966,44 @@
         <button class="btn-secondary" (click)="closeCorreccionModal()">Cancelar</button>
         <button class="btn-primary" (click)="submitCorreccion()" [disabled]="modalSaving()">
           {{ modalSaving() ? 'Guardando…' : 'Registrar corrección' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── MODAL CONFIRMAR BAJA / CANCELACIÓN / ANULACIÓN ─────────────────── -->
+@if (deleteTarget()) {
+  <div class="modal-backdrop" (click)="closeDeleteConfirm()">
+    <div class="modal modal-narrow" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          @if (deleteTarget()!.type === 'cliente') { Dar de baja cliente }
+          @else if (deleteTarget()!.type === 'trabajo') { Eliminar trabajo }
+          @else { Anular factura }
+        </h3>
+        <button class="modal-close" type="button" (click)="closeDeleteConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-text">
+          @if (deleteTarget()!.type === 'cliente') {
+            ¿Dar de baja al cliente <strong>{{ deleteTarget()!.label }}</strong>? Quedará inactivo pero se conservará su historial.
+          } @else if (deleteTarget()!.type === 'trabajo') {
+            ¿Eliminar el trabajo <strong>{{ deleteTarget()!.label }}</strong>? Si está finalizado también quedará marcado como cancelado.
+          } @else {
+            ¿Anular la factura <strong>{{ deleteTarget()!.label }}</strong>? La factura quedará como anulada aunque tenga pagos registrados.
+          }
+        </p>
+        @if (deleteError()) {
+          <p class="modal-error">{{ deleteError() }}</p>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeDeleteConfirm()" [disabled]="deleteSaving()">
+          Cancelar
+        </button>
+        <button type="button" class="btn-danger-solid" (click)="confirmAdminDelete()" [disabled]="deleteSaving()">
+          {{ deleteSaving() ? 'Procesando…' : 'Confirmar' }}
         </button>
       </div>
     </div>

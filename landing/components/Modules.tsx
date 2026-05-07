@@ -56,11 +56,11 @@ const MODULES = [
     ),
   },
   {
-    title: 'IA Asistente',
-    desc: 'Redacción de escritos y resúmenes de expedientes automáticos.',
+    title: 'Documentos',
+    desc: 'Carpetas por cliente, búsqueda, ficheros recientes y control de almacenamiento.',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
       </svg>
     ),
   },
@@ -74,11 +74,15 @@ export default function Modules() {
           <RevealWrapper>
             <div>
               <span className="eyebrow on-dark">Módulos</span>
-              <h2 style={{ marginTop: '16px' }}>Cada pieza de tu gestoría, conectada</h2>
+              <h2 style={{ marginTop: '16px' }}>Construido alrededor<br />de tu día a día.</h2>
               <p className="lead">
-                Todos los módulos comparten datos en tiempo real. Lo que ocurre en un trabajo
-                se refleja en la factura, en el fichaje y en el dashboard sin ningún esfuerzo manual.
+                Cada módulo está pensado para una tarea concreta y conectado
+                con los demás. Cambia un dato y se actualiza donde haga falta.
               </p>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '32px', flexWrap: 'wrap' }}>
+                <a href="#download" className="btn btn--cream">Probar gratis</a>
+                <a href="#showcase" className="btn btn--outline-cream">Ver demo</a>
+              </div>
             </div>
           </RevealWrapper>
 

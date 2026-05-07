@@ -475,9 +475,10 @@ def intranet_trabajos_delete(
     trabajo_id: str,
     current_user=Depends(get_current_user),
 ):
-    deleted = TrabajosService.delete_trabajo(trabajo_id)
+    is_admin = current_user.role == "administrador"
+    deleted = TrabajosService.delete_trabajo(trabajo_id, is_admin=is_admin)
     if not deleted:
-        raise HTTPException(status_code=404, detail="Trabajo no encontrado o ya inactivo")
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado o ya cancelado")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -544,7 +545,7 @@ def intranet_trabajos_add_comentario(
 @router.get("/pagos", response_model=PagosTabResponse)
 def intranet_pagos(
     page_facturas: int = Query(default=1, ge=1),
-    page_size_facturas: int = Query(default=20, ge=1, le=100),
+    page_size_facturas: int = Query(default=20, ge=1, le=500),
     page_pagos: int = Query(default=1, ge=1),
     page_size_pagos: int = Query(default=20, ge=1, le=100),
     estado_factura: str | None = Query(default=None),
@@ -617,8 +618,9 @@ def intranet_facturas_delete(
     factura_id: str,
     current_user=Depends(get_current_user),
 ):
+    is_admin = current_user.role == "administrador"
     try:
-        deleted = PagosService.delete_factura(factura_id)
+        deleted = PagosService.delete_factura(factura_id, is_admin=is_admin)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except PsycopgError as exc:

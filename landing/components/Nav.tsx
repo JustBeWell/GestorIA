@@ -23,15 +23,14 @@ export default function Nav() {
         </a>
 
         <div className="nav__links">
-          <a href="#features">Características</a>
+          <a href="#features">Funciones</a>
           <a href="#modulos">Módulos</a>
           <a href="#download">Descarga</a>
           <a href="#faq">FAQ</a>
         </div>
 
         <div className="nav__actions">
-          <a href="http://localhost:4200" className="btn btn--ghost">Acceder</a>
-          <a href="#download" className="btn btn--primary">Descargar gratis</a>
+          <a href="https://github.com/JustBeWell/GestorIA/releases" target="_blank" rel="noopener noreferrer" className="btn btn--primary">Descargar gratis</a>
         </div>
       </div>
     </nav>

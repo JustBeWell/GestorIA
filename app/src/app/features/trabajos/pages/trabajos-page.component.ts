@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subject, finalize, takeUntil } from 'rxjs';
+import { Subject, finalize, forkJoin, takeUntil } from 'rxjs';
 
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import {
@@ -74,6 +74,7 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
   private readonly intranetService = inject(IntranetService);
   private readonly authState = inject(AuthStateService);
   private readonly destroy$ = new Subject<void>();
+  @ViewChild('commentsList') private commentsList!: ElementRef<HTMLElement>;
 
   // ── State ──────────────────────────────────────────────────────────────────
   protected readonly loading = signal(true);
@@ -204,12 +205,16 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
     this.comentarios = [];
     this.nuevoComentario = '';
 
-    this.intranetService.getTrabajoDetail(item.trabajo_id)
+    forkJoin({
+      detail: this.intranetService.getTrabajoDetail(item.trabajo_id),
+      comentarios: this.intranetService.getTrabajoComentarios(item.trabajo_id),
+    })
       .pipe(finalize(() => this.loadingDetail.set(false)))
       .subscribe({
-        next: (detail) => {
+        next: ({ detail, comentarios }) => {
           this.selectedTrabajo = detail;
-          this.loadComentarios(item.trabajo_id);
+          this.comentarios = comentarios;
+          this.scrollCommentsToBottom();
         },
       });
   }
@@ -225,7 +230,19 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
     this.loadingComentarios = true;
     this.intranetService.getTrabajoComentarios(trabajoId)
       .pipe(finalize(() => { this.loadingComentarios = false; }))
-      .subscribe({ next: (list) => { this.comentarios = list; } });
+      .subscribe({
+        next: (list) => {
+          this.comentarios = list;
+          this.scrollCommentsToBottom();
+        },
+      });
+  }
+
+  private scrollCommentsToBottom(): void {
+    setTimeout(() => {
+      const el = this.commentsList?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 0);
   }
 
   // ── Estado rápido desde kanban ─────────────────────────────────────────────
@@ -246,12 +263,13 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
     const texto = this.nuevoComentario.trim();
     if (!texto || !this.selectedTrabajo) return;
     this.savingComentario = true;
-    this.intranetService.addTrabajoComentario(this.selectedTrabajo.trabajo_id, texto)
+    const trabajoId = this.selectedTrabajo.trabajo_id;
+    this.intranetService.addTrabajoComentario(trabajoId, texto)
       .pipe(finalize(() => { this.savingComentario = false; }))
       .subscribe({
-        next: (c) => {
-          this.comentarios = [...this.comentarios, c];
+        next: () => {
           this.nuevoComentario = '';
+          this.loadComentarios(trabajoId);
         },
       });
   }

@@ -140,8 +140,12 @@ class TrabajosResumen(BaseModel):
 
 class PagosResumen(BaseModel):
 	cobrado_mes: float
+	facturado_mes: float = 0
+	facturas_emitidas_mes: int = 0
 	pendiente_total: float
+	pendiente_count: int = 0
 	facturas_vencidas: int
+	vencido_total: float = 0
 
 
 class PortalIntranetHomeResponse(BaseModel):

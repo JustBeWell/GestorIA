@@ -301,7 +301,7 @@
         @if (loadingComentarios) {
           <p class="panel-empty-text">Cargando...</p>
         } @else {
-          <div class="comments-list">
+          <div class="comments-list" #commentsList>
             @for (c of comentarios; track c.comentario_id) {
               <div class="comment-item">
                 <span class="comment-avatar">{{ initials(c.autor_nombre) }}</span>

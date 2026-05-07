@@ -2,24 +2,24 @@ import RevealWrapper from './RevealWrapper';
 
 const FAQS = [
   {
-    q: '¿Cuánto cuesta GestorIA?',
-    a: 'GestorIA tiene 30 días de prueba gratuita sin necesidad de tarjeta de crédito. Después, el plan de equipo parte de 39 €/mes para hasta 5 usuarios. Consulta la página de precios para ver todas las opciones.',
+    q: '¿Mis datos viven en la nube?',
+    a: 'No. GestorIA es una aplicación de escritorio nativa: tus datos se almacenan localmente en tu equipo, cifrados. Puedes activar copias de seguridad opcionales en tu propio almacenamiento.',
   },
   {
-    q: '¿Es compatible con mis datos actuales?',
-    a: 'Sí. Puedes importar clientes y trabajos desde CSV. Si usas otro software de gestión, nuestro equipo de soporte te ayuda con la migración sin coste adicional durante el primer mes.',
+    q: '¿Cuánto cuesta?',
+    a: 'La versión Personal es gratuita y permite gestionar hasta 25 clientes. Las versiones Pro y Equipo se contratan por una sola vez (sin renovaciones forzadas) e incluyen actualizaciones durante 12 meses.',
   },
   {
-    q: '¿Funciona sin conexión a internet?',
-    a: 'La versión de escritorio (macOS y Windows) almacena los datos localmente y sincroniza cuando hay conexión. La versión web requiere conexión, pero los cambios se guardan en cuanto el navegador recupera la red.',
+    q: '¿Se integra con la AEAT?',
+    a: 'Sí. Soportamos la generación de los principales modelos (303, 130, 111, 115, 202, 347, 349) listos para presentar. Próximamente, presentación directa con certificado digital.',
   },
   {
-    q: '¿Cuántos usuarios puedo añadir?',
-    a: 'En el plan base tienes hasta 5 usuarios. Los planes superiores incluyen usuarios ilimitados. También puedes dar acceso de solo lectura a clientes o colaboradores externos sin consumir licencia.',
+    q: '¿Puedo importar desde otros gestores?',
+    a: 'Sí. Aceptamos CSV/Excel y plantillas de los gestores más comunes (A3, Sage, Holded, Contasimple). Nuestro asistente guía la importación en menos de 5 minutos.',
   },
   {
-    q: '¿Cómo funciona el asistente IA?',
-    a: 'El asistente analiza el contexto de cada expediente y cliente para generar textos, resumir documentos adjuntos y sugerir los siguientes pasos. Usa modelos de lenguaje de última generación con tus datos procesados de forma segura y sin compartirlos con terceros.',
+    q: '¿Hay versión para Linux?',
+    a: 'Versión beta disponible bajo petición (.AppImage y .deb). Escríbenos a soporte@gestoria.app.',
   },
 ];
 
@@ -29,8 +29,8 @@ export default function FAQ() {
       <div className="wrap">
         <RevealWrapper>
           <div className="section-head">
-            <span className="eyebrow">FAQ</span>
-            <h2>Preguntas frecuentes</h2>
+            <span className="eyebrow">Preguntas frecuentes</span>
+            <h2>Lo que más nos preguntan.</h2>
           </div>
         </RevealWrapper>
 

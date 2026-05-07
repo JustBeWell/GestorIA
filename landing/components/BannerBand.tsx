@@ -1,10 +1,10 @@
 import RevealWrapper from './RevealWrapper';
 
 const STATS = [
-  { num: '87', unit: '%', label: 'reducción de tiempo en tareas repetitivas' },
-  { num: '340', unit: '+', label: 'gestorías usando GestorIA activamente' },
-  { num: '4.8', unit: '★', label: 'valoración media de los usuarios' },
-  { num: '30', unit: 'd', label: 'de prueba gratuita, sin límites' },
+  { num: '68', unit: '%', pre: '−', label: 'tiempo en tareas repetitivas' },
+  { num: '4,2', unit: 'h', pre: '+', label: 'recuperadas a la semana' },
+  { num: '12', unit: '+', pre: '', label: 'modelos AEAT integrados' },
+  { num: '100', unit: '%', pre: '', label: 'datos en tu equipo' },
 ];
 
 export default function BannerBand() {
@@ -13,13 +13,13 @@ export default function BannerBand() {
       <div className="banner-band">
         <div className="banner-band__inner">
           <div>
-            <span className="eyebrow on-dark">Por qué GestorIA</span>
+            <span className="eyebrow on-dark">El día a día, en cifras</span>
             <h2 style={{ marginTop: '16px' }}>
-              Diseñado para el día a día de tu gestoría
+              Menos clics,<br />más tiempo<br />para tus clientes.
             </h2>
             <p style={{ marginTop: '16px' }}>
-              No es otro software genérico. GestorIA nace de escuchar a gestores y asesores:
-              menos clics, más automatización y una IA que realmente ayuda a gestionar expedientes.
+              Diseñada con asesores reales: cada flujo está pensado para reducir trabajo
+              administrativo y darte una visión clara del negocio.
             </p>
           </div>
 
@@ -27,17 +27,11 @@ export default function BannerBand() {
             {STATS.map((s) => (
               <div key={s.label}>
                 <div className="banner-stat__num">
-                  {s.num}<small>{s.unit}</small>
+                  {s.pre}{s.num}<small>{s.unit}</small>
                 </div>
                 <div className="banner-stat__label">{s.label}</div>
               </div>
             ))}
-          </div>
-
-          <div>
-            <a href="#download" className="btn btn--cream btn--lg">
-              Empezar ahora — gratis
-            </a>
           </div>
         </div>
       </div>

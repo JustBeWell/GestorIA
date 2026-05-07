@@ -4,14 +4,24 @@ const FEATURES = [
   {
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+    title: 'Control horario sin ruido',
+    desc: 'Fichaje con un clic, calendario mensual con barras de jornada y reportes listos para inspección.',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
         <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ),
-    title: 'Gestión de clientes',
-    desc: 'Panel centralizado con historial completo, documentos, estado fiscal y comunicaciones de cada cliente.',
+    title: 'Cartera de clientes ordenada',
+    desc: 'Sociedades, autónomos, SCP… con NIF/CIF, facturación anual y estado a la vista.',
   },
   {
     icon: (
@@ -22,8 +32,8 @@ const FEATURES = [
         <rect x="14" y="14" width="7" height="7" rx="1" />
       </svg>
     ),
-    title: 'Control de trabajos',
-    desc: 'Kanban visual para gestionar expedientes. Asigna empleados, establece prioridades y sigue el progreso en tiempo real.',
+    title: 'Trabajos en kanban',
+    desc: 'Pendiente, en curso, bloqueado, finalizado — con prioridad, progreso y vencimiento.',
   },
   {
     icon: (
@@ -32,18 +42,8 @@ const FEATURES = [
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
     ),
-    title: 'Pagos y facturas',
-    desc: 'Emite facturas, registra cobros y controla los vencimientos. KPIs en tiempo real de cobrado, pendiente y vencido.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
-    title: 'Fichaje digital',
-    desc: 'Registro de presencia con entradas, salidas y pausas. Informes mensuales automáticos e integración con nóminas.',
+    title: 'Facturación y cobros',
+    desc: 'Emite, marca como pagada y vigila vencidas. Total mes, pendiente y vencido a un vistazo.',
   },
   {
     icon: (
@@ -55,61 +55,47 @@ const FEATURES = [
       </svg>
     ),
     title: 'Calendario fiscal',
-    desc: 'Vencimientos fiscales precargados para España. Alertas automáticas y planificación por cliente y modelo tributario.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
-        <path d="M12 8v4l3 3" />
-      </svg>
-    ),
-    title: 'Panel de gerencia',
-    desc: 'Vista 360° del negocio: KPIs de equipo, gráficas de productividad, fichajes de todos y gestión de clientes y trabajos.',
-    big: true,
-    bigIcon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-    ),
-    bigTitle: 'Asistente IA integrado',
-    bigDesc:
-      'Redacta escritos, resume expedientes y sugiere el siguiente paso. El asistente IA analiza el contexto de cada trabajo y cliente para darte recomendaciones precisas. Sin prompts complicados — funciona dentro del flujo natural de trabajo.',
+    desc: 'Modelos 303, 130, 111, 115, 347, 349… avisándote semanas antes del vencimiento.',
   },
 ];
 
-export default function Features() {
-  const regularFeatures = FEATURES.filter((f) => !f.big);
-  const bigFeature = FEATURES.find((f) => f.big)!;
+const BIG_FEATURE = {
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  ),
+  title: 'Una vista del negocio que sí entiende un asesor.',
+  desc: 'KPIs reales: horas trabajadas, clientes activos, trabajos en curso, facturado del mes — y vencimientos AEAT marcados antes de que se conviertan en un problema.',
+};
 
+export default function Features() {
   return (
     <section className="features" id="features">
       <div className="wrap">
         <RevealWrapper>
           <div className="section-head">
-            <span className="eyebrow">Características</span>
-            <h2>Todo lo que una gestoría necesita</h2>
+            <span className="eyebrow">Todo en una</span>
+            <h2>Un escritorio de trabajo,<br />no diez pestañas.</h2>
             <p>
-              Desde el fichaje del empleado hasta la factura al cliente,<br />
-              GestorIA cubre cada parte del proceso.
+              Olvida cambiar entre Excel, calendarios y carpetas. GestorIA reúne tu<br />
+              operación en un único lugar, con la sobriedad que un profesional necesita.
             </p>
           </div>
         </RevealWrapper>
 
         <div className="features__grid">
-          {/* Big AI feature */}
+          {/* Big dark card — first */}
           <RevealWrapper>
             <div className="feature feature--big">
-              <div className="feature__icon">
-                {bigFeature.bigIcon}
-              </div>
-              <h3>{bigFeature.bigTitle}</h3>
-              <p>{bigFeature.bigDesc}</p>
+              <div className="feature__icon">{BIG_FEATURE.icon}</div>
+              <h3>{BIG_FEATURE.title}</h3>
+              <p>{BIG_FEATURE.desc}</p>
             </div>
           </RevealWrapper>
 
-          {/* Regular features */}
-          {regularFeatures.map((f) => (
+          {/* Regular feature cards */}
+          {FEATURES.map((f) => (
             <RevealWrapper key={f.title}>
               <div className="feature">
                 <div className="feature__icon">{f.icon}</div>

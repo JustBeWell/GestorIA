@@ -2,16 +2,19 @@ import RevealWrapper from './RevealWrapper';
 
 const STEPS = [
   {
-    title: 'Crea tu cuenta y configura tu gestoría',
-    desc: 'Regístrate en menos de 2 minutos. Añade el nombre de tu despacho, el número de usuarios y los módulos que necesitas. Sin instalar nada.',
+    num: '01',
+    title: 'Descarga la app',
+    desc: 'Instalable nativo para Windows y macOS. 80 MB, sin servidores intermedios.',
   },
   {
-    title: 'Importa clientes y define flujos de trabajo',
-    desc: 'Importa tu cartera de clientes desde CSV o añádelos manualmente. Configura las categorías de trabajos y asigna responsables a cada expediente.',
+    num: '02',
+    title: 'Importa tus clientes',
+    desc: 'Desde Excel, CSV o tu gestor anterior. La app detecta NIF/CIF y normaliza los datos.',
   },
   {
-    title: 'GestorIA gestiona, tú decides',
-    desc: 'El asistente IA analiza el estado de cada expediente, sugiere próximas acciones y redacta documentos. Tú apruebas; la IA ejecuta.',
+    num: '03',
+    title: 'Empieza a trabajar',
+    desc: 'Calendario fiscal, fichaje y trabajos listos desde el primer día.',
   },
 ];
 
@@ -21,9 +24,9 @@ export default function HowItWorks() {
       <div className="wrap">
         <RevealWrapper>
           <div className="section-head">
-            <span className="eyebrow">Cómo funciona</span>
-            <h2>En marcha en menos de 10 minutos</h2>
-            <p>Sin instalaciones complicadas, sin curvas de aprendizaje largas.</p>
+            <span className="eyebrow">Cómo empezar</span>
+            <h2>Operativo en menos de 5 minutos.</h2>
+            <p>Sin migraciones complicadas ni dependencias en la nube. Descarga, importa y trabaja.</p>
           </div>
         </RevealWrapper>
 
@@ -31,6 +34,7 @@ export default function HowItWorks() {
           <div className="how__steps">
             {STEPS.map((step) => (
               <div key={step.title} className="how__step">
+                <span className="how__step-num">{step.num}</span>
                 <h3>{step.title}</h3>
                 <p>{step.desc}</p>
               </div>

@@ -102,7 +102,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     const q = this.pagosSearch.trim().toLowerCase();
     return this.adminPagosFacturas.filter((f) => {
       if (this.pagosFilterEstado && f.estado !== this.pagosFilterEstado) return false;
-      if (q && !f.numero_factura.toLowerCase().includes(q) && !f.cliente_nombre.toLowerCase().includes(q)) return false;
+      if (q && !f.numero.toLowerCase().includes(q) && !f.cliente_nombre.toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -181,6 +181,10 @@ export class AdminPageComponent implements OnInit, OnDestroy {
         next: (res) => {
           this.adminPagosFacturas = res.facturas;
           this.adminPagosResumen = res.resumen;
+        },
+        error: (err: HttpErrorResponse) => {
+          const detail = err?.error?.detail;
+          this.errorMessage.set(typeof detail === 'string' ? detail : 'No se pudieron cargar las facturas.');
         },
       });
   }
@@ -601,5 +605,55 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     const labels = this.chartLabels('facturacion');
     if (idx === null || !labels.length) return 50;
     return (idx / Math.max(labels.length - 1, 1)) * 100;
+  }
+
+  // ─── Delete / baja ────────────────────────────────────────────────────────
+
+  protected readonly deleteTarget = signal<{
+    type: 'cliente' | 'trabajo' | 'factura';
+    id: string;
+    label: string;
+  } | null>(null);
+  protected readonly deleteError = signal('');
+  protected readonly deleteSaving = signal(false);
+
+  protected openDeleteConfirm(type: 'cliente' | 'trabajo' | 'factura', id: string, label: string): void {
+    this.deleteTarget.set({ type, id, label });
+    this.deleteError.set('');
+  }
+
+  protected closeDeleteConfirm(): void {
+    if (this.deleteSaving()) return;
+    this.deleteTarget.set(null);
+    this.deleteError.set('');
+  }
+
+  protected confirmAdminDelete(): void {
+    const target = this.deleteTarget();
+    if (!target) return;
+    this.deleteSaving.set(true);
+    this.deleteError.set('');
+
+    let op$;
+    if (target.type === 'cliente') {
+      op$ = this.intranetService.deleteCliente(target.id);
+    } else if (target.type === 'trabajo') {
+      op$ = this.intranetService.deleteTrabajo(target.id);
+    } else {
+      op$ = this.intranetService.deleteFactura(target.id);
+    }
+
+    op$.pipe(finalize(() => this.deleteSaving.set(false))).subscribe({
+      next: () => {
+        this.deleteTarget.set(null);
+        if (target.type === 'cliente')  this.refreshAdminClientes();
+        if (target.type === 'trabajo')  this.refreshAdminTrabajos();
+        if (target.type === 'factura')  this.refreshAdminPagos();
+      },
+      error: (err: HttpErrorResponse) => {
+        const detail = err?.error?.detail;
+        this.deleteError.set(typeof detail === 'string' ? detail : 'No se pudo completar la operación.');
+      },
+    });
   }
 }

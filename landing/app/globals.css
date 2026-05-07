@@ -909,3 +909,121 @@ details.faq__item p {
   .hero-mockup { grid-template-columns: 1fr; }
   .hero-mockup__sidebar { display: none; }
 }
+
+/* ============================================================
+   Hero dark variant (PDF design)
+   ============================================================ */
+.hero--dark {
+  background: #070e0c;
+}
+.hero--dark::before {
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(46, 106, 88, 0.42) 0%, transparent 65%);
+}
+.hero--dark .hero__eyebrow--dark {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(243, 236, 218, 0.85);
+}
+.hero--dark .hero__eyebrow--dark b {
+  background: var(--green-700);
+  color: var(--cream);
+}
+.hero__cta-meta--dark {
+  color: rgba(243, 236, 218, 0.5);
+}
+.hero__cta-meta--dark svg { color: var(--green-400); }
+
+/* Hero brand panel */
+.hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 80px 60px 76px;
+  text-align: center;
+  position: relative;
+  background: #0c1a16;
+  min-height: 460px;
+}
+.hero-brand::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 60%; height: 68%;
+  background: linear-gradient(145deg, var(--green-700) 0%, var(--green-600) 20%, transparent 72%);
+  border-radius: 14px 0 100% 0;
+  opacity: 0.9;
+}
+.hero-compass {
+  width: 112px; height: 112px;
+  border: 2px solid rgba(243, 236, 218, 0.72);
+  border-radius: 50%;
+  display: grid; place-items: center;
+  position: relative; z-index: 1;
+  color: var(--cream);
+}
+.hero-compass svg { width: 54px; height: 54px; }
+.hero-wordmark {
+  font-size: clamp(60px, 9.5vw, 118px);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: var(--cream);
+  line-height: 1;
+  position: relative; z-index: 1;
+}
+.hero-tagline-brand {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.3vw, 15px);
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 218, 0.52);
+  position: relative; z-index: 1;
+}
+@media (max-width: 640px) {
+  .hero-brand { padding: 52px 28px 48px; min-height: 320px; }
+  .hero-compass { width: 80px; height: 80px; }
+  .hero-compass svg { width: 38px; height: 38px; }
+}
+
+/* ============================================================
+   Download dark section
+   ============================================================ */
+.download--dark {
+  background: linear-gradient(160deg, #0e2923 0%, #060e0c 100%);
+  color: var(--cream);
+  padding-bottom: 80px;
+}
+.download--dark h2 { color: var(--cream); }
+.download--dark .download__lead { color: rgba(243, 236, 218, 0.62); }
+.download--dark .download__more { color: rgba(243, 236, 218, 0.45); }
+.download--dark .download__more a { color: var(--green-400); border-bottom-color: rgba(87, 181, 154, 0.3); }
+.download--dark .eyebrow { color: rgba(243,236,218,0.7); }
+
+/* 2-column download grid */
+.download__grid--2col {
+  grid-template-columns: 1fr 1fr;
+  max-width: 840px;
+  margin: 0 auto;
+}
+.platform__meta--row {
+  display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .download__grid--2col { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Footer 4-col variant
+   ============================================================ */
+.footer__top--4col {
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+}
+@media (max-width: 960px) {
+  .footer__top--4col { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .footer__top--4col { grid-template-columns: 1fr; }
+}
+
