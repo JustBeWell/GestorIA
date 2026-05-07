@@ -838,9 +838,15 @@
                 <option value="correccion_fichaje">Corrección fichaje</option>
               </select>
               <button class="tab-refresh-btn" type="button" (click)="loadAuditoria()">&#8635; Refrescar</button>
-              <a class="btn-export-csv" [href]="downloadCierreURL()" target="_blank">
-                ↓ PDF cierre {{ cierreYear }}/{{ cierreMonth | number:'2.0-0' }}
-              </a>
+              <button class="btn-cierre-pdf" type="button"
+                (click)="downloadCierre()"
+                [disabled]="cierreDownloading()">
+                @if (cierreDownloading()) {
+                  Generando…
+                } @else {
+                  ↓ PDF cierre {{ cierreYear }}/{{ cierreMonth | number:'2.0-0' }}
+                }
+              </button>
             </div>
           </div>
 

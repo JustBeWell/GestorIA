@@ -382,6 +382,10 @@ export class IntranetService {
     return url.toString();
   }
 
-  exportCierrePDF(year: number, month: number): string {
-    return `${this.apiUrl}/intranet/admin/cierre/pdf?year=${year}&month=${month}`;
-  }}
+  exportCierrePDF(year: number, month: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/intranet/admin/cierre/pdf?year=${year}&month=${month}`,
+      { responseType: 'blob' },
+    );
+  }
+}

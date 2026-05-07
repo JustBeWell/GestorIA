@@ -1076,6 +1076,25 @@
 }
 .tab-refresh-btn:hover { background: #f1f5f9; }
 
+.btn-cierre-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: #1e3a2f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  white-space: nowrap;
+}
+.btn-cierre-pdf:hover:not(:disabled) { background: #2d5c47; }
+.btn-cierre-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .tab-loading, .tab-empty {
   text-align: center;
   padding: 48px 24px;

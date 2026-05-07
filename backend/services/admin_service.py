@@ -484,6 +484,9 @@ class AdminService:
                 ]
 
         return {"resumen": resumen, "facturas": facturas}
+
+    @staticmethod
+    def get_auditoria(
         page: int = 1,
         page_size: int = 50,
         entidad: str | None = None,

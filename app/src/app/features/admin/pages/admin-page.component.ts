@@ -396,11 +396,27 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     this.expandedAuditoria.set(this.expandedAuditoria() === id ? null : id);
   }
 
+  protected readonly cierreDownloading = signal(false);
+
   get cierreYear(): number { return new Date().getFullYear(); }
   get cierreMonth(): number { return new Date().getMonth() + 1; }
 
-  protected downloadCierreURL(): string {
-    return this.intranetService.exportCierrePDF(this.cierreYear, this.cierreMonth);
+  protected downloadCierre(): void {
+    this.cierreDownloading.set(true);
+    this.intranetService.exportCierrePDF(this.cierreYear, this.cierreMonth).pipe(
+      finalize(() => this.cierreDownloading.set(false)),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cierre_${this.cierreYear}_${String(this.cierreMonth).padStart(2, '0')}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {},
+    });
   }
 
   // ─── Fichajes tab ─────────────────────────────────────────────────────────
