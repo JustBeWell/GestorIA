@@ -646,3 +646,22 @@ class DeudaVivaPorClienteItem(BaseModel):
 	deuda_pendiente: float
 	facturas_vencidas: int
 
+
+# ── Auditoría ─────────────────────────────────────────────────────────────────
+
+class AuditoriaEventoItem(BaseModel):
+	evento_id: str
+	actor_id: str
+	actor_nombre: str
+	entidad: str
+	entidad_id: str
+	accion: str
+	detalle_json: dict | None = None
+	ip: str | None = None
+	created_at: datetime
+
+
+class AuditoriaResponse(BaseModel):
+	eventos: list[AuditoriaEventoItem]
+	paginacion: PaginacionMeta
+

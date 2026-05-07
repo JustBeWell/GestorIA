@@ -526,7 +526,7 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 
 ---
 
-## Sprint 4 — Auditoría (M9) + Exportaciones restantes (M8)
+## Sprint 4 — Auditoría (M9) + Exportaciones restantes (M8) ✅ COMPLETO
 
 **Objetivo del sprint:** activar el sistema de auditoría de forma transversal en todos los módulos ya construidos, completar la generación del documento mensual de cierre y conectar la vista `v_resumen_mensual` al Home.
 
@@ -888,5 +888,5 @@ El MVP se considera **COMPLETO** cuando:
 | Sprint 1 | 2026-05-04 | 2026-05-04 | ✅ Completado — commit cbb4b56 |
 | Sprint 2 | 2026-05-04 | 2026-05-04 | Full stack trabajos: Kanban board, CRUD, comentarios, asignación de empleados ✅ — commit cbb4b56 |
 | Sprint 3 | 2026-05-06 | — | 🔄 En curso — UI pagos+KPIs+export entregados y bug navegación resuelto; pendiente escritura backend y formularios |
-| Sprint 4 | — | — | — |
+| Sprint 4 | M9 Auditoría + M8 Exports | ✅ | commit sprint-4 |
 | Sprint 5 | — | — | — |

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -13,6 +13,7 @@ import {
   ClienteDetailItem,
   ClientesTabResponse,
   ClienteUpdate,
+  AuditoriaResponse,
   DeudaVivaPorCliente,
   FacturaCreate,
   FacturaDetailItem,
@@ -349,4 +350,38 @@ export class IntranetService {
   getDeudaViva(): Observable<DeudaVivaPorCliente[]> {
     return this.http.get<DeudaVivaPorCliente[]>(`${this.apiUrl}/intranet/deuda`);
   }
-}
+  // ── Auditoría ──────────────────────────────────────────────
+
+  getAuditoria(params: {
+    page?: number;
+    page_size?: number;
+    entidad?: string;
+    actor_id?: string;
+    accion?: string;
+    fecha_desde?: string;
+    fecha_hasta?: string;
+  } = {}): Observable<AuditoriaResponse> {
+    let p = new HttpParams();
+    if (params.page) p = p.set('page', params.page);
+    if (params.page_size) p = p.set('page_size', params.page_size);
+    if (params.entidad) p = p.set('entidad', params.entidad);
+    if (params.actor_id) p = p.set('actor_id', params.actor_id);
+    if (params.accion) p = p.set('accion', params.accion);
+    if (params.fecha_desde) p = p.set('fecha_desde', params.fecha_desde);
+    if (params.fecha_hasta) p = p.set('fecha_hasta', params.fecha_hasta);
+    return this.http.get<AuditoriaResponse>(`${this.apiUrl}/intranet/admin/auditoria`, { params: p });
+  }
+
+  // ── M8: Exports ────────────────────────────────────────────
+
+  exportFacturasCSV(params: { estado_factura?: string; cliente_id?: string; vencidas_solo?: boolean } = {}): string {
+    const url = new URL(`${this.apiUrl}/intranet/facturas/export/csv`);
+    if (params.estado_factura) url.searchParams.set('estado_factura', params.estado_factura);
+    if (params.cliente_id) url.searchParams.set('cliente_id', params.cliente_id);
+    if (params.vencidas_solo) url.searchParams.set('vencidas_solo', 'true');
+    return url.toString();
+  }
+
+  exportCierrePDF(year: number, month: number): string {
+    return `${this.apiUrl}/intranet/admin/cierre/pdf?year=${year}&month=${month}`;
+  }}

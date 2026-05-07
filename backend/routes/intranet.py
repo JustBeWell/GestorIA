@@ -13,6 +13,8 @@ from models import (
     AdminCorreccionRequest,
     AdminCorreccionResponse,
     AdminFichajesResponse,
+    AuditoriaEventoItem,
+    AuditoriaResponse,
     ClienteCreate,
     ClienteDetailItem,
     ClientesTabResponse,
@@ -40,6 +42,7 @@ from models import (
 )
 from services.admin_service import AdminService
 from services.auth_service import get_current_user
+from services.auditoria_service import registrar_evento
 from services.clientes_service import ClientesService
 from services.fichaje_service import FichajeService
 from services.home_service import HomeService
@@ -371,12 +374,21 @@ def intranet_clientes_create(
     current_user=Depends(get_current_user),
 ):
     try:
-        return ClientesService.create_cliente(payload)
+        result = ClientesService.create_cliente(payload)
     except PsycopgError as exc:
         detail = exc.pgerror or str(exc)
         if "uq_clientes_cif_nif" in detail:
             raise HTTPException(status_code=409, detail="Ya existe un cliente con ese CIF/NIF") from exc
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="cliente",
+        entidad_id=result["cliente_id"],
+        accion="crear",
+        detalle={"nombre_fiscal": result["nombre_fiscal"], "cif_nif": result["cif_nif"]},
+    )
+    return result
 
 
 @router.put("/clientes/{cliente_id}", response_model=ClienteDetailItem)
@@ -394,6 +406,14 @@ def intranet_clientes_update(
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
     if not data:
         raise HTTPException(status_code=404, detail="Cliente no encontrado o inactivo")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="cliente",
+        entidad_id=cliente_id,
+        accion="editar",
+        detalle={k: v for k, v in payload.model_dump(exclude_none=True).items()},
+    )
     return data
 
 
@@ -407,6 +427,13 @@ def intranet_clientes_delete(
     deleted = ClientesService.delete_cliente(cliente_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="cliente",
+        entidad_id=cliente_id,
+        accion="eliminar",
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -447,6 +474,14 @@ def intranet_trabajos_create(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PsycopgError as exc:
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="trabajo",
+        entidad_id=result["trabajo_id"],
+        accion="crear",
+        detalle={"titulo": result["titulo"], "cliente_id": result["cliente_id"]},
+    )
     return result
 
 
@@ -470,6 +505,14 @@ def intranet_trabajos_update(
     result = TrabajosService.update_trabajo(trabajo_id, payload)
     if not result:
         raise HTTPException(status_code=404, detail="Trabajo no encontrado")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="trabajo",
+        entidad_id=trabajo_id,
+        accion="editar",
+        detalle={k: v for k, v in payload.model_dump(exclude_none=True).items()},
+    )
     return result
 
 
@@ -482,6 +525,13 @@ def intranet_trabajos_delete(
     deleted = TrabajosService.delete_trabajo(trabajo_id, is_admin=is_admin)
     if not deleted:
         raise HTTPException(status_code=404, detail="Trabajo no encontrado o ya cancelado")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="trabajo",
+        entidad_id=trabajo_id,
+        accion="eliminar",
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -509,6 +559,14 @@ def intranet_trabajos_asignar_empleado(
         if "uq_te_trabajo_empleado_activo" in detail:
             raise HTTPException(status_code=409, detail="El empleado ya está asignado a este trabajo") from exc
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="trabajo",
+        entidad_id=trabajo_id,
+        accion="editar",
+        detalle={"accion": "asignar_empleado", "empleado_id": payload.empleado_id},
+    )
     return {"empleados": result}
 
 
@@ -521,6 +579,14 @@ def intranet_trabajos_desasignar_empleado(
     removed = TrabajosService.unassign_empleado(trabajo_id, empleado_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Asignación no encontrada")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="trabajo",
+        entidad_id=trabajo_id,
+        accion="editar",
+        detalle={"accion": "desasignar_empleado", "empleado_id": empleado_id},
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -593,6 +659,14 @@ def intranet_facturas_create(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PsycopgError as exc:
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="factura",
+        entidad_id=result["factura_id"],
+        accion="crear",
+        detalle={"numero": result["numero"], "cliente_id": result["cliente_id"], "total": result["total"]},
+    )
     return result
 
 
@@ -619,6 +693,14 @@ def intranet_facturas_update(
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
     if not result:
         raise HTTPException(status_code=404, detail="Factura no encontrada")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="factura",
+        entidad_id=factura_id,
+        accion="editar",
+        detalle={k: v for k, v in payload.model_dump(exclude_none=True).items()},
+    )
     return result
 
 
@@ -636,6 +718,14 @@ def intranet_facturas_delete(
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
     if not deleted:
         raise HTTPException(status_code=404, detail="Factura no encontrada o ya anulada")
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="factura",
+        entidad_id=factura_id,
+        accion="eliminar",
+        detalle={"accion": "anulada"},
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -654,6 +744,14 @@ def intranet_facturas_pago(
         if "sobrepago" in detail.lower() or "excede" in detail.lower():
             raise HTTPException(status_code=409, detail="El importe supera el pendiente de la factura") from exc
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {detail}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="pago",
+        entidad_id=result["pago_id"],
+        accion="crear",
+        detalle={"factura_id": factura_id, "importe": result["importe"], "metodo_pago": result["metodo_pago"]},
+    )
     return result
 
 
@@ -704,7 +802,7 @@ def intranet_admin_fichajes_correccion(
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
     try:
-        return AdminService.create_correccion(
+        result = AdminService.create_correccion(
             empleado_id=payload.empleado_id,
             tipo_evento=payload.tipo_evento,
             fecha_hora=payload.fecha_hora,
@@ -712,3 +810,193 @@ def intranet_admin_fichajes_correccion(
         )
     except PsycopgError as exc:
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="fichaje",
+        entidad_id=result["fichaje_id"],
+        accion="correccion_fichaje",
+        detalle={"empleado_id": payload.empleado_id, "tipo_evento": payload.tipo_evento, "corregido_por": current_user.nombre_usuario},
+    )
+    return result
+
+
+# ── Auditoría ───────────────────────────────────────────────────────────
+
+@router.get("/admin/auditoria", response_model=AuditoriaResponse)
+def intranet_admin_auditoria(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+    entidad: str | None = Query(default=None),
+    actor_id: str | None = Query(default=None),
+    accion: str | None = Query(default=None),
+    fecha_desde: date | None = Query(default=None),
+    fecha_hasta: date | None = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return AdminService.get_auditoria(
+        page=page,
+        page_size=page_size,
+        entidad=entidad,
+        actor_id=actor_id,
+        accion=accion,
+        fecha_desde=fecha_desde.isoformat() if fecha_desde else None,
+        fecha_hasta=fecha_hasta.isoformat() if fecha_hasta else None,
+    )
+
+
+# ── M8: CSV Export facturas ────────────────────────────────────────────────────
+
+@router.get("/facturas/export/csv")
+def intranet_facturas_export_csv(
+    estado_factura: str | None = Query(default=None),
+    cliente_id: str | None = Query(default=None),
+    vencidas_solo: bool = Query(default=False),
+    current_user=Depends(get_current_user),
+):
+    is_admin = current_user.role == "administrador"
+    facturas = PagosService.get_facturas_for_export(
+        user_id=current_user.user_id,
+        estado_factura=estado_factura,
+        cliente_id=cliente_id,
+        vencidas_solo=vencidas_solo,
+        is_admin=is_admin,
+    )
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["Numero", "Cliente", "Estado", "Fecha emision", "Fecha vencimiento", "Total", "Pagado", "Pendiente"])
+    for f in facturas:
+        writer.writerow([
+            f.get("numero", ""),
+            f.get("cliente_nombre", ""),
+            f.get("estado", ""),
+            f.get("fecha_emision", ""),
+            f.get("fecha_vencimiento", ""),
+            f.get("total", ""),
+            f.get("pagado", ""),
+            f.get("pendiente", ""),
+        ])
+    csv_bytes = buf.getvalue().encode("utf-8-sig")
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=\"facturas.csv\""},
+    )
+
+
+# ── M8: PDF Cierre mensual ─────────────────────────────────────────────────────
+
+@router.get("/admin/cierre/pdf")
+def intranet_admin_cierre_pdf(
+    year: int = Query(..., ge=2020, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    data = AdminService.get_cierre_mensual(year=year, month=month)
+    pdf_bytes = _build_cierre_pdf(data, year, month)
+    filename = f"cierre_{year}_{month:02d}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=\"{filename}\""},
+    )
+
+
+def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
+    MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+    C_PRIMARY   = (30, 41, 59)
+    C_HEADER_BG = (241, 245, 249)
+    C_WHITE     = (255, 255, 255)
+    C_BORDER    = (226, 232, 240)
+    titulo_periodo = f"{MESES_ES[month - 1]} {year}"
+
+    pdf = FPDF()
+    pdf.set_margins(left=15, top=15, right=15)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Cabecera
+    pdf.set_fill_color(*C_PRIMARY)
+    pdf.rect(x=0, y=0, w=210, h=28, style="F")
+    pdf.set_y(8)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(*C_WHITE)
+    pdf.cell(0, 8, "GestorIA", align="L")
+    pdf.set_y(17)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 5, "Informe de cierre mensual", align="L")
+    pdf.set_xy(15, 8)
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(*C_WHITE)
+    pdf.cell(0, 8, "CIERRE MENSUAL", align="R")
+    pdf.set_xy(15, 17)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(148, 163, 184)
+    pdf.cell(0, 5, titulo_periodo, align="R")
+
+    pdf.set_y(34)
+    pdf.set_text_color(*C_PRIMARY)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, f"Resumen — {titulo_periodo}", ln=True)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 4, f"Generado el {_pdf_today()}", ln=True)
+    pdf.ln(4)
+
+    # Tabla resumen KPIs
+    resumen = data.get("resumen", {})
+    kpis = [
+        ("Facturado", f"{resumen.get('total_facturado', 0):,.2f} €"),
+        ("Cobrado", f"{resumen.get('total_cobrado', 0):,.2f} €"),
+        ("Trabajos nuevos", str(resumen.get("trabajos_nuevos", 0))),
+        ("Trabajos cerrados", str(resumen.get("trabajos_cerrados", 0))),
+        ("Clientes nuevos", str(resumen.get("clientes_nuevos", 0))),
+        ("Horas trabajadas", f"{resumen.get('horas_trabajadas', 0):,.1f} h"),
+    ]
+    col_w = [90, 85]
+    pdf.set_fill_color(*C_HEADER_BG)
+    pdf.set_draw_color(*C_BORDER)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_text_color(*C_PRIMARY)
+    pdf.cell(col_w[0], 7, "Indicador", border=1, fill=True, align="C")
+    pdf.cell(col_w[1], 7, "Valor", border=1, fill=True, align="C")
+    pdf.ln()
+    pdf.set_font("Helvetica", "", 8)
+    for label, value in kpis:
+        pdf.cell(col_w[0], 6, f"  {label}", border=1)
+        pdf.cell(col_w[1], 6, f"  {value}", border=1)
+        pdf.ln()
+
+    pdf.ln(6)
+
+    # Top facturas del mes
+    facturas = data.get("facturas", [])
+    if facturas:
+        pdf.set_font("Helvetica", "B", 10)
+        pdf.set_text_color(*C_PRIMARY)
+        pdf.cell(0, 6, "Facturas emitidas en el periodo", ln=True)
+        pdf.ln(2)
+        headers_f = ["Número", "Cliente", "Estado", "Total", "Pendiente"]
+        col_widths_f = [28, 65, 24, 22, 22]
+        pdf.set_fill_color(*C_HEADER_BG)
+        pdf.set_font("Helvetica", "B", 8)
+        for h, w in zip(headers_f, col_widths_f):
+            pdf.cell(w, 7, h, border=1, fill=True, align="C")
+        pdf.ln()
+        pdf.set_font("Helvetica", "", 7)
+        for row in facturas[:30]:
+            pdf.cell(col_widths_f[0], 6, str(row.get("numero", "")), border=1)
+            nombre = str(row.get("cliente_nombre", ""))[:35]
+            pdf.cell(col_widths_f[1], 6, nombre, border=1)
+            pdf.cell(col_widths_f[2], 6, str(row.get("estado", "")), border=1, align="C")
+            pdf.cell(col_widths_f[3], 6, f"{row.get('total', 0):,.2f}", border=1, align="R")
+            pdf.cell(col_widths_f[4], 6, f"{row.get('pendiente', 0):,.2f}", border=1, align="R")
+            pdf.ln()
+
+    return bytes(pdf.output())

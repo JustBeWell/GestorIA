@@ -10,6 +10,8 @@ import {
   AdminEmpleadoResumen,
   AdminFichajesResponse,
   AdminResumenResponse,
+  AuditoriaEventoItem,
+  AuditoriaResponse,
   ClienteTabItem,
   ClientesTabResponse,
   EstadoFactura,
@@ -18,6 +20,7 @@ import {
   HorasMensualesPoint,
   TrabajosMensualesPoint,
   ClientesMensualesPoint,
+  PaginationMeta,
   PagosResumen,
   TrabajoTabItem,
   TrabajosTabResponse,
@@ -49,7 +52,16 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   protected readonly charts = signal<AdminChartsResponse | null>(null);
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────
-  protected readonly activeTab = signal<'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos'>('resumen');
+  protected readonly activeTab = signal<'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'auditoria'>('resumen');
+
+  // ── Auditoría signals ────────────────────────────────────────
+  protected readonly auditoriaEventos = signal<AuditoriaEventoItem[]>([]);
+  protected readonly auditoriaLoading = signal(false);
+  protected readonly auditoriaPaginacion = signal<PaginationMeta | null>(null);
+  protected readonly auditoriaPage = signal(1);
+  protected readonly filtroAuditoriaEntidad = signal('');
+  protected readonly filtroAuditoriaAccion = signal('');
+  protected readonly expandedAuditoria = signal<string | null>(null);
 
   // ─── Tab clientes ─────────────────────────────────────────────────────────
   protected readonly clientesLoading = signal(false);
@@ -339,8 +351,8 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ─── Tab navigation ───────────────────────────────────────────────────────
-  protected switchTab(tab: 'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos'): void {
+  // ─── Tab navigation ──────────────────────────────────────────────
+  protected switchTab(tab: 'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'auditoria'): void {
     this.activeTab.set(tab);
     if (tab === 'fichajes' && !this.fichajes) {
       this.loadFichajes();
@@ -354,6 +366,41 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     if (tab === 'pagos' && !this.adminPagosFacturas.length) {
       this.loadAdminPagos();
     }
+    if (tab === 'auditoria' && !this.auditoriaEventos().length) {
+      this.loadAuditoria();
+    }
+  }
+
+  // ─── Auditoría tab ────────────────────────────────────────────
+  protected loadAuditoria(page = 1): void {
+    this.auditoriaLoading.set(true);
+    this.auditoriaPage.set(page);
+    const params: Record<string, unknown> = { page, page_size: 50 };
+    const ent = this.filtroAuditoriaEntidad();
+    const acc = this.filtroAuditoriaAccion();
+    if (ent) params['entidad'] = ent;
+    if (acc) params['accion'] = acc;
+    this.intranetService.getAuditoria(params).pipe(
+      finalize(() => this.auditoriaLoading.set(false)),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (res: AuditoriaResponse) => {
+        this.auditoriaEventos.set(res.eventos);
+        this.auditoriaPaginacion.set(res.paginacion);
+      },
+      error: () => {},
+    });
+  }
+
+  protected toggleExpandAuditoria(id: string): void {
+    this.expandedAuditoria.set(this.expandedAuditoria() === id ? null : id);
+  }
+
+  get cierreYear(): number { return new Date().getFullYear(); }
+  get cierreMonth(): number { return new Date().getMonth() + 1; }
+
+  protected downloadCierreURL(): string {
+    return this.intranetService.exportCierrePDF(this.cierreYear, this.cierreMonth);
   }
 
   // ─── Fichajes tab ─────────────────────────────────────────────────────────

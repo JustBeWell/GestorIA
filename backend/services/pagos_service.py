@@ -702,3 +702,23 @@ class PagosService:
                     }
                     for row in cur.fetchall()
                 ]
+
+    @staticmethod
+    def get_facturas_for_export(
+        user_id: str,
+        estado_factura: str | None = None,
+        cliente_id: str | None = None,
+        vencidas_solo: bool = False,
+        is_admin: bool = False,
+    ) -> list[dict]:
+        """Devuelve todas las facturas (sin paginación) para exportar a CSV."""
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                usuario = get_usuario(cursor, user_id)
+                if not usuario:
+                    return []
+                empleado_id = usuario["empleado_id"]
+                return PagosService._get_facturas_detalle(
+                    cursor, empleado_id, estado_factura, cliente_id, vencidas_solo,
+                    limit=10000, offset=0, is_admin=is_admin,
+                )

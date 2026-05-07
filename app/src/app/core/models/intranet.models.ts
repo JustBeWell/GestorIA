@@ -472,3 +472,22 @@ export interface DeudaVivaPorCliente {
   facturas_vencidas: number;
 }
 
+
+// ── Auditoría ─────────────────────────────────────────────────────────────────
+
+export interface AuditoriaEventoItem {
+  evento_id: string;
+  actor_id: string;
+  actor_nombre: string;
+  entidad: string;
+  entidad_id: string;
+  accion: string;
+  detalle_json: Record<string, unknown> | null;
+  ip: string | null;
+  created_at: string;
+}
+
+export interface AuditoriaResponse {
+  eventos: AuditoriaEventoItem[];
+  paginacion: PaginationMeta;
+}

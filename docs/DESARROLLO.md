@@ -154,17 +154,17 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 - [x] Exportacion PDF de fichaje mensual (fpdf2, endpoint GET /intranet/fichaje/export/pdf)
 - [x] Exportacion CSV de facturas desde frontend (descarga del listado visible con headers en espanol)
 - [x] Exportacion PDF de facturas desde frontend (impresion via window.print)
-- [ ] Endpoint backend `GET /intranet/facturas/export/csv` con filtros y UTF-8 BOM
-- [ ] Generacion de documento mensual de cierre (PDF con fpdf2)
+- [x] Endpoint backend `GET /intranet/facturas/export/csv` con filtros y UTF-8 BOM
+- [x] Generacion de documento mensual de cierre (PDF con fpdf2) — `GET /intranet/admin/cierre/pdf?year=&month=`
 
 ---
 
-### M9 · Auditoria — PENDIENTE
+### M9 · Auditoria — COMPLETO
 - [x] Tabla `auditoria_eventos` preparada en BD con estructura completa
-- [ ] Escritura de eventos de auditoria desde el backend (ninguna accion la usa aun)
-- [ ] UI de visualizacion de auditoria (solo para admin)
-- [ ] Registro de correcciones de fichaje en auditoria
-- [ ] Registro de altas/bajas de empleados, clientes y facturas
+- [x] Escritura de eventos de auditoria desde el backend (clientes, trabajos, facturas, pagos, fichajes, empleados)
+- [x] UI de visualizacion de auditoria (solo para admin) — tab "Auditoría" con filtros y paginacion
+- [x] Registro de correcciones de fichaje en auditoria
+- [x] Registro de altas/bajas de empleados, clientes y facturas
 
 ---
 

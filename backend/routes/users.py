@@ -3,6 +3,7 @@ from psycopg2 import Error as PsycopgError
 
 from models import UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
 from services.auth_service import get_current_user
+from services.auditoria_service import registrar_evento
 from services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(get_current_user)])
@@ -18,9 +19,18 @@ def create_user(payload: UserCreateRequest, current_user=Depends(get_current_use
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Se requiere rol administrador")
     try:
-        return UserService.create(payload)
+        result = UserService.create(payload)
     except PsycopgError as exc:
         raise HTTPException(status_code=400, detail=f"Error de base de datos: {exc.pgerror or str(exc)}") from exc
+    registrar_evento(
+        actor_id=current_user.user_id,
+        actor_nombre=current_user.nombre_usuario,
+        entidad="empleado",
+        entidad_id=result.get("usuario_id", ""),
+        accion="crear",
+        detalle={"nombre_usuario": payload.nombre_usuario, "rol": payload.rol},
+    )
+    return result
 
 
 @router.get("/me")
@@ -66,6 +76,14 @@ def admin_update_user(user_id: str, payload: UserAdminUpdateRequest, _current_us
     updated = UserService.admin_update(user_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    registrar_evento(
+        actor_id=_current_user.user_id,
+        actor_nombre=_current_user.nombre_usuario,
+        entidad="empleado",
+        entidad_id=user_id,
+        accion="editar",
+        detalle={k: v for k, v in payload.model_dump(exclude_none=True).items()},
+    )
     return updated
 
 
@@ -73,4 +91,12 @@ def admin_update_user(user_id: str, payload: UserAdminUpdateRequest, _current_us
 def admin_delete_user(user_id: str, _current_user=Depends(get_current_user)):
     if _current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Se requiere rol administrador")
-    return {"deleted": UserService.delete(user_id)}
+    deleted = UserService.delete(user_id)
+    registrar_evento(
+        actor_id=_current_user.user_id,
+        actor_nombre=_current_user.nombre_usuario,
+        entidad="empleado",
+        entidad_id=user_id,
+        accion="eliminar",
+    )
+    return {"deleted": deleted}

@@ -427,3 +427,129 @@ class AdminService:
             return f"{MONTH_ABBR_ES[int(month) - 1].capitalize()} {year}"
         except Exception:
             return mes_str
+
+    @staticmethod
+    def get_cierre_mensual(year: int, month: int) -> dict:
+        """Datos para el PDF de cierre mensual: resumen KPIs + facturas del periodo."""
+        periodo = f"{year}-{month:02d}"
+        fecha_inicio = f"{year}-{month:02d}-01"
+        # last day: first day of next month
+        if month == 12:
+            fecha_fin = f"{year + 1}-01-01"
+        else:
+            fecha_fin = f"{year}-{month + 1:02d}-01"
+
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # KPIs from v_resumen_mensual
+                cur.execute(
+                    "SELECT * FROM v_resumen_mensual WHERE periodo = %s",
+                    (periodo,),
+                )
+                row = cur.fetchone()
+                resumen = dict(row) if row else {
+                    "total_facturado": 0,
+                    "total_cobrado": 0,
+                    "trabajos_nuevos": 0,
+                    "trabajos_cerrados": 0,
+                    "clientes_nuevos": 0,
+                    "horas_trabajadas": 0,
+                }
+                for k in ("total_facturado", "total_cobrado"):
+                    if k in resumen and resumen[k] is not None:
+                        resumen[k] = float(resumen[k])
+
+                # Facturas del periodo
+                cur.execute(
+                    """
+                    SELECT
+                        f.numero,
+                        c.nombre_fiscal AS cliente_nombre,
+                        f.estado::text AS estado,
+                        f.total,
+                        GREATEST(f.total - COALESCE(SUM(p.importe), 0), 0) AS pendiente
+                    FROM facturas f
+                    JOIN clientes c ON c.id = f.cliente_id
+                    LEFT JOIN pagos p ON p.factura_id = f.id
+                    WHERE f.fecha_emision >= %s AND f.fecha_emision < %s
+                    GROUP BY f.id, f.numero, c.nombre_fiscal, f.estado, f.total
+                    ORDER BY f.fecha_emision DESC
+                    LIMIT 200
+                    """,
+                    (fecha_inicio, fecha_fin),
+                )
+                facturas = [
+                    {**dict(r), "total": float(r["total"] or 0), "pendiente": float(r["pendiente"] or 0)}
+                    for r in cur.fetchall()
+                ]
+
+        return {"resumen": resumen, "facturas": facturas}
+        page: int = 1,
+        page_size: int = 50,
+        entidad: str | None = None,
+        actor_id: str | None = None,
+        accion: str | None = None,
+        fecha_desde: str | None = None,
+        fecha_hasta: str | None = None,
+    ) -> dict:
+        filters = []
+        params: list = []
+
+        if entidad:
+            filters.append("entidad = %s")
+            params.append(entidad)
+        if actor_id:
+            filters.append("actor_id = %s::uuid")
+            params.append(actor_id)
+        if accion:
+            filters.append("accion = %s::accion_auditoria")
+            params.append(accion)
+        if fecha_desde:
+            filters.append("created_at >= %s::timestamptz")
+            params.append(fecha_desde)
+        if fecha_hasta:
+            filters.append("created_at < (%s::date + interval '1 day')::timestamptz")
+            params.append(fecha_hasta)
+
+        where_clause = ("WHERE " + " AND ".join(filters)) if filters else ""
+        offset = (page - 1) * page_size
+
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    f"SELECT COUNT(*) AS total FROM auditoria_eventos {where_clause}",
+                    params,
+                )
+                total = cur.fetchone()["total"]
+
+                cur.execute(
+                    f"""
+                    SELECT
+                        id::text           AS evento_id,
+                        actor_id::text     AS actor_id,
+                        actor_nombre,
+                        entidad,
+                        entidad_id,
+                        accion::text       AS accion,
+                        detalle_json,
+                        ip,
+                        created_at
+                    FROM auditoria_eventos
+                    {where_clause}
+                    ORDER BY created_at DESC
+                    LIMIT %s OFFSET %s
+                    """,
+                    [*params, page_size, offset],
+                )
+                eventos = [dict(r) for r in cur.fetchall()]
+
+        total_pages = max(1, -(-total // page_size))  # ceiling division
+        return {
+            "eventos": eventos,
+            "paginacion": {
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": total_pages,
+            },
+        }
