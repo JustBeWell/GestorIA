@@ -54,7 +54,7 @@ export class AiChatWidgetComponent implements OnInit, OnDestroy, AfterViewChecke
   }
 
   private updateVisibility(url: string): void {
-    const isPublic = url === '/' || url.startsWith('/auth');
+    const isPublic = url === '/' || url.startsWith('/auth') || url.startsWith('/intro');
     this.visible.set(!isPublic);
     if (isPublic) this.isOpen.set(false);
   }

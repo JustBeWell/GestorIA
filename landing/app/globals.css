@@ -235,16 +235,58 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
 /* Banner */
 .hero__banner-wrap {
   position: relative;
-  max-width: 920px;
+  max-width: 860px;
   width: 100%;
 }
-.hero__banner {
+.hero__banner-img-wrap {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow-strong);
-  background: var(--green-900);
   animation: heroFloat 9s ease-in-out infinite;
-  position: relative;
+}
+
+/* Card flotante que orbita sobre el banner */
+.hero__floating-card {
+  position: absolute;
+  bottom: -28px;
+  right: -36px;
+  width: 240px;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08);
+  animation: floatOrbit 7s ease-in-out infinite;
+  z-index: 10;
+}
+@keyframes floatOrbit {
+  0%   { transform: translate(0px,  0px)  rotate(-1deg); }
+  25%  { transform: translate(10px, -14px) rotate(1deg); }
+  50%  { transform: translate(18px, -6px)  rotate(-0.5deg); }
+  75%  { transform: translate(6px,  -18px) rotate(1.5deg); }
+  100% { transform: translate(0px,  0px)  rotate(-1deg); }
+}
+@media (max-width: 640px) {
+  .hero__floating-card { width: 140px; bottom: -18px; right: -12px; }
+}
+
+/* Banner + vídeo en fila (legacy, mantenido por si se usa) */
+.hero__media-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 1060px;
+  animation: heroFloat 9s ease-in-out infinite;
+}
+.hero__media-item {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-strong);
+  aspect-ratio: 3 / 2;
+  background: var(--green-900);
+}
+@media (max-width: 720px) {
+  .hero__media-row { grid-template-columns: 1fr; }
 }
 @keyframes heroFloat {
   0%, 100% { transform: translateY(0); }
@@ -771,7 +813,7 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
   display: grid; place-items: center; flex-shrink: 0;
 }
 .platform__icon svg { width: 28px; height: 28px; }
-.platform__name { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.platform__name { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink-900); }
 .platform__sub {
   font-size: 11px; color: var(--ink-300);
   letter-spacing: 0.08em; text-transform: uppercase;

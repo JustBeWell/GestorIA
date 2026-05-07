@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de navegacion resuelto)
+Ultima revision: 2026-05-07 (Sprint 3 en curso — admin panel completo, borrado en cascada, landing page y UX de intro mejorados)
 
 ---
 
@@ -72,6 +72,8 @@ Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de
 - [x] Control 409 para CIF/NIF duplicado, 403 para no-admin en escritura
 - [x] Vista admin muestra TODOS los clientes (sin filtro por empleado); empleado ve solo sus asignados
 - [x] RBAC en UI: botones de alta/edicion/baja solo visibles para rol administrador
+- [x] Borrado fisico en cascada: al eliminar cliente se borran trabajos, facturas y pagos asociados (V009 + DELETE fisico)
+- [x] "Dar de baja" eliminado del modal de detalle de clientes (solo disponible en panel admin)
 
 ---
 
@@ -94,6 +96,9 @@ Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de
 - [x] Filtros por prioridad y cliente con toggle de cancelados
 - [x] Vista admin muestra TODOS los trabajos; empleado ve solo los que tiene asignados
 - [x] RBAC en UI: alta/edicion/baja/asignacion solo visibles para rol administrador
+- [x] Comentarios cargan en paralelo con detalle del trabajo (forkJoin); recarga al enviar comentario
+- [x] Auto-scroll al comentario mas reciente al abrir detalle y al enviar
+- [x] Admin puede cancelar trabajos en estado `finalizado` (bypass is_admin en delete_trabajo)
 
 ---
 
@@ -110,6 +115,9 @@ Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de
 - [x] Tabla siempre renderizada; estado vacio como `<tr colspan>` dentro del `<tbody>`
 - [x] `withInMemoryScrolling` en router (`scrollPositionRestoration: 'top'`) para corregir renderizado al navegar
 - [x] `OnDestroy` + `takeUntil(destroy$)` en suscripciones HTTP del componente de pagos
+- [x] Admin puede anular facturas con pagos asociados (bypass is_admin en delete_factura)
+- [x] Panel admin: acciones de eliminar trabajos (incluyendo `finalizado`) y anular facturas operativas
+- [x] Bug 422 corregido: `page_size_facturas` acepta hasta 500
 - [ ] Endpoints de escritura: `POST /intranet/facturas`, `PUT /intranet/facturas/{id}` (PENDIENTE)
 - [ ] Endpoints de escritura: `POST /intranet/pagos`, `PUT /intranet/pagos/{id}` (PENDIENTE)
 - [ ] Formulario de alta de factura en UI (PENDIENTE — requiere endpoint POST)
@@ -196,6 +204,7 @@ Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de
 - [x] Migracion V003 aplicada — vistas analíticas
 - [x] Indice en `fichajes(empleado_id, fecha_hora)` — ya presente en V001 (`idx_fichajes_empleado_fecha`)
 - [x] Campo `intentos_fallidos` y `bloqueado_hasta` en `usuarios` — lógica de bloqueo implementada en `auth_service.py`
+- [x] Migracion V009 aplicada — FK `trabajos.cliente_id`, `facturas.cliente_id` y `pagos.factura_id` cambiadas a `ON DELETE CASCADE`
 
 ---
 
@@ -205,6 +214,31 @@ Ultima revision: 2026-05-06 (Sprint 3 en curso — UI de pagos operativa, bug de
 - [x] Splash screen rediseñada: `app-banner.png` como fondo pantalla completa (`object-fit: cover`), barra de progreso en overlay inferior semitransparente
 - [x] Splash window ampliada a 700x440 px
 - [x] Funciones `updateProgress(pct, text)`, `showDone()`, `showError(msg)` preservadas para integración con `main.cjs`
+- [x] Splash con fade-out suave (opacity 0 en 0.6 s) antes de mostrar la app
+
+---
+
+## UX / Experiencia de usuario transversal
+
+- [x] Ruta `/intro` con componente `BrandingVideoPageComponent` — video `hero.mp4` en pantalla completa antes del login
+- [x] Intro: fade-in 0.6 s al montar; fade-out 1.2 s al terminar video; fallback de 20 s si el video no se reproduce
+- [x] Intro: volumen 0.25 para evitar susto al arrancar
+- [x] Intro: `goLogin()` navega a `/auth` con `replaceUrl: true` (sin historial de intro)
+- [x] Login: animación `loginFadeIn` 0.8 s al montar componente
+- [x] Fondo global oscuro `#0c1a16` en `html, body` — evita flash blanco entre rutas
+- [x] Widget de IA oculto en rutas `/`, `/auth` e `/intro`
+- [x] Ruta raiz redirige a `/intro` (antes redirigía a `/auth`)
+
+---
+
+## Landing page
+
+- [x] Hero: sustituido SVG genérico por imagen real `app-banner.png` (max-width 860 px)
+- [x] Hero: card flotante animada con `hero.gif` en esquina inferior derecha (`floatOrbit` 7 s)
+- [x] Sección Download: iconos oficiales Windows (flag SVG) y Apple (logo SVG) en lugar de emojis
+- [x] Sección Download: títulos de plataforma a 26 px/800 para mayor visibilidad
+- [x] `next.config.mjs`: `images: { unoptimized: true }` para compatibilidad con `output: 'export'`
+- [x] Assets en `landing/public/` (app-banner.png, hero.gif) para que Next.js los sirva correctamente
 
 ---
 

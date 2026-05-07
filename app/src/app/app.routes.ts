@@ -4,8 +4,12 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
 	{
     path: '',
-    redirectTo: 'auth',
+    redirectTo: 'intro',
     pathMatch: 'full',
+  },
+  {
+    path: 'intro',
+    loadComponent: () => import('./features/auth/pages/branding-video-page.component').then((m) => m.BrandingVideoPageComponent),
   },
   {
 		path: 'auth',

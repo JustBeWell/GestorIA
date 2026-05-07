@@ -1,8 +1,8 @@
 # Plan de Sprints — GestorIA MVP
 
 **Generado:** 2026-05-04  
-**Última revisión:** 2026-05-06  
-**Estado global:** 🟡 Sprint 3 en curso — UI de pagos operativa y bug de navegación resuelto; pendiente endpoints de escritura y formularios
+**Última revisión:** 2026-05-07  
+**Estado global:** 🟡 Sprint 3 en curso — panel admin completo (borrado en cascada, anulación de facturas), UX de intro y landing mejorados; pendiente endpoints de escritura de facturas/pagos y formularios
 
 ---
 
@@ -349,6 +349,13 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 **Dependencias previas:** Sprint 1 (cliente selector), Sprint 2 (opcional: vincular trabajos a facturas).
 
 **Criterio de aceptación del sprint:** un gerente puede emitir facturas, registrar cobros parciales o totales, y consultar la deuda pendiente por cliente con alertas de vencimiento.
+
+**Completado en Sprint 3 hasta 2026-05-07:**
+- [x] UI de pagos operativa: KPIs, tabla con filtros y paginación, export CSV/PDF
+- [x] Bug de navegación corregido (`withInMemoryScrolling` + `takeUntil`)
+- [x] Admin panel: eliminar trabajos (incluyendo `finalizado`), anular facturas con pagos asociados
+- [x] Borrado en cascada de clientes (trabajos + facturas + pagos) via migración V009
+- [x] Bug 422 corregido en endpoint de pagos (`page_size_facturas` hasta 500)
 
 ---
 

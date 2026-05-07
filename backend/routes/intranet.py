@@ -401,9 +401,11 @@ def intranet_clientes_delete(
     cliente_id: str,
     current_user=Depends(get_current_user),
 ):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Solo los administradores pueden eliminar clientes")
     deleted = ClientesService.delete_cliente(cliente_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado o ya inactivo")
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

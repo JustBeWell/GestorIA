@@ -100,10 +100,11 @@ class ClientesService:
 
     @staticmethod
     def delete_cliente(cliente_id: str) -> bool:
+        """Elimina el cliente y, en cascada, todos sus trabajos y facturas (con sus pagos)."""
         with db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE clientes SET activo = FALSE, updated_at = NOW() WHERE id = %s AND activo = TRUE",
+                    "DELETE FROM clientes WHERE id = %s",
                     (cliente_id,),
                 )
                 affected = cursor.rowcount
