@@ -634,3 +634,15 @@ class PagoDetailItem(BaseModel):
 	referencia: str | None
 	notas: str | None
 
+
+class DeudaVivaPorClienteItem(BaseModel):
+	cliente_id: str
+	nombre_fiscal: str
+	cif_nif: str
+	activo: bool
+	total_facturas: int
+	total_facturado: float
+	total_cobrado: float
+	deuda_pendiente: float
+	facturas_vencidas: int
+

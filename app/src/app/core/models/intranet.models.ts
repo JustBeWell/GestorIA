@@ -460,3 +460,15 @@ export interface PagoDetailItem {
   notas: string | null;
 }
 
+export interface DeudaVivaPorCliente {
+  cliente_id: string;
+  nombre_fiscal: string;
+  cif_nif: string;
+  activo: boolean;
+  total_facturas: number;
+  total_facturado: number;
+  total_cobrado: number;
+  deuda_pendiente: number;
+  facturas_vencidas: number;
+}
+

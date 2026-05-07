@@ -500,3 +500,51 @@
 }
 .btn-danger:hover:not(:disabled) { background: #fecaca; }
 .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Tab navigation ──────────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  padding: 0 0 0 4px;
+  border-bottom: 2px solid #e2e8f0;
+  margin: 16px 0 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover { color: #0f172a; background: #f8fafc; }
+
+.tab-btn.active {
+  color: #0f172a;
+  border-bottom-color: #0f172a;
+  font-weight: 600;
+}
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9px;
+}

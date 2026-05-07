@@ -634,3 +634,71 @@ class PagosService:
                 pago_row = cur.fetchone()
 
         return {**dict(pago_row), "importe": float(pago_row["importe"] or 0)}
+
+    # ── Deuda viva ─────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_deuda_viva(user_id: str, is_admin: bool) -> list[dict]:
+        """Devuelve el resumen de deuda pendiente agrupado por cliente."""
+        with db_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                usuario = get_usuario(cur, user_id)
+                if not usuario:
+                    return []
+                empleado_id = usuario["empleado_id"]
+
+                if is_admin:
+                    scope_frag = "1=1"
+                    scope_vals: list = []
+                else:
+                    scope_frag = """c.id IN (
+                        SELECT DISTINCT t.cliente_id
+                        FROM trabajo_empleado te
+                        JOIN trabajos t ON t.id = te.trabajo_id
+                        WHERE te.empleado_id = %s AND te.desasignado_en IS NULL
+                    )"""
+                    scope_vals = [empleado_id]
+
+                cur.execute(
+                    f"""
+                    SELECT
+                        c.id::text AS cliente_id,
+                        c.nombre_fiscal,
+                        c.cif_nif,
+                        c.activo,
+                        COUNT(DISTINCT f.id)                         AS total_facturas,
+                        COALESCE(SUM(f.total), 0)                    AS total_facturado,
+                        COALESCE(SUM(cobros.cobrado), 0)             AS total_cobrado,
+                        COALESCE(SUM(f.total), 0)
+                            - COALESCE(SUM(cobros.cobrado), 0)       AS deuda_pendiente,
+                        COUNT(DISTINCT f.id) FILTER (
+                            WHERE f.estado IN ('emitida', 'pagada_parcial')
+                            AND f.fecha_vencimiento IS NOT NULL
+                            AND f.fecha_vencimiento < CURRENT_DATE
+                        )                                            AS facturas_vencidas
+                    FROM clientes c
+                    LEFT JOIN facturas f
+                           ON f.cliente_id = c.id
+                          AND f.estado NOT IN ('anulada', 'borrador')
+                    LEFT JOIN LATERAL (
+                        SELECT COALESCE(SUM(p.importe), 0) AS cobrado
+                        FROM pagos p WHERE p.factura_id = f.id
+                    ) cobros ON TRUE
+                    WHERE {scope_frag}
+                    GROUP BY c.id, c.nombre_fiscal, c.cif_nif, c.activo
+                    HAVING COALESCE(SUM(f.total), 0) - COALESCE(SUM(cobros.cobrado), 0) > 0
+                    ORDER BY deuda_pendiente DESC
+                    """,
+                    scope_vals,
+                )
+                return [
+                    {
+                        **dict(row),
+                        "total_facturado": float(row["total_facturado"]),
+                        "total_cobrado": float(row["total_cobrado"]),
+                        "deuda_pendiente": float(row["deuda_pendiente"]),
+                        "total_facturas": int(row["total_facturas"]),
+                        "facturas_vencidas": int(row["facturas_vencidas"]),
+                    }
+                    for row in cur.fetchall()
+                ]

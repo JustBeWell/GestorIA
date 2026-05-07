@@ -16,6 +16,8 @@ import {
   PaginationMeta,
   EstadoFactura,
   MetodoPago,
+  DeudaVivaPorCliente,
+  PagoRecienteTabItem,
 } from '../../../core/models/intranet.models';
 
 @Component({
@@ -40,8 +42,15 @@ export class PagosPageComponent implements OnInit, OnDestroy {
   // ── Datos principales ────────────────────────────────────────────────────
   resumen = signal<PagosResumen>({ cobrado_mes: 0, facturado_mes: 0, facturas_emitidas_mes: 0, pendiente_total: 0, pendiente_count: 0, facturas_vencidas: 0, vencido_total: 0 });
   facturas = signal<FacturaPagoTabItem[]>([]);
+  pagosRecientes = signal<PagoRecienteTabItem[]>([]);
   paginacion = signal<PaginationMeta>({ page: 1, page_size: 20, total: 0, total_pages: 0 });
   clientes = signal<{ cliente_id: string; nombre: string }[]>([]);
+
+  // ── Tabs ──────────────────────────────────────────────────────────
+  activeTab = signal<'facturas' | 'deuda' | 'pagos'>('facturas');
+  deudaViva = signal<DeudaVivaPorCliente[]>([]);
+  loadingDeuda = signal(false);
+  deudaLoaded = signal(false);
 
   // ── Filtros ───────────────────────────────────────────────────────────────
   filtroEstado = signal<string>('');
@@ -140,6 +149,7 @@ export class PagosPageComponent implements OnInit, OnDestroy {
           this.ngZone.run(() => {
             this.resumen.set(data.resumen);
             this.facturas.set(data.facturas);
+            this.pagosRecientes.set(data.pagos_recientes ?? []);
             this.paginacion.set(data.paginacion_facturas);
             this.currentPage.set(page);
           });
@@ -163,6 +173,32 @@ export class PagosPageComponent implements OnInit, OnDestroy {
         );
       },
       error: () => { /* clientes son opcionales para los filtros */ },
+    });
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  switchTab(tab: 'facturas' | 'deuda' | 'pagos'): void {
+    this.activeTab.set(tab);
+    if (tab === 'deuda' && !this.deudaLoaded()) {
+      this.loadDeudaViva();
+    }
+  }
+
+  loadDeudaViva(): void {
+    this.loadingDeuda.set(true);
+    this.svc.getDeudaViva().pipe(
+      takeUntil(this.destroy$),
+      finalize(() => this.ngZone.run(() => this.loadingDeuda.set(false)))
+    ).subscribe({
+      next: (data) => this.ngZone.run(() => {
+        this.deudaViva.set(data);
+        this.deudaLoaded.set(true);
+      }),
+      error: (err) => this.ngZone.run(() => {
+        const detail = err?.error?.detail;
+        this.errorMsg.set(typeof detail === 'string' ? detail : 'Error al cargar la deuda viva');
+      }),
     });
   }
 

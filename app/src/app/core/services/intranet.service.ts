@@ -13,6 +13,7 @@ import {
   ClienteDetailItem,
   ClientesTabResponse,
   ClienteUpdate,
+  DeudaVivaPorCliente,
   FacturaCreate,
   FacturaDetailItem,
   FacturaUpdate,
@@ -341,5 +342,11 @@ export class IntranetService {
       `${this.apiUrl}/intranet/facturas/${facturaId}/pagos`,
       payload
     );
+  }
+
+  // ── Deuda viva ────────────────────────────────────────────────────────────
+
+  getDeudaViva(): Observable<DeudaVivaPorCliente[]> {
+    return this.http.get<DeudaVivaPorCliente[]>(`${this.apiUrl}/intranet/deuda`);
   }
 }

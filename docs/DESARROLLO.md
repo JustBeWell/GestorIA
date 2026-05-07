@@ -3,7 +3,7 @@
 ## Contexto
 Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
 
-Ultima revision: 2026-05-07 (Sprint 3 en curso — admin panel completo, borrado en cascada, landing page y UX de intro mejorados)
+Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finalizado: CRUD facturas/pagos, tab deuda viva, tabs Facturas/Deuda/Pagos recientes)
 
 ---
 
@@ -102,7 +102,7 @@ Ultima revision: 2026-05-07 (Sprint 3 en curso — admin panel completo, borrado
 
 ---
 
-### M6 · Facturacion y pagos — EN CURSO (Sprint 3 · iniciado 2026-05-06)
+### M6 · Facturacion y pagos — COMPLETO (Sprint 3 · 2026-05-06/07)
 - [x] Endpoint `GET /intranet/pagos` — listado facturas y pagos con filtros
 - [x] Series trimestrales de pagos cobrados
 - [x] Modelos `facturas` y `pagos` en BD con triggers de validacion
@@ -118,13 +118,21 @@ Ultima revision: 2026-05-07 (Sprint 3 en curso — admin panel completo, borrado
 - [x] Admin puede anular facturas con pagos asociados (bypass is_admin en delete_factura)
 - [x] Panel admin: acciones de eliminar trabajos (incluyendo `finalizado`) y anular facturas operativas
 - [x] Bug 422 corregido: `page_size_facturas` acepta hasta 500
-- [ ] Endpoints de escritura: `POST /intranet/facturas`, `PUT /intranet/facturas/{id}` (PENDIENTE)
-- [ ] Endpoints de escritura: `POST /intranet/pagos`, `PUT /intranet/pagos/{id}` (PENDIENTE)
-- [ ] Formulario de alta de factura en UI (PENDIENTE — requiere endpoint POST)
-- [ ] Modal de registro de pago parcial/total (PENDIENTE — requiere endpoint POST pagos)
-- [ ] Vista de deuda viva por cliente (tab o panel, datos de `v_deuda_por_cliente`) (PENDIENTE)
-- [ ] Listado de facturas vencidas con alerta visual reforzada (PENDIENTE)
-- [ ] Endpoint backend `GET /intranet/facturas/export/csv` con filtros (PENDIENTE)
+- [x] Endpoints de escritura: `POST /intranet/facturas` (201), `PUT /intranet/facturas/{id}`, `DELETE /intranet/facturas/{id}` (204, baja logica)
+- [x] Endpoint `GET /intranet/facturas/{id}` — detalle completo con pagos embebidos
+- [x] Endpoint `POST /intranet/facturas/{id}/pagos` (201) — registrar pago sobre factura
+- [x] Formulario modal alta/edicion de factura en UI
+- [x] Modal de registro de pago (importe, metodo, fecha, referencia)
+- [x] Modal confirmacion de anulacion de factura
+- [x] Panel lateral de detalle de factura con pagos asociados
+- [x] Badges de estado con colores por estado (`borrador`, `emitida`, `pagada_parcial`, `pagada`, `anulada`)
+- [x] Fila resaltada en rojo para facturas vencidas + etiqueta `+Nd`
+- [x] Navegacion por tabs: Facturas / Deuda viva / Pagos recientes
+- [x] Endpoint `GET /intranet/deuda` — deuda viva agrupada por cliente con `facturas_vencidas`
+- [x] Tab "Deuda viva": tabla por cliente con deuda pendiente, total facturado/cobrado y facturas vencidas
+- [x] Tab "Pagos recientes": listado de ultimos cobros registrados
+- [x] Modelo `DeudaVivaPorClienteItem` en backend y `DeudaVivaPorCliente` en frontend
+- [x] Scope por rol en deuda viva: admin ve todos los clientes; empleado solo sus asignados
 
 ---
 
@@ -189,8 +197,8 @@ Ultima revision: 2026-05-07 (Sprint 3 en curso — admin panel completo, borrado
 ### Backend
 - [x] Endpoints de escritura para clientes (POST/PUT/DELETE — Sprint 1)
 - [x] Endpoints de escritura para trabajos (POST/PUT/DELETE, asignaciones, comentarios — Sprint 2)
-- [ ] Endpoints de escritura para facturas (POST/PUT — pendiente Sprint 3)
-- [ ] Endpoints de escritura para pagos (POST/PUT — pendiente Sprint 3)
+- [x] Endpoints de escritura para facturas (POST/PUT — completados Sprint 3)
+- [x] Endpoints de escritura para pagos (POST/PUT — completados Sprint 3)
 - [x] Paginacion en endpoint de clientes (page_size hasta 200, default 50)
 - [x] Route handlers convertidos de `async def` a `def` en todos los routers (intranet, auth, users, ai) — psycopg2 sincrono bloqueaba el event loop; FastAPI ahora los ejecuta en thread pool concurrente
 - [x] Validacion de formato NIF/CIF en backend (Pydantic field_validator con regex)

@@ -17,6 +17,7 @@ from models import (
     ClienteDetailItem,
     ClientesTabResponse,
     ClienteUpdate,
+    DeudaVivaPorClienteItem,
     FacturaCreate,
     FacturaDetailItem,
     FacturaUpdate,
@@ -573,6 +574,12 @@ def intranet_pagos(
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.get("/deuda", response_model=list[DeudaVivaPorClienteItem])
+def intranet_deuda_viva(current_user=Depends(get_current_user)):
+    is_admin = current_user.role == "administrador"
+    return PagosService.get_deuda_viva(current_user.user_id, is_admin)
 
 
 @router.post("/facturas", response_model=FacturaDetailItem, status_code=status.HTTP_201_CREATED)

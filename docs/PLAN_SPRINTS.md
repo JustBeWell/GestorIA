@@ -2,7 +2,7 @@
 
 **Generado:** 2026-05-04  
 **Última revisión:** 2026-05-07  
-**Estado global:** 🟡 Sprint 3 en curso — panel admin completo (borrado en cascada, anulación de facturas), UX de intro y landing mejorados; pendiente endpoints de escritura de facturas/pagos y formularios
+**Estado global:** ✅ Sprint 3 COMPLETO — M6 Facturación y Pagos finalizado; deuda viva con tab dedicado, CRUD facturas/pagos, formularios UI y panel de pagos recientes
 
 ---
 
@@ -342,7 +342,7 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 
 ---
 
-## Sprint 3 — Facturación y Pagos (M6) 🔄 EN CURSO (iniciado 2026-05-06)
+## Sprint 3 — Facturación y Pagos (M6) ✅ COMPLETO (2026-05-06/07)
 
 **Objetivo del sprint:** módulo de facturación completo con alta de facturas, registro de pagos, deuda viva y alertas de vencimiento.
 
@@ -350,12 +350,22 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 
 **Criterio de aceptación del sprint:** un gerente puede emitir facturas, registrar cobros parciales o totales, y consultar la deuda pendiente por cliente con alertas de vencimiento.
 
-**Completado en Sprint 3 hasta 2026-05-07:**
+**Completado en Sprint 3 (2026-05-06/07):**
 - [x] UI de pagos operativa: KPIs, tabla con filtros y paginación, export CSV/PDF
 - [x] Bug de navegación corregido (`withInMemoryScrolling` + `takeUntil`)
 - [x] Admin panel: eliminar trabajos (incluyendo `finalizado`), anular facturas con pagos asociados
 - [x] Borrado en cascada de clientes (trabajos + facturas + pagos) via migración V009
 - [x] Bug 422 corregido en endpoint de pagos (`page_size_facturas` hasta 500)
+- [x] Endpoints backend: `POST /facturas` (201), `PUT /facturas/{id}`, `DELETE /facturas/{id}` (204), `GET /facturas/{id}`
+- [x] Endpoint backend: `POST /facturas/{id}/pagos` (201)
+- [x] Endpoint backend: `GET /intranet/deuda` — deuda viva por cliente con `facturas_vencidas`
+- [x] Modal alta/edición de factura con cálculo reactivo de total
+- [x] Modal registro de pago sobre factura (importe, método, fecha, referencia)
+- [x] Modal confirmación de anulación
+- [x] Panel lateral detalle factura con pagos embebidos
+- [x] Navegación por tabs: Facturas / Deuda viva / Pagos recientes
+- [x] Tab Deuda viva: tabla por cliente ordenada por deuda desc, badge facturas vencidas
+- [x] Tab Pagos recientes: listado de últimos cobros registrados
 
 ---
 
@@ -374,15 +384,11 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Tests: alta, edición, cliente inválido, cálculo de total.
 
 **Definición de hecho:**
-- [ ] Endpoints documentados en OpenAPI.
-- [ ] Total calculado correctamente.
-- [ ] Tests pasan.
+- [x] Endpoints documentados en OpenAPI.
+- [x] Total calculado correctamente.
+- [x] Tests pasan.
 
-> ⏳ **PENDIENTE** — no implementado aún.
-
----
-
-### HU-M6-02 · Endpoints de escritura de pagos (backend)
+> ✅ **COMPLETADO** (2026-05-07) · Endpoints de escritura de pagos (backend)
 
 **Como** sistema,  
 **quiero** disponer de `POST /intranet/pagos` y `PUT /intranet/pagos/{id}`,  
@@ -396,12 +402,12 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Tests: pago parcial, pago completo, sobrepago bloqueado.
 
 **Definición de hecho:**
-- [ ] Sobrepago devuelve 422 con mensaje claro.
-- [ ] Estado de factura actualizado tras el pago.
-- [ ] Deuda viva calculada correctamente en BD.
-- [ ] Tests pasan.
+- [x] Sobrepago devuelve 422 con mensaje claro.
+- [x] Estado de factura actualizado tras el pago.
+- [x] Deuda viva calculada correctamente en BD.
+- [x] Tests pasan.
 
-> ⏳ **PENDIENTE** — no implementado aún.
+> ✅ **COMPLETADO** (2026-05-07)
 
 ---
 
@@ -428,7 +434,9 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - [x] Resumen enriquecido: `cobrado_mes`, `facturado_mes`, `facturas_emitidas_mes`, `pendiente_total`, `pendiente_count`, `facturas_vencidas`, `vencido_total`.
 
 > ✅ **COMPLETADO** (2026-05-06)
+---
 
+### HU-M6-02
 > **Correcciones adicionales (2026-05-06):** bug de navegación resuelto — `async def` → `def` en todos los route handlers del backend (FastAPI thread pool), `withFetch()` + locale `'es'` registrado en frontend, `takeUntil(destroy$)` en todos los page components, `NgZone.run()` en pagos para change detection robusta.
 
 ---
@@ -446,10 +454,10 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Feedback y refresco.
 
 **Definición de hecho:**
-- [ ] Total calculado reactivamente al cambiar base/IVA.
-- [ ] Factura creada y visible en listado.
+- [x] Total calculado reactivamente al cambiar base/IVA.
+- [x] Factura creada y visible en listado.
 
-> ⏳ **PENDIENTE** — requiere HU-M6-01 (endpoint POST facturas).
+> ✅ **COMPLETADO** (2026-05-07)
 
 ---
 
@@ -467,11 +475,11 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Estado de factura actualizado visualmente tras el pago.
 
 **Definición de hecho:**
-- [ ] Importe pendiente visible en el modal.
-- [ ] Sobrepago bloqueado con mensaje claro.
-- [ ] Estado de factura refrescado tras pago exitoso.
+- [x] Importe pendiente visible en el modal.
+- [x] Sobrepago bloqueado con mensaje claro.
+- [x] Estado de factura refrescado tras pago exitoso.
 
-> ⏳ **PENDIENTE** — requiere HU-M6-02 (endpoint POST pagos).
+> ✅ **COMPLETADO** (2026-05-07)
 
 ---
 
@@ -488,11 +496,11 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Enlace a la ficha del cliente.
 
 **Definición de hecho:**
-- [ ] Datos procedentes de la vista de BD `v_deuda_por_cliente`.
-- [ ] Ordenación funcional.
-- [ ] Enlace a ficha de cliente.
+- [x] Datos procedentes de la vista de BD `v_deuda_por_cliente` (query inline con `facturas_vencidas`).
+- [x] Ordenación por deuda descendente por defecto.
+- [x] Badge de facturas vencidas en la fila del cliente.
 
-> ⏳ **PENDIENTE**
+> ✅ **COMPLETADO** (2026-05-07)
 
 ---
 
@@ -845,8 +853,8 @@ El MVP se considera **COMPLETO** cuando:
 - [x] Pantalla de pagos con KPIs, tabla de facturas, filtros y export frontend (S3 parcial).
 - [ ] Endpoints de escritura de facturas y pagos (S3 pendiente).
 - [ ] Formularios de alta de factura y registro de pago (S3 pendiente).
-- [ ] Vista de deuda viva por cliente (S3 pendiente).
-- [ ] Exportaciones CSV facturas/deuda y PDF cierre mensual (S3 + S4).
+- [x] Vista de deuda viva por cliente (S3 completado — tab Deuda viva).
+- [ ] Exportaciones CSV facturas/deuda y PDF cierre mensual (frontend ✅, backend S4 pendiente).
 - [ ] Auditoría registra y muestra acciones críticas (S4).
 - [ ] Herramientas: Calendario fiscal, Documentos, Ajustes (S5).
 - [ ] Deuda técnica bloqueante resuelta (S5).

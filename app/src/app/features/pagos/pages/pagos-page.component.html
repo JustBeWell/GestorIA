@@ -126,7 +126,33 @@
       </div>
       }
 
+      <!-- Tab navigation -->
+      <nav class="tab-nav" role="tablist">
+        <button class="tab-btn" role="tab"
+          [class.active]="activeTab() === 'facturas'"
+          [attr.aria-selected]="activeTab() === 'facturas'"
+          (click)="switchTab('facturas')">
+          Facturas
+        </button>
+        <button class="tab-btn" role="tab"
+          [class.active]="activeTab() === 'deuda'"
+          [attr.aria-selected]="activeTab() === 'deuda'"
+          (click)="switchTab('deuda')">
+          Deuda viva
+          @if (deudaViva().length > 0) {
+            <span class="tab-badge">{{ deudaViva().length }}</span>
+          }
+        </button>
+        <button class="tab-btn" role="tab"
+          [class.active]="activeTab() === 'pagos'"
+          [attr.aria-selected]="activeTab() === 'pagos'"
+          (click)="switchTab('pagos')">
+          Pagos recientes
+        </button>
+      </nav>
+
       <!-- Table panel -->
+      @if (activeTab() === 'facturas') {
       <section class="panel table-section">
 
         @if (loading()) {
@@ -215,6 +241,116 @@
           }
         }
       </section>
+      } <!-- /tab facturas -->
+
+      <!-- Tab: Deuda viva por cliente -->
+      @if (activeTab() === 'deuda') {
+      <section class="panel table-section">
+        @if (loadingDeuda()) {
+          <div class="skeleton-rows">
+            @for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }
+          </div>
+        } @else {
+          <table class="facturas-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>CIF/NIF</th>
+                <th class="text-right">Facturas</th>
+                <th class="text-right">Facturado</th>
+                <th class="text-right">Cobrado</th>
+                <th class="text-right">Deuda pendiente</th>
+                <th class="text-right">Vencidas</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (deudaViva().length === 0) {
+                <tr>
+                  <td colspan="7">
+                    <div class="state-card">
+                      <span class="empty-icon">✅</span>
+                      <h2>Sin deuda pendiente</h2>
+                      <p>Todos los clientes están al corriente de pago.</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @for (d of deudaViva(); track d.cliente_id) {
+                <tr [class.row-vencida]="d.facturas_vencidas > 0">
+                  <td>
+                    <span [class.text-muted]="!d.activo">{{ d.nombre_fiscal }}</span>
+                    @if (!d.activo) { <span class="badge estado-anulada" style="margin-left:4px">inactivo</span> }
+                  </td>
+                  <td class="font-mono">{{ d.cif_nif }}</td>
+                  <td class="text-right">{{ d.total_facturas }}</td>
+                  <td class="text-right font-mono">{{ d.total_facturado | currency:'EUR':'symbol':'1.2-2' }}</td>
+                  <td class="text-right font-mono">{{ d.total_cobrado | currency:'EUR':'symbol':'1.2-2' }}</td>
+                  <td class="text-right font-mono text-danger">{{ d.deuda_pendiente | currency:'EUR':'symbol':'1.2-2' }}</td>
+                  <td class="text-right">
+                    @if (d.facturas_vencidas > 0) {
+                      <span class="vencida-tag" title="Facturas con vencimiento superado">{{ d.facturas_vencidas }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (deudaViva().length > 0) {
+            <p class="table-info">{{ deudaViva().length }} cliente{{ deudaViva().length !== 1 ? 's' : '' }} con deuda</p>
+          }
+        }
+      </section>
+      } <!-- /tab deuda -->
+
+      <!-- Tab: Pagos recientes -->
+      @if (activeTab() === 'pagos') {
+      <section class="panel table-section">
+        @if (loading()) {
+          <div class="skeleton-rows">
+            @for (i of [1,2,3,4]; track i) { <div class="skeleton-row"></div> }
+          </div>
+        } @else {
+          <table class="facturas-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Factura</th>
+                <th>Cliente</th>
+                <th>Método</th>
+                <th class="text-right">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (pagosRecientes().length === 0) {
+                <tr>
+                  <td colspan="5">
+                    <div class="state-card">
+                      <span class="empty-icon">💳</span>
+                      <h2>Sin pagos recientes</h2>
+                      <p>Aún no se han registrado cobros.</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @for (p of pagosRecientes(); track p.pago_id) {
+                <tr>
+                  <td>{{ p.fecha_pago | date:'dd/MM/yyyy' }}</td>
+                  <td class="factura-numero">{{ p.factura_numero }}</td>
+                  <td>{{ p.cliente_nombre }}</td>
+                  <td>{{ p.metodo_pago }}</td>
+                  <td class="text-right font-mono">{{ p.importe | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (pagosRecientes().length > 0) {
+            <p class="table-info">{{ pagosRecientes().length }} cobro{{ pagosRecientes().length !== 1 ? 's' : '' }} recientes</p>
+          }
+        }
+      </section>
+      } <!-- /tab pagos -->
 
     </section><!-- /content -->
 
