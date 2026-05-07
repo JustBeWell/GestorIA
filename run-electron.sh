@@ -23,19 +23,18 @@ done
 colima restart 
 # ── 1. Backend (Docker) ────────────────────────────────────────────────────
 if [[ "$SKIP_DOCKER" == false ]]; then
-  echo "── Iniciando DB y backend (Docker) ───────────────────────────"
+  echo "── Iniciando DB, microservicios y gateway (Docker) ──────────"
   cd "$SCRIPT_DIR"
-  docker-compose up -d db backend
+  docker-compose up -d
 
-  echo "── Esperando a que el backend responda en :8008 ──────────────"
-  for i in $(seq 1 30); do
-    if curl -sf http://localhost:8008/health > /dev/null 2>&1 || \
-       curl -sf http://localhost:8008/docs   > /dev/null 2>&1; then
-      echo "   Backend listo."
+  echo "── Esperando a que el gateway responda en :8008 ──────────────"
+  for i in $(seq 1 40); do
+    if curl -sf http://localhost:8008/gateway/health > /dev/null 2>&1; then
+      echo "   Gateway listo."
       break
     fi
-    if [[ $i -eq 30 ]]; then
-      echo "   Aviso: el backend no respondió en 30s, continuando de todas formas."
+    if [[ $i -eq 40 ]]; then
+      echo "   Aviso: el gateway no respondió en 40s, continuando de todas formas."
     fi
     sleep 1
   done

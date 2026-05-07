@@ -171,16 +171,15 @@ async function runLauncher() {
   try {
     // Step 1 — db
     splashUpdate(splash, 5,  'Preparando los datos…');
-    await spawnAsync('docker-compose', ['build', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 18, 'Conectando con la base de datos…');
     await spawnAsync('docker-compose', ['up', '-d', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 30, 'Base de datos lista');
+    splashUpdate(splash, 18, 'Base de datos lista');
 
-    splashUpdate(splash, 33, 'Cargando los servicios…');
-    await spawnAsync('docker-compose', ['build', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 48, 'Iniciando los servicios…');
-    await spawnAsync('docker-compose', ['up', '-d', 'backend'], PROJECT_ROOT);
-    splashUpdate(splash, 55, 'Servicios listos');
+    // Step 2 — build shared backend image (all microservicios reusan la misma imagen)
+    splashUpdate(splash, 20, 'Construyendo los microservicios…');
+    await spawnAsync('docker-compose', ['build'], PROJECT_ROOT);
+    splashUpdate(splash, 45, 'Iniciando los microservicios…');
+    await spawnAsync('docker-compose', ['up', '-d'], PROJECT_ROOT);
+    splashUpdate(splash, 55, 'Microservicios y gateway listos');
 
     splashUpdate(splash, 58, 'Preparando la interfaz…');
     const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
