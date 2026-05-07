@@ -1,3 +1,26 @@
+x-backend-common: &backend-common
+  build:
+    context: ./backend
+    dockerfile: Dockerfile
+  depends_on:
+    db:
+      condition: service_healthy
+  environment:
+    POSTGRES_HOST: db
+    POSTGRES_PORT: 5432
+    POSTGRES_DB: GestorIA
+    POSTGRES_USER: gestoria
+    POSTGRES_PASSWORD: gestoria
+    POSTGRES_SSLMODE: disable
+    DATABASE_URL: postgresql://gestoria:gestoria@db:5432/GestorIA?sslmode=disable
+    JWT_SECRET_KEY: dev-secret-change-me
+    JWT_ALGORITHM: HS256
+    JWT_EXPIRATION_HOURS: 8
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
+    TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+    TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+    TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+
 services:
   db:
     image: postgres:17-alpine
@@ -17,32 +40,69 @@ services:
       timeout: 5s
       retries: 12
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: gestoria-backend
+  # ── Backend microservices ──────────────────────────────────────────────────
+
+  backend-auth:
+    <<: *backend-common
+    container_name: gestoria-backend-auth
+    command: ["uvicorn", "main_auth:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-home:
+    <<: *backend-common
+    container_name: gestoria-backend-home
+    command: ["uvicorn", "main_home:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-fichaje:
+    <<: *backend-common
+    container_name: gestoria-backend-fichaje
+    command: ["uvicorn", "main_fichaje:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-clientes:
+    <<: *backend-common
+    container_name: gestoria-backend-clientes
+    command: ["uvicorn", "main_clientes:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-trabajos:
+    <<: *backend-common
+    container_name: gestoria-backend-trabajos
+    command: ["uvicorn", "main_trabajos:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-pagos:
+    <<: *backend-common
+    container_name: gestoria-backend-pagos
+    command: ["uvicorn", "main_pagos:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-admin:
+    <<: *backend-common
+    container_name: gestoria-backend-admin
+    command: ["uvicorn", "main_admin:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  backend-ai:
+    <<: *backend-common
+    container_name: gestoria-backend-ai
+    command: ["uvicorn", "main_ai:app", "--host", "0.0.0.0", "--port", "8008"]
+
+  # ── API Gateway ────────────────────────────────────────────────────────────
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: gestoria-gateway
     depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      POSTGRES_DB: GestorIA
-      POSTGRES_USER: gestoria
-      POSTGRES_PASSWORD: gestoria
-      POSTGRES_SSLMODE: disable
-      DATABASE_URL: postgresql://gestoria:gestoria@db:5432/GestorIA?sslmode=disable
-      JWT_SECRET_KEY: dev-secret-change-me
-      JWT_ALGORITHM: HS256
-      JWT_EXPIRATION_HOURS: 8
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
-      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      - backend-auth
+      - backend-home
+      - backend-fichaje
+      - backend-clientes
+      - backend-trabajos
+      - backend-pagos
+      - backend-admin
+      - backend-ai
     ports:
       - "8008:8008"
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8008"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  # ── Frontend ───────────────────────────────────────────────────────────────
 
   frontend-electron:
     build:
@@ -50,7 +110,7 @@ services:
       dockerfile: Dockerfile.electron
     container_name: gestoria-frontend-electron
     depends_on:
-      - backend
+      - gateway
     volumes:
       - ./app/dist:/app/dist
     restart: "no"
