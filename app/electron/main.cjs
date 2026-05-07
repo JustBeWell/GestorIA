@@ -123,6 +123,37 @@ function splashUpdate(splash, pct, text) {
   splash.webContents.executeJavaScript(`updateProgress(${pct}, ${JSON.stringify(text)})`).catch(() => {});
 }
 
+/** Inicia el avance lento de la barra hasta maxPct mientras se espera una operación */
+function splashCreep(splash, maxPct, step = 0.35, intervalMs = 180) {
+  if (splash.isDestroyed()) return;
+  splash.webContents.executeJavaScript(`startCreep(${maxPct}, ${step}, ${intervalMs})`).catch(() => {});
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Espera a que el gateway nginx responda en /gateway/health */
+function waitForGateway(maxWaitMs = 60000) {
+  const http = require('http');
+  const pollInterval = 1500;
+  let elapsed = 0;
+  return new Promise((resolve) => {
+    const check = () => {
+      const req = http.get('http://localhost:8008/gateway/health', (res) => {
+        if (res.statusCode === 200) return resolve();
+        retry();
+      });
+      req.on('error', retry);
+      req.setTimeout(1000, () => { req.destroy(); retry(); });
+    };
+    const retry = () => {
+      elapsed += pollInterval;
+      if (elapsed >= maxWaitMs) return resolve(); // no bloquear indefinidamente
+      setTimeout(check, pollInterval);
+    };
+    check();
+  });
+}
+
 /** Spawn a child process and resolve/reject on exit */
 function spawnAsync(cmd, args, cwd) {
   return new Promise((resolve, reject) => {
@@ -169,19 +200,35 @@ async function runLauncher() {
   const splash = await createSplashWindow();
 
   try {
-    // Step 1 — db
-    splashUpdate(splash, 5,  'Preparando los datos…');
+    // ── Paso 1: base de datos ────────────────────────────────────────────────
+    splashUpdate(splash, 4, 'Arrancando el motor de base de datos…');
+    splashCreep(splash, 20);
     await spawnAsync('docker-compose', ['up', '-d', 'db'], PROJECT_ROOT);
-    splashUpdate(splash, 18, 'Base de datos lista');
+    splashUpdate(splash, 22, 'Base de datos conectada');
+    await sleep(350);
 
-    // Step 2 — build shared backend image (all microservicios reusan la misma imagen)
-    splashUpdate(splash, 20, 'Construyendo los microservicios…');
+    // ── Paso 2: construir imagen compartida ──────────────────────────────────
+    splashUpdate(splash, 24, 'Preparando los módulos de la aplicación…');
+    splashCreep(splash, 56);
     await spawnAsync('docker-compose', ['build'], PROJECT_ROOT);
-    splashUpdate(splash, 45, 'Iniciando los microservicios…');
-    await spawnAsync('docker-compose', ['up', '-d'], PROJECT_ROOT);
-    splashUpdate(splash, 55, 'Microservicios y gateway listos');
+    splashUpdate(splash, 57, 'Módulos compilados correctamente');
+    await sleep(300);
 
-    splashUpdate(splash, 58, 'Preparando la interfaz…');
+    // ── Paso 3: levantar microservicios ──────────────────────────────────────
+    splashUpdate(splash, 59, 'Iniciando los servicios en segundo plano…');
+    splashCreep(splash, 70);
+    await spawnAsync('docker-compose', ['up', '-d'], PROJECT_ROOT);
+    splashUpdate(splash, 71, 'Servicios iniciados, verificando disponibilidad…');
+
+    // ── Paso 4: esperar gateway ──────────────────────────────────────────────
+    splashCreep(splash, 83);
+    await waitForGateway();
+    splashUpdate(splash, 84, 'Todos los servicios responden correctamente');
+    await sleep(350);
+
+    // ── Paso 5: compilar Angular ─────────────────────────────────────────────
+    splashUpdate(splash, 86, 'Compilando la interfaz de usuario…');
+    splashCreep(splash, 96);
     const ng = path.join(APP_DIR, 'node_modules', '.bin', 'ng');
     // Buscar node en PATH
     const nodeExec = (() => {
@@ -192,15 +239,13 @@ async function runLauncher() {
       return 'node'; // fallback
     })();
     await spawnAsync(nodeExec, [ng, 'build'], APP_DIR);
-    splashUpdate(splash, 85, 'Interfaz preparada');
-
-    splashUpdate(splash, 90, 'Abriendo GestorIA…');
-    await new Promise((r) => setTimeout(r, 600));
+    splashUpdate(splash, 97, 'Interfaz lista, abriendo GestorIA…');
+    await sleep(500);
 
     if (!splash.isDestroyed()) {
       splash.webContents.executeJavaScript('showDone()').catch(() => {});
     }
-    await new Promise((r) => setTimeout(r, 900));
+    await sleep(1000);
 
     createWindow();
     if (!splash.isDestroyed()) splash.close();

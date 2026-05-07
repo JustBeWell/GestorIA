@@ -67,7 +67,6 @@
       background: linear-gradient(90deg, #a8c5b0, #ffffff);
       border-radius: 99px;
       width: 0%;
-      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
   </style>
@@ -91,26 +90,67 @@
     const status  = document.getElementById('status');
     const percent = document.getElementById('percent');
 
+    let current = 0;   // valor actualmente dibujado
+    let target  = 0;   // valor al que nos dirigimos
+    let rafId   = null;
+    let creepId = null;
+
+    /* Anima current → target con easing suave */
+    function _animate() {
+      rafId = null;
+      const diff = target - current;
+      if (Math.abs(diff) < 0.05) {
+        current = target;
+      } else {
+        current += diff * 0.10;   // 10 % del tramo restante por fotograma
+        rafId = requestAnimationFrame(_animate);
+      }
+      bar.style.width   = current.toFixed(2) + '%';
+      percent.textContent = Math.round(current) + '%';
+    }
+
+    function _scheduleAnimate() {
+      if (!rafId) rafId = requestAnimationFrame(_animate);
+    }
+
+    /* Actualización directa (llamada desde main.cjs) */
     function updateProgress(pct, text) {
-      bar.style.width = pct + '%';
-      percent.textContent = Math.round(pct) + '%';
-      if (text) status.textContent = text;
-      status.classList.remove('error');
+      _stopCreep();
+      target = pct;
+      if (text) { status.textContent = text; status.classList.remove('error'); }
+      _scheduleAnimate();
+    }
+
+    /* Avance lento mientras esperamos una operación larga */
+    function startCreep(maxPct, step = 0.35, intervalMs = 180) {
+      _stopCreep();
+      creepId = setInterval(() => {
+        if (current < maxPct - step) {
+          target = Math.min(target + step, maxPct);
+          _scheduleAnimate();
+        } else {
+          _stopCreep();
+        }
+      }, intervalMs);
+    }
+
+    function _stopCreep() {
+      if (creepId) { clearInterval(creepId); creepId = null; }
     }
 
     function showDone() {
+      _stopCreep();
       bar.style.background = 'linear-gradient(90deg, #4ade80, #bbf7d0)';
-      bar.style.width = '100%';
-      percent.textContent = '100%';
+      target = 100;
+      _scheduleAnimate();
       status.textContent = '¡Todo listo!';
-      // Fade-out suave antes de cerrar el splash
-      setTimeout(() => {
-        document.body.style.opacity = '0';
-      }, 300);
+      setTimeout(() => { document.body.style.opacity = '0'; }, 400);
     }
 
     function showError(msg) {
+      _stopCreep();
       bar.style.background = '#f87171';
+      target = 100; current = 100;
       bar.style.width = '100%';
       status.classList.add('error');
       status.textContent = msg;
