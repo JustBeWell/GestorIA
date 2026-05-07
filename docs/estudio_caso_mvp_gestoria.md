@@ -19,7 +19,7 @@ El problema parte de un entorno de gestoría pequeña o empresa con operativa ad
 - dificultad para consolidar información mensual,
 - dependencia excesiva de trabajo manual para preparar documentación.
 
-Según el anteproyecto, la necesidad surge de digitalizar el fichaje de empleados y centralizar la gestión de clientes, trabajos, pagos y documentación mensual en un único sistema, reduciendo errores y esfuerzo humano. Además, el sistema debe poder evolucionar hacia automatización documental asistida por IA y una arquitectura preparada para crecer en el futuro. fileciteturn2file0
+Según el anteproyecto, la necesidad surge de digitalizar el fichaje de empleados y centralizar la gestión de clientes, trabajos, pagos y documentación mensual en un único sistema, reduciendo errores y esfuerzo humano. Además, el sistema debe poder evolucionar hacia automatización documental asistida por IA y una arquitectura preparada para crecer en el futuro.
 
 ---
 
@@ -43,13 +43,13 @@ La empresa necesita saber:
 La empresa necesita registrar facturas, pagos parciales o completos, y conocer la deuda viva por cliente, es decir, el importe que sigue pendiente de cobro.
 
 ### 3.4. Cierre mensual
-La gerencia necesita consolidar el estado de la actividad del mes: horas trabajadas, incidencias de fichaje, trabajos, ingresos, deudas y alertas. En una fase posterior, esto se complementa con IA para detectar anomalías y proponer correcciones, manteniendo siempre validación humana. fileciteturn2file1 fileciteturn2file2
+La gerencia necesita consolidar el estado de la actividad del mes: horas trabajadas, incidencias de fichaje, trabajos, ingresos, deudas y alertas. En una fase posterior, esto se complementa con IA para detectar anomalías y proponer correcciones, manteniendo siempre validación humana.
 
 ---
 
 ## 4. Objetivo del sistema
 
-El objetivo general del sistema es desarrollar una aplicación de gestión para una gestoría pequeña que digitalice el fichaje de empleados y centralice la gestión operativa y económica, automatizando la generación del documento mensual de fichaje con garantías de seguridad, privacidad y trazabilidad. fileciteturn2file0
+El objetivo general del sistema es desarrollar una aplicación de gestión para una gestoría pequeña que digitalice el fichaje de empleados y centralice la gestión operativa y económica, automatizando la generación del documento mensual de fichaje con garantías de seguridad, privacidad y trazabilidad.
 
 Traducido a producto software, esto implica construir una plataforma que permita:
 
@@ -66,7 +66,7 @@ Traducido a producto software, esto implica construir una plataforma que permita
 
 ## 5. Actores del sistema
 
-A partir del DGR, los actores principales del sistema son los siguientes: fileciteturn2file2
+A partir del DGR, los actores principales del sistema son los siguientes:
 
 ### 5.1. Gerente / Administrador
 Es el actor principal de control. Configura reglas, gestiona usuarios y permisos, supervisa fichajes, revisa informes, administra clientes, trabajos y facturación.
@@ -78,7 +78,7 @@ Realiza fichajes, consulta sus asignaciones y, en fases posteriores, actualiza e
 No actúa directamente sobre el sistema en el MVP, pero es destinataria de documentación mensual o resúmenes exportados.
 
 ### 5.4. Cliente
-Aparece en la documentación como posible actor para una versión posterior mediante portal cliente, por lo que **no forma parte del MVP**. fileciteturn2file2
+Aparece en la documentación como posible actor para una versión posterior mediante portal cliente, por lo que **no forma parte del MVP**.
 
 ---
 
@@ -95,13 +95,13 @@ Del análisis conjunto de anteproyecto y DGR, las necesidades reales del sistema
 - reducir trabajo manual repetitivo,
 - preparar el terreno para automatizaciones posteriores.
 
-Estas necesidades están priorizadas en la documentación por iteraciones, donde el camino crítico comienza por fichaje, base de datos, empleados y clientes, antes de evolucionar hacia trabajos, facturación, informes y auditoría. fileciteturn2file2
+Estas necesidades están priorizadas en la documentación por iteraciones, donde el camino crítico comienza por fichaje, base de datos, empleados y clientes, antes de evolucionar hacia trabajos, facturación, informes y auditoría.
 
 ---
 
 ## 7. Alcance funcional total del producto
 
-El alcance completo definido en los documentos incluye: fichaje legal, gestión de empleados, clientes, trabajos, facturación básica, deudas, informes, panel de control, exportaciones y automatización documental con IA. fileciteturn2file2
+El alcance completo definido en los documentos incluye: fichaje legal, gestión de empleados, clientes, trabajos, facturación básica, deudas, informes, panel de control, exportaciones y automatización documental con IA.
 
 Sin embargo, para empezar el desarrollo de manera realista, conviene separar:
 
@@ -141,7 +141,7 @@ Incluye:
 - política básica de contraseñas,
 - bloqueo básico por intentos fallidos si se implementa de forma sencilla.
 
-Esto aparece como requisito transversal del sistema y dependencia del módulo de fichaje. fileciteturn2file2
+Esto aparece como requisito transversal del sistema y dependencia del módulo de fichaje.
 
 ### Módulo 2. Gestión de empleados
 Incluye:
@@ -151,7 +151,7 @@ Incluye:
 - asignación de rol,
 - vista resumida de fichajes por empleado.
 
-Se apoya en RF3 del DGR. fileciteturn2file2
+Se apoya en RF3 del DGR.
 
 ### Módulo 3. Fichaje
 Incluye:
@@ -163,7 +163,7 @@ Incluye:
 - consulta por fecha o rango,
 - exportación básica CSV/PDF.
 
-En el DGR este es el núcleo legal inicial y el primer requisito funcional prioritario. fileciteturn2file2
+En el DGR este es el núcleo legal inicial y el primer requisito funcional prioritario.
 
 ### Módulo 4. Gestión de clientes
 Incluye:
@@ -173,7 +173,7 @@ Incluye:
 - validación de CIF/NIF,
 - búsqueda por nombre, CIF o email.
 
-El historial documental avanzado puede dejarse simplificado para una segunda fase. fileciteturn2file2
+El historial documental avanzado puede dejarse simplificado para una segunda fase.
 
 ### Módulo 5. Gestión de trabajos
 Incluye:
@@ -184,7 +184,7 @@ Incluye:
 - comentarios internos simples,
 - filtro por estado y cliente.
 
-Los adjuntos pueden mantenerse en una primera versión muy simple o posponerse si retrasan demasiado el arranque. fileciteturn2file2
+Los adjuntos pueden mantenerse en una primera versión muy simple o posponerse si retrasan demasiado el arranque.
 
 ### Módulo 6. Facturación y pagos
 Incluye:
@@ -195,7 +195,7 @@ Incluye:
 - cálculo automático de deuda viva por cliente,
 - listado de facturas pendientes.
 
-Las alertas automáticas por impago pueden empezar como vista filtrable en lugar de notificación automática. fileciteturn2file2
+Las alertas automáticas por impago pueden empezar como vista filtrable en lugar de notificación automática.
 
 ### Módulo 7. Resumen operativo mínimo
 Incluye un panel básico para gerente con:
@@ -239,10 +239,10 @@ Se pospone:
 - etiquetado de riesgo sofisticado,
 - explicabilidad detallada enlazada a datos fuente.
 
-El DGR sitúa esta parte en iteraciones posteriores y además indica dependencia de histórico suficiente. fileciteturn2file2
+El DGR sitúa esta parte en iteraciones posteriores y además indica dependencia de histórico suficiente.
 
 ### 9.2. Portal cliente
-No entra en la primera versión. Está definido como opcional/v1+ y como extensión SaaS futura. fileciteturn2file2
+No entra en la primera versión. Está definido como opcional/v1+ y como extensión SaaS futura.
 
 ### 9.3. Integraciones externas complejas
 Fuera del MVP:
@@ -257,10 +257,10 @@ Fuera del MVP:
 Las notificaciones automáticas por email o in-app pueden quedar para la v1, siempre que en el MVP existan listados filtrables de pendientes e incidencias.
 
 ### 9.5. Antifraude fuerte
-Geolocalización o control por IP pueden prepararse a nivel de diseño, pero no deberían bloquear el inicio del desarrollo. El propio DGR lo marca como política opcional. fileciteturn2file2
+Geolocalización o control por IP pueden prepararse a nivel de diseño, pero no deberían bloquear el inicio del desarrollo. El propio DGR lo marca como política opcional.
 
 ### 9.6. 2FA obligatoria
-La autenticación en dos factores (*Two-Factor Authentication*, segundo factor adicional al password) puede quedar preparada como mejora posterior. En documentos aparece como opcional, no como requisito imprescindible del arranque. fileciteturn2file2
+La autenticación en dos factores (*Two-Factor Authentication*, segundo factor adicional al password) puede quedar preparada como mejora posterior. En documentos aparece como opcional, no como requisito imprescindible del arranque.
 
 ---
 
@@ -291,7 +291,7 @@ El MVP queda definido así:
 - integraciones externas sofisticadas,
 - analítica histórica avanzada.
 
-Esta delimitación respeta el camino crítico del DGR y permite arrancar por los módulos con mayor valor inmediato. fileciteturn2file2
+Esta delimitación respeta el camino crítico del DGR y permite arrancar por los módulos con mayor valor inmediato.
 
 ---
 
@@ -371,7 +371,7 @@ Estas reglas son especialmente importantes porque condicionan la lógica del bac
 
 ## 13. Casos de uso principales del MVP
 
-Los casos de uso que mejor describen el producto mínimo son los siguientes, alineados con el DGR. fileciteturn2file2
+Los casos de uso que mejor describen el producto mínimo son los siguientes, alineados con el DGR.
 
 ### CU-MVP-01. Iniciar sesión
 **Actor:** Empleado / Gerente  
@@ -417,7 +417,7 @@ Los casos de uso que mejor describen el producto mínimo son los siguientes, ali
 
 ## 14. Priorización real para arrancar desarrollo
 
-La documentación ya establece un camino crítico: RF1 -> RF2 -> (RF3, RF4) -> RF5 -> RF6 -> (RF7, RF8) -> (RF9, RF10). fileciteturn2file2
+La documentación ya establece un camino crítico: RF1 -> RF2 -> (RF3, RF4) -> RF5 -> RF6 -> (RF7, RF8) -> (RF9, RF10).
 
 Para desarrollo práctico, lo convertiría en este orden:
 
@@ -454,7 +454,7 @@ Para desarrollo práctico, lo convertiría en este orden:
 - endurecimiento de seguridad,
 - pruebas integradas.
 
-Este orden es coherente con las iteraciones ya definidas en los documentos, pero las convierte en una secuencia más operativa para empezar a programar. fileciteturn2file0 fileciteturn2file2
+Este orden es coherente con las iteraciones ya definidas en los documentos, pero las convierte en una secuencia más operativa para empezar a programar.
 
 ---
 
@@ -566,7 +566,7 @@ Este modelo cubre el núcleo del MVP sin introducir complejidad innecesaria.
 
 ## 16. Requisitos no funcionales mínimos para arrancar
 
-El DGR define varios RNF importantes: rendimiento, disponibilidad, seguridad, privacidad, accesibilidad, mantenibilidad, compatibilidad, observabilidad y recuperación. fileciteturn2file2
+El DGR define varios RNF importantes: rendimiento, disponibilidad, seguridad, privacidad, accesibilidad, mantenibilidad, compatibilidad, observabilidad y recuperación.
 
 Para el MVP, conviene aterrizarlos así:
 
@@ -608,44 +608,43 @@ No hace falta agotar toda WCAG 2.1 AA en el primer día, pero sí conviene empez
 
 ---
 
-## 17. Decisiones técnicas recomendadas para el MVP
+## 17. Decisiones técnicas recomendadas y stack finalmente aplicado
 
-Los documentos proponen como stack principal Electron + React en frontend y FastAPI en backend, con PostgreSQL como base de datos, y RabbitMQ o Redis para mensajería asíncrona. fileciteturn2file3
-
-Para un MVP, la decisión más sensata sería:
+Este documento se redactó como estudio inicial del MVP. En ese momento se valoraban varias opciones de frontend y arquitectura. La implementación real del proyecto ha quedado así:
 
 ### Backend
-**FastAPI + SQLAlchemy + PostgreSQL**
+**FastAPI + PostgreSQL**
 
 Motivo:
-- encaja con lo ya planteado,
 - permite construir API REST de forma rápida,
-- tiene buena integración con validación y documentación automática,
-- facilita escalar más adelante.
+- ofrece documentación OpenAPI,
+- encaja bien con Pydantic para contratos de datos,
+- permite separar rutas y servicios por dominio,
+- facilita una evolución posterior hacia microservicios.
+
+En la versión actual, el backend está dividido en entry-points FastAPI por dominio (`main_auth.py`, `main_home.py`, `main_fichaje.py`, `main_clientes.py`, `main_trabajos.py`, `main_pagos.py`, `main_admin.py`, `main_ai.py`) y se expone mediante nginx como API gateway.
 
 ### Frontend
-Hay dos rutas posibles:
+**Angular + Electron**
 
-#### Opción A. React web puro
-Es la mejor opción para arrancar rápido si no necesitas aplicación de escritorio desde el día 1.
+La implementación final usa Angular para la SPA y Electron para la experiencia de escritorio. La decisión de incluir Electron desde el MVP se justifica porque el producto se plantea como herramienta local de escritorio para una gestoría pequeña, con launcher macOS y splash screen de arranque.
 
-#### Opción B. Electron + React
-Solo compensa si el requisito de escritorio es real e inmediato.
+### Base de datos
+**PostgreSQL**
 
-### Recomendación práctica
-Para dejar el producto en términos de MVP puro, **arrancaría con frontend web en React** y dejaría Electron como envoltorio posterior si fuera necesario. Electron añade una capa adicional de empaquetado y mantenimiento que no aporta valor directo al negocio en el arranque.
+PostgreSQL se usa como fuente de verdad para datos relacionales, triggers, vistas analíticas y reglas críticas como secuencias de fichaje o validación de pagos.
 
 ### Mensajería
-**No es obligatoria en el MVP inicial.** Se puede empezar sin broker y añadir Redis/RabbitMQ cuando entren notificaciones o procesos asíncronos más pesados.
+No se ha incorporado broker en el MVP. Redis o RabbitMQ quedan reservados para una evolución futura con notificaciones, colas de documentos, tareas asíncronas o integraciones externas.
 
 ### IA
-Debe diseñarse como módulo desacoplado. Para el MVP, bastaría con una capa de reglas de negocio y un punto de extensión para IA futura.
+La IA se ha incorporado de forma acotada mediante un widget de consulta, manteniendo restricciones de ámbito y protecciones contra prompt injection. La automatización documental avanzada queda fuera del MVP.
 
 ---
 
 ## 18. Riesgos del caso y mitigación
 
-Los riesgos principales ya aparecen reflejados en el DGR. Los reformulo desde el punto de vista del arranque del desarrollo. fileciteturn2file2
+Los riesgos principales ya aparecen reflejados en el DGR. Los reformulo desde el punto de vista del arranque del desarrollo.
 
 ### Riesgo 1. Intentar construir demasiado en la primera versión
 **Problema:** retraso del desarrollo y producto incompleto.  
@@ -741,18 +740,20 @@ Se considerará que el MVP está terminado cuando se cumplan estos criterios:
 
 ## 21. Conclusión ejecutiva
 
-A la vista de los documentos proporcionados, el caso está bien orientado y tiene una lógica de negocio clara. El valor principal no está en construir desde el principio una plataforma compleja con todas las integraciones posibles, sino en resolver correctamente el flujo central de una gestoría pequeña: **fichaje legal + empleados + clientes + trabajos + facturación + deuda + cierre mensual básico**. Esto coincide con el propósito, el alcance y la priorización por iteraciones descritos en el DGR y en el anteproyecto. fileciteturn2file0 fileciteturn2file2
+A la vista de los documentos proporcionados, el caso está bien orientado y tiene una lógica de negocio clara. El valor principal no está en construir desde el principio una plataforma compleja con todas las integraciones posibles, sino en resolver correctamente el flujo central de una gestoría pequeña: **fichaje legal + empleados + clientes + trabajos + facturación + deuda + cierre mensual básico**. Esto coincide con el propósito, el alcance y la priorización por iteraciones descritos en el DGR y en el anteproyecto.
 
-Por tanto, el MVP recomendado para empezar el desarrollo es:
+Por tanto, el MVP finalmente implementado queda alineado con el objetivo de producto:
 
 - backend con FastAPI y PostgreSQL,
-- frontend web en React,
+- frontend Angular,
+- aplicación de escritorio con Electron,
 - autenticación y RBAC,
 - módulos de empleados, fichaje, clientes, trabajos, facturación y pagos,
-- resumen operativo básico,
-- exportaciones mínimas,
-- auditoría básica desde el inicio,
-- IA solo como extensión futura o versión asistida simple.
+- resumen operativo,
+- exportaciones principales,
+- auditoría desde backend y UI,
+- widget IA acotado,
+- arquitectura Docker con microservicios locales y nginx como gateway.
 
 Esta decisión reduce riesgo, mantiene coherencia con la planificación original y deja una base sólida para iterar hacia una versión más avanzada sin rehacer el núcleo.
 
@@ -799,7 +800,11 @@ GestorIA
 
 ## 23. Fuentes base utilizadas
 
-Este estudio se ha construido a partir de:
+Este estudio se construyó inicialmente a partir del anteproyecto del TFG y del documento de análisis de requisitos. Para consultar el estado real implementado después de los sprints, revisar:
 
-- el anteproyecto del TFG, que define el problema, objetivos, metodología, temporización y stack tecnológico, fileciteturn2file0
-- el documento de análisis de requisitos (DGR), que define alcance, stakeholders, roadmap por iteraciones, requisitos funcionales y no funcionales, casos de uso, camino crítico y riesgos. fileciteturn2file2
+- `MEMORIA.md`
+- `docs/DESARROLLO.md`
+- `docs/PLAN_SPRINTS.md`
+- `docs/modelo_datos.md`
+- `app/README.md`
+- `backend/README.md`

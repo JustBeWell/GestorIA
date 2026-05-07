@@ -1,24 +1,69 @@
-# Backend API (User Service)
+# Backend GestorIA
 
-Este backend expone la API de autenticación, gestión de usuarios y portada de intranet para GestorIA.
+API de GestorIA construida con FastAPI y PostgreSQL. El backend empezo como una API modular y actualmente se ejecuta en Docker como varios microservicios FastAPI detras de un gateway nginx.
 
-## Estado actual
+## Stack
 
-- Framework: FastAPI
-- Base de datos: PostgreSQL
-- Autenticación: JWT Bearer Token
-- Suite de tests: `27 passed`
+- FastAPI
+- Pydantic
+- PostgreSQL
+- psycopg2
+- JWT Bearer Token
+- slowapi para rate limiting
+- Twilio para OTP por SMS
+- fpdf2 para generacion de PDFs
+- pytest para pruebas
+
+## Arquitectura actual
+
+Todos los microservicios comparten el mismo codigo base y la misma base de datos. La separacion se hace por entry-point:
+
+| Servicio Docker | Entry-point | Responsabilidad |
+|---|---|---|
+| `backend-auth` | `main_auth:app` | Auth, OTP, logout y usuarios. |
+| `backend-home` | `main_home:app` | Home y series trimestrales. |
+| `backend-fichaje` | `main_fichaje:app` | Fichaje y exportaciones de jornada. |
+| `backend-clientes` | `main_clientes:app` | Clientes. |
+| `backend-trabajos` | `main_trabajos:app` | Trabajos, asignaciones y comentarios. |
+| `backend-pagos` | `main_pagos:app` | Pagos, facturas y deuda viva. |
+| `backend-admin` | `main_admin:app` | Panel admin, auditoria y cierre mensual. |
+| `backend-ai` | `main_ai:app` | Chat IA. |
+
+La factoria comun `app_factory.py` centraliza CORS, rate limiting, middleware de autenticacion y health checks.
+
+## API Gateway
+
+El gateway nginx escucha en `http://localhost:8008` y enruta por prefijo:
+
+| Prefijo | Servicio |
+|---|---|
+| `/auth`, `/users` | `backend-auth` |
+| `/intranet/home`, `/intranet/series` | `backend-home` |
+| `/intranet/fichaje` | `backend-fichaje` |
+| `/intranet/clientes` | `backend-clientes` |
+| `/intranet/trabajos` | `backend-trabajos` |
+| `/intranet/pagos`, `/intranet/deuda`, `/intranet/facturas` | `backend-pagos` |
+| `/intranet/admin` | `backend-admin` |
+| `/ai` | `backend-ai` |
+
+El gateway tambien responde preflight `OPTIONS` y evita cabeceras CORS duplicadas ocultando las del upstream.
 
 ## Estructura
 
-- `main.py`: inicialización de app, CORS, middleware global de auth y health checks.
-- `routes/`: endpoints HTTP (`auth.py`, `users.py`, `intranet.py`).
-- `services/`: lógica de negocio (`auth_service.py`, `user_service.py`, `intranet_service.py`).
-- `models.py`: contratos Pydantic de request/response.
-- `database.py`: conexión y health de PostgreSQL.
-- `pytest.ini`: configuración de pruebas.
+| Ruta | Responsabilidad |
+|---|---|
+| `app_factory.py` | Creacion comun de apps FastAPI. |
+| `main_*.py` | Entry-points por microservicio. |
+| `database.py` | Conexion y health de PostgreSQL. |
+| `service_config.py` | Configuracion por variables de entorno. |
+| `models.py` | Schemas Pydantic. |
+| `routes/auth.py` | Auth, OTP y logout. |
+| `routes/users.py` | Usuarios y empleados. |
+| `routes/intranet/*.py` | Rutas de dominio de intranet. |
+| `services/*.py` | Logica de negocio por dominio. |
+| `tests/*.py` | Pruebas automatizadas existentes. |
 
-## Variables de entorno requeridas
+## Variables de entorno
 
 Definidas en `service_config.py`:
 
@@ -28,171 +73,149 @@ Definidas en `service_config.py`:
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
 - `POSTGRES_SSLMODE`
-- `DATABASE_URL` (opcional, si se define reemplaza la construcción manual)
+- `DATABASE_URL` opcional
 - `JWT_SECRET_KEY`
 - `JWT_ALGORITHM`
 - `JWT_EXPIRATION_HOURS`
 - `FRONTEND_URL`
+- `OPENAI_API_KEY`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER`
 
-Para desarrollo local, existe una plantilla en `backend/.env.example`.
+## Ejecucion
 
-## Ejecución local
+### Via Docker Compose
 
-Desde `backend/`:
+Desde la raiz del repositorio:
 
 ```bash
-python -m uvicorn main:app --reload --port 8008
+docker-compose up --build
 ```
 
-OpenAPI:
+La API queda disponible en:
 
-- Swagger: `http://localhost:8008/docs`
-- ReDoc: `http://localhost:8008/redoc`
+- Gateway: `http://localhost:8008`
+- Health gateway: `http://localhost:8008/gateway/health`
+- Health servicio: `http://localhost:8008/health`
 
-## Modelo de autenticación
+### Ejecucion local de un servicio
 
-La app aplica middleware global de token en `main.py`:
+Desde `backend/`, arrancar un entry-point concreto:
 
-- Toda ruta requiere `Authorization: Bearer <token>` salvo rutas públicas.
-- Validación por `services.auth_service.get_current_user`.
+```bash
+python -m uvicorn main_auth:app --reload --port 8008
+python -m uvicorn main_pagos:app --reload --port 8008
+```
 
-### Rutas públicas
+El antiguo `main.py` se conserva como app integrada de compatibilidad, pero el flujo principal del proyecto es Docker + gateway + `main_*.py`.
+
+## Autenticacion y seguridad
+
+La API aplica middleware global de token:
+
+- toda ruta privada requiere `Authorization: Bearer <token>`;
+- la validacion se realiza con `services.auth_service.get_current_user`;
+- las rutas publicas se declaran por servicio en `create_app`;
+- login y verificacion OTP tienen rate limiting;
+- logout server-side invalida tokens mediante blacklist.
+
+Rutas publicas principales:
 
 - `GET /`
-- `POST /auth/login`
-- `GET /auth/google/login`
-- `GET /auth/google/callback`
-- `POST /auth/google/token`
 - `GET /health`
 - `GET /health/db`
-
-### Rutas protegidas
-
-Todo lo demás (`/auth/token`, `/auth/logout`, `/users/*`, `/intranet/*`).
+- `POST /auth/login`
+- `POST /auth/otp/verify`
+- `GET /docs`
+- `GET /redoc`
+- `GET /openapi.json`
 
 ## Endpoints principales
 
-### Auth
+### Auth y users
 
 - `POST /auth/login`
-  - body: `{ dni, password }`
-  - devuelve token JWT y datos básicos de usuario.
+- `POST /auth/otp/verify`
 - `GET /auth/token`
-  - renueva token para usuario autenticado.
 - `POST /auth/logout`
 - `POST /auth/logout/all`
-
-### Users
-
 - `GET /users/`
-- `POST /users/` (solo `administrador`)
+- `POST /users/`
 - `GET /users/me`
 - `PUT /users/me`
 - `DELETE /users/me`
 - `GET /users/{user_id}`
 - `GET /users/{user_id}/exists`
-- `PUT /users/{user_id}/admin` (solo `administrador`)
-- `DELETE /users/{user_id}` (solo `administrador`)
+- `PUT /users/{user_id}/admin`
+- `DELETE /users/{user_id}`
 
-### Intranet
+### Home
 
 - `GET /intranet/home`
+- `GET /intranet/series/fichaje`
+- `GET /intranet/series/clientes`
+- `GET /intranet/series/trabajos`
+- `GET /intranet/series/pagos`
+
+### Fichaje
+
 - `GET /intranet/fichaje`
+- `POST /intranet/fichaje/registrar`
+- `POST /intranet/fichaje/ultimo/eliminar`
+- `GET /intranet/fichaje/export`
+- `GET /intranet/fichaje/export/pdf`
+
+### Clientes
+
 - `GET /intranet/clientes`
+- `GET /intranet/clientes/{cliente_id}`
+- `POST /intranet/clientes`
+- `PUT /intranet/clientes/{cliente_id}`
+- `DELETE /intranet/clientes/{cliente_id}`
+
+### Trabajos
+
 - `GET /intranet/trabajos`
+- `POST /intranet/trabajos`
+- `GET /intranet/trabajos/{trabajo_id}`
+- `PUT /intranet/trabajos/{trabajo_id}`
+- `DELETE /intranet/trabajos/{trabajo_id}`
+- `GET /intranet/trabajos/{trabajo_id}/empleados`
+- `POST /intranet/trabajos/{trabajo_id}/empleados`
+- `DELETE /intranet/trabajos/{trabajo_id}/empleados/{empleado_id}`
+- `GET /intranet/trabajos/{trabajo_id}/comentarios`
+- `POST /intranet/trabajos/{trabajo_id}/comentarios`
+
+### Pagos, deuda y facturas
+
 - `GET /intranet/pagos`
+- `GET /intranet/deuda`
+- `GET /intranet/facturas/export/csv`
+- `POST /intranet/facturas`
+- `GET /intranet/facturas/{factura_id}`
+- `PUT /intranet/facturas/{factura_id}`
+- `DELETE /intranet/facturas/{factura_id}`
+- `POST /intranet/facturas/{factura_id}/pagos`
 
-#### Facturas (M6 — Sprint 3)
+### Admin
 
-- `POST /intranet/facturas` (solo `administrador`) — crear factura
-- `GET /intranet/facturas/{factura_id}` — detalle con historial de pagos
-- `PUT /intranet/facturas/{factura_id}` (solo `administrador`) — editar factura
-- `DELETE /intranet/facturas/{factura_id}` (solo `administrador`) — anular factura (204)
-- `POST /intranet/facturas/{factura_id}/pagos` (solo `administrador`) — registrar pago
+- `GET /intranet/admin/resumen`
+- `GET /intranet/admin/charts`
+- `GET /intranet/admin/fichajes`
+- `POST /intranet/admin/fichajes/correccion`
+- `GET /intranet/admin/auditoria`
+- `GET /intranet/admin/cierre/pdf`
 
-## Filtros y paginación
+### IA
 
-### `GET /intranet/fichaje`
+- `POST /ai/chat`
 
-Query params:
+## Scope por rol
 
-- `page` (default: 1)
-- `page_size` (default: 20, max: 100)
-- `tipo_evento` (`entrada` | `salida`)
-- `fecha_desde` (YYYY-MM-DD)
-- `fecha_hasta` (YYYY-MM-DD)
-
-Response incluye:
-
-- `resumen`
-- `eventos_recientes`
-- `paginacion { page, page_size, total, total_pages }`
-
-### `GET /intranet/trabajos`
-
-Query params:
-
-- `page`, `page_size`
-- `estado`
-- `prioridad`
-- `cliente_id`
-- `fecha_desde`, `fecha_hasta`
-
-Response incluye:
-
-- `resumen`
-- `trabajos`
-- `paginacion`
-
-### `GET /intranet/pagos`
-
-Query params:
-
-- Facturas: `page_facturas`, `page_size_facturas`
-- Pagos: `page_pagos`, `page_size_pagos`
-- `estado_factura`
-- `cliente_id`
-- `vencidas_solo` (bool)
-- `fecha_pago_desde`, `fecha_pago_hasta`
-
-Response incluye:
-
-- `resumen`
-- `facturas`
-- `pagos_recientes`
-- `paginacion_facturas`
-- `paginacion_pagos`
-
-### `POST /intranet/facturas`
-
-Body: `{ cliente_id, concepto, base_imponible, porcentaje_iva?, fecha_emision?, fecha_vencimiento?, notas? }`
-
-Genera número correlativo `F-YYYY-XXXX`. Devuelve `FacturaDetailItem`.
-
-### `GET /intranet/facturas/{factura_id}`
-
-Devuelve detalle completo con lista de `pagos[]` embebidos.
-
-### `PUT /intranet/facturas/{factura_id}`
-
-Actualización parcial. Campos: `concepto`, `base_imponible`, `porcentaje_iva`, `fecha_emision`, `fecha_vencimiento`, `estado`, `notas`.
-
-### `DELETE /intranet/facturas/{factura_id}`
-
-Cambia el estado a `anulada`. Retorna 204. Lanza 409 si la factura ya tiene pagos.
-
-### `POST /intranet/facturas/{factura_id}/pagos`
-
-Body: `{ importe, metodo_pago?, fecha_pago?, referencia?, notas? }`
-
-Trigger de DB actualiza automáticamente el estado de la factura. Devuelve 409 si el importe supera el pendiente.
-
-## Alcance de datos por empleado
-
-Los endpoints de intranet están acotados al usuario autenticado:
-
-- Se resuelve `user_id -> empleado_id`.
-- Todos los datos de fichaje, trabajos, clientes y pagos se consultan dentro de ese scope.
+- El administrador puede consultar y operar sobre todos los datos de la intranet.
+- El empleado queda acotado al scope asociado a su usuario/empleado, salvo acciones que el producto haya abierto expresamente.
+- La UI aplica visibilidad por rol, pero la autorizacion real debe mantenerse en backend.
 
 ## Pruebas
 
@@ -202,4 +225,11 @@ Desde `backend/`:
 python -m pytest -q
 ```
 
-Configuración en `pytest.ini` sin warnings de terceros para mantener salida limpia en CI.
+Tests existentes:
+
+- `tests/test_intranet_home.py`
+- `tests/test_intranet_tabs.py`
+- `tests/test_user_service.py`
+
+La cobertura debe ampliarse especialmente en endpoints de escritura, auditoria, clientes, trabajos, facturas y pagos.
+

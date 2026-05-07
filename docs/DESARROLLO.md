@@ -1,274 +1,238 @@
 # Desarrollo
 
-## Contexto
-Este documento sigue el avance del MVP descrito en `docs/estudio_caso_mvp_gestoria.md` y sirve como guia de trabajo para no perder el hilo entre sesiones.
+Documento de seguimiento tecnico del MVP de GestorIA.
 
-Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finalizado: CRUD facturas/pagos, tab deuda viva, tabs Facturas/Deuda/Pagos recientes)
+**Ultima revision:** 2026-05-07  
+**Estado global:** MVP operativo avanzado. Sprints 1-4 completados; Sprint 5 pendiente para herramientas, calidad y cierre de deuda tecnica.
 
 ---
 
 ## Estado actual por modulo
 
-### M1 · Autenticacion y autorizacion — COMPLETO
-- [x] Login por NIF/password con JWT
-- [x] Roles administrador/empleado (RBAC)
-- [x] Guard de ruta en frontend (`auth.guard.ts`)
-- [x] Interceptor de token en peticiones (`auth.interceptor.ts`)
-- [x] Endpoint `/auth/login` y `/auth/me`
-- [x] Bloqueo por intentos fallidos (columnas en BD + logica backend)
-- [x] Logout con invalidacion de token en servidor (blacklist con TTL)
-- [x] Logout con confirmacion modal en sidebar y en modulo-page
-- [x] Limpieza de cache de empleado en logout y en nuevo login (evita datos obsoletos entre usuarios)
-- [x] 2FA por SMS via Twilio (OTP 6 digitos, expiracion 10 min, hash SHA-256 en BD)
-- [x] Normalizacion de telefono a formato E.164 (+34 para numeros espanoles)
-- [x] CORS configurado para origen `app://localhost` (Electron) en `allow_origins` de Starlette
+| Modulo | Estado | Resumen |
+|---|---|---|
+| M1 Autenticacion y autorizacion | Completo | JWT, RBAC, bloqueo de login, logout server-side, OTP por SMS, rate limiting y CORS para Electron/gateway. |
+| M2 Gestion de empleados | Completo | Alta, edicion, baja logica, roles, activacion, MFA y gestion desde panel admin. |
+| M3 Fichaje | Completo | Entrada, salida, pausas, validaciones, correccion admin, CSV y PDF mensual. |
+| M4 Clientes | Completo | CRUD, busqueda, validacion CIF/NIF, detalle, exportaciones y borrado en cascada. |
+| M5 Trabajos | Completo | Kanban, CRUD, asignaciones, comentarios, estados, prioridades y exportaciones. |
+| M6 Facturacion y pagos | Completo | Facturas, pagos, deuda viva, vencidos, tabs, KPIs y export CSV/PDF. |
+| M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
+| M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
+| M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
+| M10 Herramientas | Placeholder | Calendario fiscal, documentos y ajustes siguen sin backend/persistencia completa. |
 
 ---
 
-### M2 · Gestion de empleados — COMPLETO
-- [x] Modelo `empleados` en BD con relacion 1:1 a `usuarios`
-- [x] Endpoint `GET /users/me` — datos propios
-- [x] Endpoint `PUT /users/me` — edicion de nombre/apellidos/telefono
-- [x] Endpoint `POST /users/` — crear usuario+empleado (solo admin)
-- [x] Endpoint `PUT /users/{id}/admin` — cambiar rol/activo/mfa (solo admin)
-- [x] Endpoint `DELETE /users/{id}` — baja logica
-- [x] UI: pantalla de gestion de empleados en panel admin
-- [x] Vista de resumen de fichajes por empleado (solo admin)
-- [x] Listado de empleados con filtros para el gerente
-- [x] Activacion/desactivacion desde UI
-- [x] Modal de alta de empleado desde UI
-- [x] Modal de edicion de empleado desde UI (rol, activo, mfa)
+## Arquitectura actual
 
----
-
-### M3 · Fichaje — COMPLETO
-- [x] Registro de entrada/salida con validaciones
-- [x] Soporte de pausas inicio/fin (migracion V002 aplicada)
-- [x] Regla: no dos entradas/salidas consecutivas
-- [x] Calculo de duracion diaria y horas totales
-- [x] Deshacer ultimo fichaje del dia
-- [x] Exportacion CSV por rango de fechas
-- [x] Exportacion PDF mensual con fpdf2 (cabecera corporativa, tabla de dias, resumen estadistico)
-- [x] UI completa con calendario, detalle de dia y modal de error
-- [x] Filtros por tipo evento y rango de fechas
-- [x] Correccion manual por gerente desde UI
-- [x] Vista de fichajes de todos los empleados (solo admin)
-
----
-
-### M4 · Gestion de clientes — COMPLETO (Sprint 1 · 2026-05-04)
-- [x] Endpoint `GET /intranet/clientes` — listado con resumen
-- [x] Series trimestrales de clientes activos
-- [x] Modelo `clientes` en BD con CIF/NIF unico y borrado logico
-- [x] **UI: pantalla de clientes** — tabla completa con estado de carga y estado vacio
-- [x] Formulario de alta de cliente con validacion CIF/NIF en frontend y backend
-- [x] Formulario de edicion con precarga de datos (incluye campos de direccion)
-- [x] Baja logica con confirmacion modal + toggle "Mostrar inactivos"
-- [x] Busqueda reactiva por nombre fiscal, CIF/NIF o email
-- [x] Vista de detalle de cliente con resumen operativo (trabajos y facturas)
-- [x] Validacion de formato CIF/NIF en frontend (regex DNI/NIE/CIF) y backend (Pydantic)
-- [x] Endpoints de escritura: `POST /clientes` (201), `PUT /clientes/{id}`, `DELETE /clientes/{id}` (204)
-- [x] Endpoint `GET /clientes/{id}` — detalle completo con agregados
-- [x] Control 409 para CIF/NIF duplicado, 403 para no-admin en escritura
-- [x] Vista admin muestra TODOS los clientes (sin filtro por empleado); empleado ve solo sus asignados
-- [x] RBAC en UI: botones de alta/edicion/baja solo visibles para rol administrador
-- [x] Borrado fisico en cascada: al eliminar cliente se borran trabajos, facturas y pagos asociados (V009 + DELETE fisico)
-- [x] "Dar de baja" eliminado del modal de detalle de clientes (solo disponible en panel admin)
-
----
-
-### M5 · Gestion de trabajos — COMPLETO (Sprint 2 · 2026-05-04)
-- [x] Endpoint `GET /intranet/trabajos` — listado filtrado por estado, prioridad, cliente, rango
-- [x] Series trimestrales de trabajos finalizados
-- [x] Modelo `trabajos` en BD con estados y prioridades
-- [x] Tabla `trabajo_empleado` para asignaciones N:M
-- [x] Tabla `comentarios_trabajo` para comentarios internos por trabajo (migracion V008)
-- [x] Campo `nro_trabajo` autoincremental en tabla `trabajos` (migracion V008)
-- [x] Endpoints de escritura: `POST /trabajos` (201), `PUT /trabajos/{id}`, `DELETE /trabajos/{id}` (204, baja logica)
-- [x] Endpoint de detalle: `GET /trabajos/{id}` — informacion completa con empleados asignados
-- [x] Endpoints de asignacion: `POST/DELETE /trabajos/{id}/empleados`
-- [x] Endpoints de comentarios: `GET/POST /trabajos/{id}/comentarios`
-- [x] **UI: Kanban board** — 4 columnas (Pendiente/En curso/Bloqueado/Finalizado) con tarjetas
-- [x] Tarjetas con referencia T-XXXX, badge de prioridad, barra de progreso (en_curso), avatares de empleados
-- [x] Panel lateral de detalle con cambio rapido de estado, asignacion/desasignacion de empleados, comentarios
-- [x] Formulario de alta y edicion de trabajo con validacion
-- [x] Baja logica con confirmacion modal (estado → cancelado)
-- [x] Filtros por prioridad y cliente con toggle de cancelados
-- [x] Vista admin muestra TODOS los trabajos; empleado ve solo los que tiene asignados
-- [x] RBAC en UI: alta/edicion/baja/asignacion solo visibles para rol administrador
-- [x] Comentarios cargan en paralelo con detalle del trabajo (forkJoin); recarga al enviar comentario
-- [x] Auto-scroll al comentario mas reciente al abrir detalle y al enviar
-- [x] Admin puede cancelar trabajos en estado `finalizado` (bypass is_admin en delete_trabajo)
-
----
-
-### M6 · Facturacion y pagos — COMPLETO (Sprint 3 · 2026-05-06/07)
-- [x] Endpoint `GET /intranet/pagos` — listado facturas y pagos con filtros
-- [x] Series trimestrales de pagos cobrados
-- [x] Modelos `facturas` y `pagos` en BD con triggers de validacion
-- [x] Vista `v_deuda_por_cliente` en BD
-- [x] **UI: pantalla de pagos completa** — KPIs (Total facturado, Pendiente de cobro, Vencido), tabla de facturas, filtros, paginacion
-- [x] KPIs enriquecidos: `cobrado_mes`, `facturado_mes`, `facturas_emitidas_mes`, `pendiente_total`, `pendiente_count`, `facturas_vencidas`, `vencido_total`
-- [x] Bypass `is_admin` en backend — admin ve todas las facturas; empleado solo las de sus clientes
-- [x] Export CSV desde frontend (descarga directa del listado visible)
-- [x] Export PDF desde frontend (impresion via `window.print()`)
-- [x] Tabla siempre renderizada; estado vacio como `<tr colspan>` dentro del `<tbody>`
-- [x] `withInMemoryScrolling` en router (`scrollPositionRestoration: 'top'`) para corregir renderizado al navegar
-- [x] `OnDestroy` + `takeUntil(destroy$)` en suscripciones HTTP del componente de pagos
-- [x] Admin puede anular facturas con pagos asociados (bypass is_admin en delete_factura)
-- [x] Panel admin: acciones de eliminar trabajos (incluyendo `finalizado`) y anular facturas operativas
-- [x] Bug 422 corregido: `page_size_facturas` acepta hasta 500
-- [x] Endpoints de escritura: `POST /intranet/facturas` (201), `PUT /intranet/facturas/{id}`, `DELETE /intranet/facturas/{id}` (204, baja logica)
-- [x] Endpoint `GET /intranet/facturas/{id}` — detalle completo con pagos embebidos
-- [x] Endpoint `POST /intranet/facturas/{id}/pagos` (201) — registrar pago sobre factura
-- [x] Formulario modal alta/edicion de factura en UI
-- [x] Modal de registro de pago (importe, metodo, fecha, referencia)
-- [x] Modal confirmacion de anulacion de factura
-- [x] Panel lateral de detalle de factura con pagos asociados
-- [x] Badges de estado con colores por estado (`borrador`, `emitida`, `pagada_parcial`, `pagada`, `anulada`)
-- [x] Fila resaltada en rojo para facturas vencidas + etiqueta `+Nd`
-- [x] Navegacion por tabs: Facturas / Deuda viva / Pagos recientes
-- [x] Endpoint `GET /intranet/deuda` — deuda viva agrupada por cliente con `facturas_vencidas`
-- [x] Tab "Deuda viva": tabla por cliente con deuda pendiente, total facturado/cobrado y facturas vencidas
-- [x] Tab "Pagos recientes": listado de ultimos cobros registrados
-- [x] Modelo `DeudaVivaPorClienteItem` en backend y `DeudaVivaPorCliente` en frontend
-- [x] Scope por rol en deuda viva: admin ve todos los clientes; empleado solo sus asignados
-
----
-
-### M7 · Resumen operativo — COMPLETO (Home)
-- [x] Panel Home con horas fichaje, clientes activos, trabajos en curso, cobrado mes
-- [x] Graficas sparkline con serie mensual de horas por dia
-- [x] Card de fichaje con horas del dia, total mensual y diferencial vs media
-- [x] Series trimestrales para todas las metricas del dashboard
-- [x] Calendario visual de fichajes del mes con detalle por dia
-- [x] Panel de administracion con KPIs, graficas historicas 12 meses y gestion de empleados y fichajes
-- [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)
-- [x] Grafica combinada historica: 6 series normalizadas, hover con tooltip, toggle de series y toggle Combinada/Individual
-- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
-
----
-
-### M8 · Exportaciones — PARCIAL
-- [x] Exportacion CSV de fichaje por rango de fechas
-- [x] Exportacion PDF de fichaje mensual (fpdf2, endpoint GET /intranet/fichaje/export/pdf)
-- [x] Exportacion CSV de facturas desde frontend (descarga del listado visible con headers en espanol)
-- [x] Exportacion PDF de facturas desde frontend (impresion via window.print)
-- [x] Endpoint backend `GET /intranet/facturas/export/csv` con filtros y UTF-8 BOM
-- [x] Generacion de documento mensual de cierre (PDF con fpdf2) — `GET /intranet/admin/cierre/pdf?year=&month=`
-
----
-
-### M9 · Auditoria — COMPLETO
-- [x] Tabla `auditoria_eventos` preparada en BD con estructura completa
-- [x] Escritura de eventos de auditoria desde el backend (clientes, trabajos, facturas, pagos, fichajes, empleados)
-- [x] UI de visualizacion de auditoria (solo para admin) — tab "Auditoría" con filtros y paginacion
-- [x] Registro de correcciones de fichaje en auditoria
-- [x] Registro de altas/bajas de empleados, clientes y facturas
-
----
-
-### M10 · Modulos de herramientas — PLACEHOLDER
-- [ ] **Calendario fiscal** — actualmente muestra datos estaticos hardcodeados; no hay backend ni modelo de datos
-- [ ] **Documentos** — pagina placeholder sin funcionalidad; no hay backend, ni almacenamiento, ni modelo
-- [ ] **Ajustes** — pagina con UI estatica; sin persistencia ni endpoints de configuracion
-
----
-
-## Deuda tecnica y mejoras transversales
+GestorIA se ejecuta como aplicacion Angular + Electron, con backend FastAPI separado por dominios y un gateway nginx.
 
 ### Frontend
-- [ ] Estado global de usuario (actualmente cada pagina lee de `sessionStorage` directamente)
-- [ ] Manejo de errores HTTP centralizado (el interceptor de auth existe pero no cubre errores de negocio)
-- [x] Feedback de carga en modulo de clientes (loading signal + estado vacio)
-- [x] Feedback de carga en modulo de pagos (skeleton + tabla siempre visible)
-- [x] `withInMemoryScrolling` en router (`scrollPositionRestoration: 'top'`) — corrige renderizado al navegar entre paginas
-- [x] `OnDestroy` + `takeUntil(destroy$)` en suscripciones HTTP de pagos — evita memory leaks
-- [x] `OnDestroy` + `takeUntil(destroy$)` extendido a todos los pages (home, fichaje, clientes, trabajos, admin) — cancelacion de peticiones al navegar
-- [x] `NgZone.run()` en actualizaciones de signals de pagos — garantiza change detection fuera del contexto de navegacion
-- [x] Timer de 3s como fallback de recarga en pagos (se cancela si los datos cargan antes)
-- [x] `withFetch()` en `provideHttpClient` — sustituye XMLHttpRequest por Fetch API, elimina limite de 6 conexiones HTTP/1.1
-- [x] `registerLocaleData(localeEs)` + `{ provide: LOCALE_ID, useValue: 'es' }` — evita NG0701 en CurrencyPipe
-- [x] Parametro `'es'` eliminado de todos los pipes `currency` del template de pagos (13 ocurrencias) — locale ya global
-- [x] Paleta de colores global migrada a verde bosque (tono banner `#1a3528`) en todos los modulos CSS
-- [ ] Feedback de carga en modulos de trabajos (kanban usa carga parcial, sin skeleton global)
-- [ ] Tests unitarios en componentes Angular (solo existe `app.spec.ts`)
+
+- Angular 21 con componentes standalone y rutas lazy mediante `loadComponent`.
+- Electron sirve el build compilado con protocolo `app://localhost`.
+- `AuthStateService` mantiene estado global de usuario con signals.
+- `authInterceptor` adjunta token Bearer y gestiona errores 401/403.
+- `IntranetService` concentra las llamadas HTTP a la API.
+- Estilos compartidos en `shared/styles`.
 
 ### Backend
-- [x] Endpoints de escritura para clientes (POST/PUT/DELETE — Sprint 1)
-- [x] Endpoints de escritura para trabajos (POST/PUT/DELETE, asignaciones, comentarios — Sprint 2)
-- [x] Endpoints de escritura para facturas (POST/PUT — completados Sprint 3)
-- [x] Endpoints de escritura para pagos (POST/PUT — completados Sprint 3)
-- [x] Paginacion en endpoint de clientes (page_size hasta 200, default 50)
-- [x] Route handlers convertidos de `async def` a `def` en todos los routers (intranet, auth, users, ai) — psycopg2 sincrono bloqueaba el event loop; FastAPI ahora los ejecuta en thread pool concurrente
-- [x] Validacion de formato NIF/CIF en backend (Pydantic field_validator con regex)
-- [ ] Rate limiting en endpoints de autenticacion
-- [ ] Tests de integracion para escritura (los tests existentes cubren solo lectura)
-- [ ] Cobertura de tests en services de clientes, trabajos y pagos
+
+El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-points:
+
+| Entry-point | Dominio |
+|---|---|
+| `main_auth.py` | Auth y users. |
+| `main_home.py` | Home y series. |
+| `main_fichaje.py` | Fichaje. |
+| `main_clientes.py` | Clientes. |
+| `main_trabajos.py` | Trabajos. |
+| `main_pagos.py` | Pagos, deuda y facturas. |
+| `main_admin.py` | Admin, auditoria y cierre. |
+| `main_ai.py` | Chat IA. |
+
+### Gateway
+
+`nginx/nginx.conf` expone un unico puerto (`8008`) y enruta:
+
+- `/auth`, `/users` -> `backend-auth`
+- `/intranet/home`, `/intranet/series` -> `backend-home`
+- `/intranet/fichaje` -> `backend-fichaje`
+- `/intranet/clientes` -> `backend-clientes`
+- `/intranet/trabajos` -> `backend-trabajos`
+- `/intranet/pagos`, `/intranet/deuda`, `/intranet/facturas` -> `backend-pagos`
+- `/intranet/admin` -> `backend-admin`
+- `/ai` -> `backend-ai`
+
+---
+
+## Detalle funcional
+
+### M1 - Autenticacion y autorizacion
+
+- [x] Login por NIF/password con JWT.
+- [x] Roles `administrador` y `empleado`.
+- [x] Guards de ruta en frontend.
+- [x] Interceptor de token.
+- [x] Bloqueo temporal por intentos fallidos.
+- [x] Logout server-side con blacklist de tokens.
+- [x] Limpieza de estado en logout/login.
+- [x] 2FA por SMS via Twilio.
+- [x] Rate limiting en `/auth/login` y `/auth/otp/verify`.
+- [x] CORS compatible con `app://localhost`, navegador local y gateway nginx.
+
+### M2 - Gestion de empleados
+
+- [x] Modelo `empleados` vinculado 1:1 a `usuarios`.
+- [x] `GET /users/me` y `PUT /users/me`.
+- [x] `POST /users/`, `PUT /users/{id}/admin`, `DELETE /users/{id}`.
+- [x] Alta, edicion, activacion/desactivacion y cambio de rol desde UI.
+- [x] Vista admin de empleados y resumen de fichajes.
+
+### M3 - Fichaje
+
+- [x] Registro de entrada/salida y pausas.
+- [x] Validacion de secuencias.
+- [x] Calculo de horas.
+- [x] Deshacer ultimo fichaje.
+- [x] Exportacion CSV por rango.
+- [x] Exportacion PDF mensual con fpdf2.
+- [x] Correccion manual desde admin.
+- [x] Vista global de fichajes para administradores.
+
+### M4 - Clientes
+
+- [x] `GET /intranet/clientes`.
+- [x] `GET /intranet/clientes/{id}`.
+- [x] `POST /intranet/clientes`.
+- [x] `PUT /intranet/clientes/{id}`.
+- [x] `DELETE /intranet/clientes/{id}`.
+- [x] Busqueda por nombre fiscal, CIF/NIF o email.
+- [x] Validacion CIF/NIF en frontend y backend.
+- [x] Control de duplicados.
+- [x] Vista de detalle con resumen operativo.
+- [x] Exportacion CSV/PDF.
+- [x] Borrado fisico en cascada de trabajos, facturas y pagos asociados.
+
+### M5 - Trabajos
+
+- [x] `GET /intranet/trabajos` con filtros.
+- [x] CRUD de trabajos.
+- [x] Asignacion/desasignacion de empleados.
+- [x] Comentarios internos.
+- [x] Kanban por estado.
+- [x] Prioridades, progreso y detalle lateral.
+- [x] Exportacion CSV/PDF.
+- [x] Creacion de trabajos abierta a todos los empleados segun ajuste de producto.
+
+### M6 - Facturacion y pagos
+
+- [x] `GET /intranet/pagos`.
+- [x] `GET /intranet/deuda`.
+- [x] `GET /intranet/facturas/export/csv`.
+- [x] CRUD de facturas.
+- [x] Registro de pagos sobre factura.
+- [x] Deuda viva por cliente.
+- [x] Tabs: Facturas / Deuda viva / Pagos recientes.
+- [x] KPIs de facturado, cobrado, pendiente y vencido.
+- [x] Resaltado de facturas vencidas.
+- [x] Exportacion CSV/PDF.
+
+### M7 - Home y panel operativo
+
+- [x] KPIs de horas, clientes, trabajos y cobros.
+- [x] Series trimestrales.
+- [x] Calendario visual de fichajes.
+- [x] Panel admin con KPIs y graficas historicas.
+- [x] Grafica combinada con tooltip y toggles.
+- [ ] `v_resumen_mensual` existe en BD, pero no esta integrada como fuente unica del Home.
+
+### M8 - Exportaciones
+
+- [x] CSV de fichaje.
+- [x] PDF mensual de fichaje.
+- [x] CSV/PDF de facturas.
+- [x] CSV/PDF de trabajos.
+- [x] CSV/PDF en tabs admin de fichajes y trabajos.
+- [x] PDF mensual de cierre: `GET /intranet/admin/cierre/pdf?year=&month=`.
+
+### M9 - Auditoria
+
+- [x] Migracion `V010__auditoria_eventos.sql`.
+- [x] Servicio `auditoria_service.py`.
+- [x] Registro de eventos de clientes, trabajos, facturas, pagos, fichajes y empleados.
+- [x] UI en panel admin.
+- [x] Endpoint `GET /intranet/admin/auditoria`.
+
+### M10 - Herramientas
+
+- [ ] Calendario fiscal: UI estatica, sin modelo ni endpoints.
+- [ ] Documentos: UI placeholder, sin almacenamiento ni endpoints.
+- [ ] Ajustes: UI estatica, sin persistencia.
+
+---
+
+## Deuda tecnica
+
+### Frontend
+
+- [x] Estado global de usuario con `AuthStateService`.
+- [x] Manejo centralizado de 401/403 en interceptor.
+- [x] `withInMemoryScrolling` para restaurar scroll.
+- [x] `OnDestroy` + `takeUntil(destroy$)` en pages principales.
+- [x] `withFetch()` para evitar limites de conexiones XHR.
+- [x] Locale `es` registrado globalmente.
+- [x] Paleta visual unificada.
+- [ ] Mejorar tests unitarios de componentes grandes.
+- [ ] Completar estados de carga/skeleton en modulos auxiliares.
+
+### Backend
+
+- [x] Refactor de servicios por dominio.
+- [x] Division de rutas en `routes/intranet/*.py`.
+- [x] Separacion por microservicios Docker.
+- [x] Gateway nginx.
+- [x] Rate limiting en auth.
+- [x] Validacion NIF/CIF.
+- [ ] Ampliar tests de escritura en clientes, trabajos, facturas, pagos y auditoria.
+- [ ] Revisar cobertura tras microservicios.
 
 ### Base de datos
-- [x] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — ya presentes en V001
-- [x] Vistas `v_deuda_por_cliente`, `v_horas_diarias`, `v_resumen_mensual` — creadas en migración V003
-- [x] Migracion V003 aplicada — vistas analíticas
-- [x] Indice en `fichajes(empleado_id, fecha_hora)` — ya presente en V001 (`idx_fichajes_empleado_fecha`)
-- [x] Campo `intentos_fallidos` y `bloqueado_hasta` en `usuarios` — lógica de bloqueo implementada en `auth_service.py`
-- [x] Migracion V009 aplicada — FK `trabajos.cliente_id`, `facturas.cliente_id` y `pagos.factura_id` cambiadas a `ON DELETE CASCADE`
+
+- [x] Triggers de fichaje, pagos y estado de factura.
+- [x] Vistas `v_deuda_por_cliente`, `v_horas_diarias`, `v_resumen_mensual`.
+- [x] Blacklist de tokens.
+- [x] OTP 2FA.
+- [x] Cascada para eliminar datos dependientes de cliente.
+- [x] Auditoria.
+- [ ] Revisar duplicidad de numeracion de migraciones `V003`.
+
+### Repositorio
+
+- [ ] Decidir si `landing/.next`, caches y artefactos generados deben salir del versionado.
+- [ ] Mantener README y documentacion sincronizados con Docker Compose y nginx.
 
 ---
 
-## Electron / Desktop
+## Proximos pasos recomendados
 
-- [x] App empaquetada como Electron con `app://localhost` CORS
-- [x] Splash screen rediseñada: `app-banner.png` como fondo pantalla completa (`object-fit: cover`), barra de progreso en overlay inferior semitransparente
-- [x] Splash window ampliada a 700x440 px
-- [x] Funciones `updateProgress(pct, text)`, `showDone()`, `showError(msg)` preservadas para integración con `main.cjs`
-- [x] Splash con fade-out suave (opacity 0 en 0.6 s) antes de mostrar la app
-
----
-
-## UX / Experiencia de usuario transversal
-
-- [x] Ruta `/intro` con componente `BrandingVideoPageComponent` — video `hero.mp4` en pantalla completa antes del login
-- [x] Intro: fade-in 0.6 s al montar; fade-out 1.2 s al terminar video; fallback de 20 s si el video no se reproduce
-- [x] Intro: volumen 0.25 para evitar susto al arrancar
-- [x] Intro: `goLogin()` navega a `/auth` con `replaceUrl: true` (sin historial de intro)
-- [x] Login: animación `loginFadeIn` 0.8 s al montar componente
-- [x] Fondo global oscuro `#0c1a16` en `html, body` — evita flash blanco entre rutas
-- [x] Widget de IA oculto en rutas `/`, `/auth` e `/intro`
-- [x] Ruta raiz redirige a `/intro` (antes redirigía a `/auth`)
+1. Completar M10: calendario fiscal, documentos y ajustes con backend real.
+2. Ampliar tests de integracion de escritura.
+3. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
+4. Conectar `v_resumen_mensual` al Home o documentar por que no se usa.
+5. Limpiar artefactos generados del repositorio.
+6. Preparar configuracion productiva de secretos, backups y logs.
 
 ---
 
-## Landing page
+## Documentacion relacionada
 
-- [x] Hero: sustituido SVG genérico por imagen real `app-banner.png` (max-width 860 px)
-- [x] Hero: card flotante animada con `hero.gif` en esquina inferior derecha (`floatOrbit` 7 s)
-- [x] Sección Download: iconos oficiales Windows (flag SVG) y Apple (logo SVG) en lugar de emojis
-- [x] Sección Download: títulos de plataforma a 26 px/800 para mayor visibilidad
-- [x] `next.config.mjs`: `images: { unoptimized: true }` para compatibilidad con `output: 'export'`
-- [x] Assets en `landing/public/` (app-banner.png, hero.gif) para que Next.js los sirva correctamente
+- `README.md`: presentacion de producto.
+- `MEMORIA.md`: memoria tecnica y flujo completo de trabajo.
+- `app/README.md`: frontend Angular/Electron.
+- `backend/README.md`: API, microservicios y endpoints.
+- `docs/PLAN_SPRINTS.md`: plan de sprints y estado de HUs.
+- `docs/modelo_datos.md`: modelo relacional y migraciones.
+- `docs/estudio_caso_mvp_gestoria.md`: alcance funcional inicial del MVP.
 
----
-
-## Proximos pasos recomendados (orden de prioridad)
-
-> Plan detallado en `docs/PLAN_SPRINTS.md`
-
-1. ~~**UI y endpoints de gestion de clientes**~~ — **COMPLETADO** en Sprint 1 (2026-05-04)
-2. ~~**Sprint 2 — UI y endpoints de gestion de trabajos**~~ — **COMPLETADO** en Sprint 2 (2026-05-04)
-3. **Sprint 3 (en curso) — Endpoints de escritura de facturas y pagos** — `POST/PUT /intranet/facturas` y `POST/PUT /intranet/pagos`
-4. **Sprint 3 (en curso) — Formularios en UI** — modal alta de factura + modal registro de pago + tab deuda viva
-5. **Sprint 4 — Auditoria** — conectar eventos de escritura con `auditoria_eventos` + UI
-6. **Sprint 5 — Herramientas** — Calendario fiscal, Documentos, Ajustes + deuda tecnica
-
----
-
-## Fuera del MVP (v1+)
-
-- Portal cliente externo
-- IA para generacion de documentos y deteccion de anomalias
-- Notificaciones automaticas por email
-- 2FA obligatoria para todos los usuarios (actualmente es opcional por usuario)
-- Integraciones externas (banca, firma electronica)
-- Multiempresa
-- Analitica historica avanzada

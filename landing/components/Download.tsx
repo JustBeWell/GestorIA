@@ -1,6 +1,6 @@
 import RevealWrapper from './RevealWrapper';
 
-const RELEASES_URL = 'https://github.com/JustBeWell/GestorIA/';
+const RELEASES_URL = 'https://github.com/JustBeWell/GestorIA/releases/tag/macOS';
 
 const PLATFORMS = [
   {

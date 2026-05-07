@@ -28,9 +28,13 @@ export default function Hero() {
               />
             </div>
             <div className="hero__floating-card">
-              <img
-                src="/hero.gif"
-                alt="GestorIA en acción"
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="hero__floating-video"
+                src="/hero.mp4"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '12px' }}
               />
             </div>
