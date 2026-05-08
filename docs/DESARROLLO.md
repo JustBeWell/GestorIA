@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos y ajustes siguen pendientes de rediseño y persistencia. |
+| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos tiene UI alineada con prototipo; ajustes sigue pendiente de rediseño y documentos/ajustes siguen pendientes de persistencia. |
 
 ---
 
@@ -173,7 +173,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
 - [x] Calendario fiscal: datos reales servidos desde backend, con semillas AEAT 2026 en BD.
 - [ ] Calendario fiscal: CRUD administrativo de vencimientos.
-- [ ] Documentos: UI placeholder, sin almacenamiento ni endpoints.
+- [x] Documentos: UI rediseñada segun prototipo visual de herramientas.
+- [ ] Documentos: sin almacenamiento ni endpoints.
 - [ ] Ajustes: UI estatica, sin persistencia.
 
 ---
@@ -231,6 +232,13 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Conectada la UI Angular a `IntranetService`, eliminando datos hardcodeados de la pantalla.
 - Pendiente: CRUD administrativo para mantener vencimientos desde la aplicacion.
 - Verificacion: `npm run build` en `app/` correcto y tests backend del endpoint en `tests/test_intranet_tabs.py`. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+
+### 2026-05-08 · HU-M10-02 Documentos UI
+
+- Rediseñada la pantalla `documentos` para seguir el prototipo: acciones superiores, carpetas fijadas, panel de almacenamiento, archivos recientes y tabla de carpetas.
+- Se mantiene dentro de los patrones existentes de intranet con sidebar/topbar compartidos.
+- Pendiente: modelo `documentos`, subida/descarga real, asociacion con clientes/trabajos y baja logica.
+- Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ---
 

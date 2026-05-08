@@ -177,6 +177,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 ### HU-M10-02 - Documentos
 
+- [x] UI rediseñada segun prototipo visual de herramientas.
 - [ ] Modelo `documentos`.
 - [ ] Subida y descarga de archivos.
 - [ ] Asociacion opcional a clientes/trabajos.

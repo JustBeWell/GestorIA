@@ -7,101 +7,126 @@
         <div class="breadcrumbs">Inicio / <strong>Documentos</strong></div>
       </header>
 
-      <section class="page-header">
+      <section class="page-header documents-header">
         <div>
           <h1 class="page-title">Documentos</h1>
-          <p class="page-subtitle">Resumen del modulo documental</p>
+          <p class="page-subtitle">7 carpetas de cliente · 369 archivos</p>
+        </div>
+        <div class="documents-actions">
+          <button type="button" class="secondary-button document-action">
+            <span aria-hidden="true">▽</span>
+            Filtros
+          </button>
+          <button type="button" class="primary-button document-action">
+            <span aria-hidden="true">+</span>
+            Subir archivo
+          </button>
         </div>
       </section>
 
-      <section class="module-container">
-        <section class="docs-hero">
-          <div>
-            <p class="docs-kicker">Archivo central</p>
-            <h2>Repositorio vivo de expedientes</h2>
-            <p class="docs-lead">Encuentra contratos, modelos fiscales y anexos con trazabilidad completa.</p>
-          </div>
-          <div class="docs-stats">
-            <div>
-              <span>Documentos activos</span>
-              <strong>1.248</strong>
-            </div>
-            <div>
-              <span>Revisiones pendientes</span>
-              <strong>18</strong>
-            </div>
-          </div>
-        </section>
+      <section class="documents-layout">
+        <div class="documents-main">
+          <section class="pinned-panel">
+            <header class="panel-title">
+              <h2>Fijadas <span>· acceso rápido</span></h2>
+            </header>
 
-        <section class="docs-columns">
-          <div class="docs-column">
-            <h3>Carpetas maestras</h3>
-            <div class="archive-list">
-              <div>
-                <strong>Fiscal · Clientes</strong>
-                <span>Modelos 303, 111, 115</span>
-              </div>
-              <div>
-                <strong>Laboral · Nominas</strong>
-                <span>Contratos, partes, seguros</span>
-              </div>
-              <div>
-                <strong>Mercantil · Sociedades</strong>
-                <span>Escrituras, libros, poderes</span>
-              </div>
+            <div class="pinned-grid">
+              @for (folder of pinnedFolders; track folder.name) {
+                <article class="pinned-folder">
+                  <div class="folder-summary">
+                    <span class="avatar" [class]="'avatar avatar--' + folder.tone">{{ folder.initials }}</span>
+                    <div>
+                      <h3>{{ folder.name }}</h3>
+                      <p>{{ folder.files }} archivos · {{ folder.size }}</p>
+                    </div>
+                  </div>
+                </article>
+              }
             </div>
-          </div>
-          <div class="docs-column">
-            <h3>Plantillas destacadas</h3>
-            <ul>
-              <li>Modelo de factura recurrente</li>
-              <li>Contrato de prestacion de servicios</li>
-              <li>Checklist de alta de cliente</li>
-              <li>Informe de cierre trimestral</li>
-            </ul>
-          </div>
-        </section>
+          </section>
 
-        <section class="docs-columns">
-          <div class="docs-column">
-            <h3>Flujos de revision</h3>
-            <div class="review-row">
-              <div>
-                <strong>Borradores</strong>
-                <span>12 documentos en preparacion</span>
+          <section class="folders-panel">
+            <header class="folders-panel__header">
+              <h2>Todas las carpetas</h2>
+              <div class="sort-tabs" aria-label="Ordenar carpetas">
+                <button type="button" class="sort-tabs__active">Recientes</button>
+                <button type="button">A-Z</button>
+                <button type="button">Tamaño</button>
               </div>
-              <span class="chip">Borrador</span>
+            </header>
+
+            <div class="folders-table" role="table" aria-label="Carpetas de clientes">
+              <div class="folders-row folders-row--head" role="row">
+                <span role="columnheader">Carpeta</span>
+                <span role="columnheader">ID</span>
+                <span role="columnheader">Archivos</span>
+                <span role="columnheader">Tamaño</span>
+                <span role="columnheader">Última actualización</span>
+                <span role="columnheader" aria-label="Acciones"></span>
+              </div>
+
+              @for (folder of folders; track folder.id) {
+                <article class="folders-row" role="row">
+                  <div class="folder-name" role="cell">
+                    <span class="avatar avatar--small" [class]="'avatar avatar--small avatar--' + folder.tone">
+                      {{ folder.initials }}
+                    </span>
+                    <strong>{{ folder.name }}</strong>
+                  </div>
+                  <span role="cell">{{ folder.id }}</span>
+                  <strong role="cell">{{ folder.files }}</strong>
+                  <span role="cell">{{ folder.size }}</span>
+                  <span role="cell">{{ folder.updated }}</span>
+                  <button type="button" class="row-arrow" aria-label="Abrir carpeta {{ folder.name }}">›</button>
+                </article>
+              }
             </div>
-            <div class="review-row">
-              <div>
-                <strong>Revision interna</strong>
-                <span>6 documentos pendientes</span>
-              </div>
-              <span class="chip warning">Revision</span>
+          </section>
+        </div>
+
+        <aside class="documents-side">
+          <section class="side-panel storage-panel">
+            <h2>Almacenamiento</h2>
+            <div class="storage-used">
+              <span>Usado</span>
+              <strong>643 MB <em>/ 5 GB</em></strong>
             </div>
-            <div class="review-row">
-              <div>
-                <strong>Aprobados</strong>
-                <span>42 documentos listos para envio</span>
-              </div>
-              <span class="chip success">Aprobado</span>
+            <div class="storage-track" aria-hidden="true">
+              <span></span>
             </div>
-          </div>
-          <div class="docs-column">
-            <h3>Seguridad y trazabilidad</h3>
-            <p>Control de permisos por equipo y bitacora de cambios.</p>
-            <div class="trace-list">
-              <div>
-                <strong>Ultimo acceso</strong>
-                <span>Equipo Fiscal · hoy 09:20</span>
-              </div>
-              <div>
-                <strong>Cambios recientes</strong>
-                <span>5 ediciones verificadas</span>
-              </div>
+            <div class="storage-list">
+              @for (item of storageTypes; track item.label) {
+                <div>
+                  <span class="storage-type">
+                    <i [class]="'dot dot--' + item.tone"></i>
+                    {{ item.label }}
+                  </span>
+                  <span>{{ item.size }}</span>
+                </div>
+              }
             </div>
-          </div>
-        </section>
+          </section>
+
+          <section class="side-panel recent-panel">
+            <h2>Archivos recientes</h2>
+            <div class="recent-list">
+              @for (file of recentFiles; track file.name) {
+                <article class="recent-file">
+                  <span class="file-badge" [class]="'file-badge file-badge--' + file.tone">{{ file.type }}</span>
+                  <div class="recent-copy">
+                    <strong>{{ file.name }}</strong>
+                    <span>{{ file.client }}</span>
+                  </div>
+                  <div class="recent-meta">
+                    <span>{{ file.size }}</span>
+                    <span>{{ file.date }}</span>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        </aside>
       </section>
     </section>
   </section>
