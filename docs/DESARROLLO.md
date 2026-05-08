@@ -2,8 +2,8 @@
 
 Documento de seguimiento tecnico del MVP de GestorIA.
 
-**Ultima revision:** 2026-05-07  
-**Estado global:** MVP operativo avanzado. Sprints 1-4 completados; Sprint 5 pendiente para herramientas, calidad y cierre de deuda tecnica.
+**Ultima revision:** 2026-05-08  
+**Estado global:** MVP operativo avanzado. Sprints 1-4 completados; Sprint 5 en curso para herramientas, calidad y cierre de deuda tecnica.
 
 ---
 
@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | Placeholder | Calendario fiscal, documentos y ajustes siguen sin backend/persistencia completa. |
+| M10 Herramientas | En curso | Calendario fiscal ya tiene UI alineada con prototipo; documentos y ajustes pendientes de rediseño, y todo M10 sigue sin backend/persistencia completa. |
 
 ---
 
@@ -167,7 +167,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ### M10 - Herramientas
 
-- [ ] Calendario fiscal: UI estatica, sin modelo ni endpoints.
+- [x] Calendario fiscal: UI estatica rediseñada segun prototipo visual de herramientas.
+- [ ] Calendario fiscal: sin modelo, endpoints ni datos reales desde backend.
 - [ ] Documentos: UI placeholder, sin almacenamiento ni endpoints.
 - [ ] Ajustes: UI estatica, sin persistencia.
 
@@ -210,8 +211,18 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ### Repositorio
 
-- [ ] Decidir si `landing/.next`, caches y artefactos generados deben salir del versionado.
+- [x] `landing/.next` y `landing/out` salen del indice y quedan ignorados.
 - [ ] Mantener README y documentacion sincronizados con Docker Compose y nginx.
+
+---
+
+## Iteraciones Sprint 5
+
+### 2026-05-08 · HU-M10-01 Calendario fiscal UI
+
+- Rediseñada la pantalla `calendario-fiscal` para seguir la estructura del prototipo: KPIs superiores, calendario mensual, vencimientos laterales y leyenda de prioridad.
+- Se mantiene como UI estatica con datos de ejemplo; quedan pendientes modelo de datos, endpoints y conexion a backend.
+- Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ---
 
@@ -235,4 +246,3 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - `docs/PLAN_SPRINTS.md`: plan de sprints y estado de HUs.
 - `docs/modelo_datos.md`: modelo relacional y migraciones.
 - `docs/estudio_caso_mvp_gestoria.md`: alcance funcional inicial del MVP.
-

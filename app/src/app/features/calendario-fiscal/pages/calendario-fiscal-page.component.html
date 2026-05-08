@@ -7,112 +7,224 @@
         <div class="breadcrumbs">Inicio / <strong>Calendario fiscal</strong></div>
       </header>
 
-      <section class="page-header">
+      <section class="page-header tools-page-header">
         <div>
           <h1 class="page-title">Calendario fiscal</h1>
-          <p class="page-subtitle">Resumen operativo de fechas y obligaciones</p>
+          <p class="page-subtitle">Vencimientos AEAT · abril 2026</p>
+        </div>
+        <div class="tools-actions">
+          <button type="button" class="secondary-button tool-action">
+            <span aria-hidden="true">↓</span>
+            Exportar ICS
+          </button>
+          <button type="button" class="primary-button tool-action">
+            <span aria-hidden="true">+</span>
+            Añadir vencimiento
+          </button>
         </div>
       </section>
 
-      <section class="module-container">
-        <section class="fiscal-hero">
-          <div>
-            <p class="fiscal-kicker">Trimestre actual</p>
-            <h2>Vista cronologica de obligaciones</h2>
-            <p class="fiscal-lead">Seguimiento de IVA, retenciones y modelos informativos con alertas previas.</p>
-          </div>
-          <div class="fiscal-status">
-            <div>
-              <span>Proximo vencimiento</span>
-              <strong>Modelo 303 · 20 mayo</strong>
+      <section class="module-container fiscal-board">
+        <section class="fiscal-kpis" aria-label="Resumen de calendario fiscal">
+          <article class="metric-card">
+            <div class="metric-card__head">
+              <span>Vencimientos del mes</span>
+              <span class="metric-icon metric-icon--blue" aria-hidden="true">▣</span>
             </div>
-            <div>
-              <span>Campana activa</span>
-              <strong>Renta 2025 · En curso</strong>
+            <strong>6</strong>
+            <div class="metric-card__footer">
+              <span>2 fechas críticas</span>
+              <span>20 abr · 30 abr</span>
             </div>
-          </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__head">
+              <span>Presentados</span>
+              <span class="metric-icon metric-icon--green" aria-hidden="true">✓</span>
+            </div>
+            <strong>2 <small>/ 6</small></strong>
+            <div class="progress-track" aria-hidden="true">
+              <span style="width: 34%"></span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__head">
+              <span>Pendientes alta prioridad</span>
+              <span class="metric-icon metric-icon--amber" aria-hidden="true">△</span>
+            </div>
+            <strong>2</strong>
+            <div class="metric-card__footer">
+              <span>Clientes afectados</span>
+              <span>22</span>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-card__head">
+              <span>Próximo vencimiento</span>
+              <span class="metric-icon metric-icon--gold" aria-hidden="true">↯</span>
+            </div>
+            <strong>30 abr <small>· 2 días</small></strong>
+            <div class="metric-card__footer">
+              <span>Modelo 202 · Modelo 349</span>
+            </div>
+          </article>
         </section>
 
-        <section class="fiscal-columns">
-          <div class="fiscal-column">
-            <header>
-              <h3>Linea de vencimientos</h3>
-              <span>Ultimos 45 dias</span>
+        <section class="fiscal-main-grid">
+          <article class="calendar-panel">
+            <header class="panel-heading">
+              <h2>Mes en vista <span>· abril 2026</span></h2>
+              <div class="month-switch" aria-label="Navegación de mes">
+                <button type="button" aria-label="Mes anterior">‹</button>
+                <span>Abr 2026</span>
+                <button type="button" aria-label="Mes siguiente">›</button>
+              </div>
             </header>
-            <ol class="timeline">
-              <li>
-                <div>
-                  <strong>Modelo 303</strong>
-                  <span>IVA trimestral · 20 mayo</span>
-                </div>
-                <span class="pill warning">Pendiente</span>
-              </li>
-              <li>
-                <div>
-                  <strong>Modelo 111</strong>
-                  <span>Retenciones · 20 mayo</span>
-                </div>
-                <span class="pill neutral">Preparacion</span>
-              </li>
-              <li>
-                <div>
-                  <strong>Modelo 347</strong>
-                  <span>Informativa anual · 28 febrero</span>
-                </div>
-                <span class="pill success">Cerrado</span>
-              </li>
-            </ol>
-          </div>
-          <div class="fiscal-column">
-            <h3>Campanas activas</h3>
-            <div class="campaign-row">
-              <div>
-                <strong>Renta y Patrimonio</strong>
-                <span>Clientes fisicos · Abril - Junio</span>
-              </div>
-              <span class="pill warning">En curso</span>
-            </div>
-            <div class="campaign-row">
-              <div>
-                <strong>Sociedades</strong>
-                <span>Empresas · Julio</span>
-              </div>
-              <span class="pill neutral">Planificado</span>
-            </div>
-            <div class="campaign-row">
-              <div>
-                <strong>Modelos informativos</strong>
-                <span>Declaraciones informativas</span>
-              </div>
-              <span class="pill neutral">Preparacion</span>
-            </div>
-          </div>
-        </section>
 
-        <section class="fiscal-columns">
-          <div class="fiscal-column">
-            <h3>Checklist previo a envio</h3>
-            <ul>
-              <li>Conciliacion bancaria validada.</li>
-              <li>Facturas emitidas y recibidas revisadas.</li>
-              <li>Retenciones y tipos aplicados verificados.</li>
-              <li>Documentacion de soporte cargada.</li>
-            </ul>
-          </div>
-          <div class="fiscal-column">
-            <h3>Alertas operativas</h3>
-            <p>Recibe avisos 7 dias antes del vencimiento y cuando haya documentos incompletos.</p>
-            <div class="alert-list">
-              <div>
-                <strong>2 obligaciones</strong>
-                <span>requieren revision documental</span>
-              </div>
-              <div>
-                <strong>1 riesgo</strong>
-                <span>por datos pendientes de cliente</span>
-              </div>
+            <div class="calendar-grid calendar-grid--weekdays" aria-hidden="true">
+              <span>L</span>
+              <span>M</span>
+              <span>X</span>
+              <span>J</span>
+              <span>V</span>
+              <span>S</span>
+              <span>D</span>
             </div>
-          </div>
+
+            <div class="calendar-grid calendar-days">
+              <div class="day day--muted"><span>29</span></div>
+              <div class="day day--muted"><span>30</span></div>
+              <div class="day"><span>1</span></div>
+              <div class="day"><span>2</span></div>
+              <div class="day"><span>3</span></div>
+              <div class="day day--weekend"><span>4</span></div>
+              <div class="day day--weekend"><span>5</span></div>
+
+              <div class="day"><span>6</span></div>
+              <div class="day"><span>7</span></div>
+              <div class="day"><span>8</span></div>
+              <div class="day"><span>9</span></div>
+              <div class="day"><span>10</span></div>
+              <div class="day day--weekend"><span>11</span></div>
+              <div class="day day--weekend"><span>12</span></div>
+
+              <div class="day"><span>13</span></div>
+              <div class="day"><span>14</span></div>
+              <div class="day"><span>15</span></div>
+              <div class="day"><span>16</span></div>
+              <div class="day"><span>17</span></div>
+              <div class="day day--weekend"><span>18</span></div>
+              <div class="day day--weekend"><span>19</span></div>
+
+              <div class="day day--busy">
+                <span>20</span>
+                <em class="event event--high">Modelo 111</em>
+                <em class="event event--medium">Modelo 115</em>
+                <small>+2</small>
+              </div>
+              <div class="day"><span>21</span></div>
+              <div class="day"><span>22</span></div>
+              <div class="day"><span>23</span></div>
+              <div class="day"><span>24</span></div>
+              <div class="day day--weekend"><span>25</span></div>
+              <div class="day day--weekend"><span>26</span></div>
+
+              <div class="day"><span>27</span></div>
+              <div class="day day--today"><span>28</span></div>
+              <div class="day"><span>29</span></div>
+              <div class="day day--busy">
+                <span>30</span>
+                <em class="event event--medium">Modelo 202</em>
+                <em class="event event--low">Modelo 349</em>
+              </div>
+              <div class="day day--muted"><span>1</span></div>
+              <div class="day day--muted day--weekend"><span>2</span></div>
+              <div class="day day--muted day--weekend"><span>3</span></div>
+            </div>
+
+            <footer class="calendar-legend">
+              <span><i class="legend-dot legend-dot--high"></i> Alta prioridad</span>
+              <span><i class="legend-dot legend-dot--medium"></i> Media</span>
+              <span><i class="legend-dot legend-dot--low"></i> Baja</span>
+              <span><i class="legend-dot legend-dot--today"></i> Hoy</span>
+            </footer>
+          </article>
+
+          <aside class="due-panel">
+            <header class="panel-heading">
+              <h2>Próximos vencimientos</h2>
+              <span class="status-chip"><i></i> 4 pendientes</span>
+            </header>
+
+            <div class="due-list">
+              <article class="due-item due-item--high">
+                <div class="date-box">
+                  <span>ABR</span>
+                  <strong>20</strong>
+                </div>
+                <div class="due-copy">
+                  <div>
+                    <strong>Modelo 130</strong>
+                    <span>· 8 clientes</span>
+                  </div>
+                  <h3>Pago fraccionado IRPF</h3>
+                  <p>Estimación directa · 1T</p>
+                </div>
+                <span class="due-time due-time--late">hace 8d</span>
+              </article>
+
+              <article class="due-item due-item--high">
+                <div class="date-box">
+                  <span>ABR</span>
+                  <strong>20</strong>
+                </div>
+                <div class="due-copy">
+                  <div>
+                    <strong>Modelo 303</strong>
+                    <span>· 14 clientes</span>
+                  </div>
+                  <h3>IVA · 1T 2026</h3>
+                  <p>Autoliquidación trimestral</p>
+                </div>
+                <span class="due-time due-time--late">hace 8d</span>
+              </article>
+
+              <article class="due-item due-item--medium">
+                <div class="date-box">
+                  <span>ABR</span>
+                  <strong>30</strong>
+                </div>
+                <div class="due-copy">
+                  <div>
+                    <strong>Modelo 202</strong>
+                    <span>· 3 clientes</span>
+                  </div>
+                  <h3>Pago a cuenta IS</h3>
+                  <p>Sociedades · 1P</p>
+                </div>
+                <span class="due-time">en 2d</span>
+              </article>
+
+              <article class="due-item due-item--low">
+                <div class="date-box">
+                  <span>ABR</span>
+                  <strong>30</strong>
+                </div>
+                <div class="due-copy">
+                  <div>
+                    <strong>Modelo 349</strong>
+                    <span>· 1 clientes</span>
+                  </div>
+                  <h3>Operaciones intracomunitarias</h3>
+                  <p>Marzo 2026</p>
+                </div>
+                <span class="due-time">en 2d</span>
+              </article>
+            </div>
+          </aside>
         </section>
       </section>
     </section>

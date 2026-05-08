@@ -1,8 +1,8 @@
 # Plan de Sprints - GestorIA MVP
 
 **Generado:** 2026-05-04  
-**Ultima revision:** 2026-05-07  
-**Estado global:** Sprints 1-4 completados. Sprint 5 pendiente para herramientas, calidad y deuda tecnica.
+**Ultima revision:** 2026-05-08  
+**Estado global:** Sprints 1-4 completados. Sprint 5 en curso para herramientas, calidad y deuda tecnica.
 
 ---
 
@@ -26,7 +26,7 @@ Antes de este plan ya estaban completados M1 Auth, M2 Empleados, M3 Fichaje y M7
 | S2 | M5 Trabajos | Completo | Kanban, CRUD, asignaciones, comentarios y exportaciones. |
 | S3 | M6 Facturacion y pagos | Completo | Facturas, pagos, deuda viva, tabs, KPIs y exportaciones. |
 | S4 | M9 Auditoria + M8 Exportaciones | Completo | Auditoria transversal, CSV facturas y PDF cierre mensual. |
-| S5 | M10 + Calidad | Pendiente | Herramientas reales, tests y limpieza de deuda tecnica. |
+| S5 | M10 + Calidad | En curso | Rediseño visual de herramientas, tests y limpieza de deuda tecnica. |
 
 ---
 
@@ -164,12 +164,13 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 **Objetivo:** cerrar lo pendiente para una version mas madura y mantenible.
 
-**Estado:** pendiente.
+**Estado:** en curso.
 
 ### HU-M10-01 - Calendario fiscal
 
 - [ ] Modelo de datos para calendario fiscal.
 - [ ] Endpoints CRUD o al menos consulta por ano.
+- [x] UI estatica rediseñada segun prototipo visual.
 - [ ] UI con datos reales desde backend.
 
 ### HU-M10-02 - Documentos
@@ -194,9 +195,9 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 ### HU-DT-02 - Limpieza de repositorio
 
-- [ ] Revisar `landing/.next`.
+- [x] Revisar `landing/.next`.
 - [ ] Revisar `__pycache__`, caches y artefactos generados.
-- [ ] Ajustar `.gitignore` si procede.
+- [x] Ajustar `.gitignore` si procede.
 
 ### HU-DT-03 - Documentacion y despliegue
 
@@ -222,7 +223,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 - [x] Backend modularizado en microservicios locales con gateway.
 - [ ] Herramientas M10 completas.
 - [ ] Cobertura de tests suficiente para escritura y reglas criticas.
-- [ ] Limpieza de artefactos generados.
+- [x] Limpieza de artefactos generados de landing/build.
 
 ---
 
@@ -236,5 +237,6 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 | Sprint 3 | 2026-05-06/07 | Completado | Facturacion, pagos y deuda viva. |
 | Sprint 4 | 2026-05-07 | Completado | Auditoria y exportaciones. |
 | Refactor microservicios | 2026-05-07 | Completado | Docker + nginx gateway + launcher adaptado. |
-| Sprint 5 | Pendiente | Pendiente | M10, tests y limpieza. |
-
+| Sprint 5 · limpieza repo | 2026-05-08 | Completado | `.gitignore` ampliado y outputs `landing/.next`/`landing/out` fuera del indice. |
+| Sprint 5 · calendario fiscal UI | 2026-05-08 | Completado | Pantalla estatica alineada con prototipo; pendiente backend y persistencia. |
+| Sprint 5 | 2026-05-08 | En curso | M10, tests y despliegue productivo. |
