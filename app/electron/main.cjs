@@ -74,10 +74,14 @@ function serveFile(filePath, rangeHeader) {
   });
 }
 
-function createWindow() {
+function createWindow(options = {}) {
+  const { show = true } = options;
   const win = new BrowserWindow({
     width: 1920,
     height: 1080,
+    show,
+    opacity: show ? 1 : 0,
+    backgroundColor: '#0c1a16',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -90,6 +94,8 @@ function createWindow() {
   } else {
     win.loadURL('app://localhost/');
   }
+
+  return win;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -105,6 +111,8 @@ function createSplashWindow() {
     resizable: false,
     center: true,
     skipTaskbar: true,
+    alwaysOnTop: true,
+    backgroundColor: '#2d5a45',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -130,6 +138,59 @@ function splashCreep(splash, maxPct, step = 0.35, intervalMs = 180) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function waitForWindowReady(win, maxWaitMs = 8000) {
+  if (win.isDestroyed()) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timeout);
+      win.webContents.off('did-finish-load', finish);
+      win.webContents.off('did-fail-load', finish);
+      win.off('ready-to-show', finish);
+      resolve();
+    };
+    const timeout = setTimeout(finish, maxWaitMs);
+
+    win.once('ready-to-show', finish);
+    win.webContents.once('did-finish-load', finish);
+    win.webContents.once('did-fail-load', finish);
+  });
+}
+
+async function showMainWindowSmoothly(win, splash) {
+  if (win.isDestroyed()) return;
+
+  await waitForWindowReady(win);
+  if (win.isDestroyed()) return;
+
+  win.setOpacity(0);
+  win.show();
+  win.focus();
+
+  if (splash && !splash.isDestroyed()) {
+    splash.webContents.executeJavaScript('fadeOutSplash()').catch(() => {});
+  }
+
+  const fadeMs = 700;
+  const steps = 24;
+  const frameMs = Math.round(fadeMs / steps);
+  for (let i = 1; i <= steps; i += 1) {
+    if (win.isDestroyed()) return;
+    const progress = i / steps;
+    const eased = 1 - Math.pow(1 - progress, 3);
+    win.setOpacity(eased);
+    if (splash && !splash.isDestroyed()) splash.setOpacity(1 - eased);
+    await sleep(frameMs);
+  }
+
+  if (!win.isDestroyed()) win.setOpacity(1);
+  if (splash && !splash.isDestroyed()) splash.close();
+  if (!win.isDestroyed()) win.focus();
+}
 
 /** Espera a que el gateway nginx responda en /gateway/health */
 function waitForGateway(maxWaitMs = 60000) {
@@ -247,8 +308,8 @@ async function runLauncher() {
     }
     await sleep(1000);
 
-    createWindow();
-    if (!splash.isDestroyed()) splash.close();
+    const win = createWindow({ show: false });
+    await showMainWindowSmoothly(win, splash);
   } catch (err) {
     if (!splash.isDestroyed()) {
       splash.webContents

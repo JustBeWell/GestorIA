@@ -2,8 +2,9 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 1000;
+  z-index: 3000;
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  pointer-events: none;
 }
 
 .ai-widget {
@@ -11,6 +12,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
+  pointer-events: auto;
 }
 
 /* ─── FAB Button ─────────────────────────────────────────── */

@@ -8,10 +8,12 @@ import HowItWorks from '@/components/HowItWorks';
 import Download from '@/components/Download';
 import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
+import BrandingIntro from '@/components/BrandingIntro';
 
 export default function HomePage() {
   return (
     <>
+      <BrandingIntro />
       <Nav />
       <main>
         <Hero />

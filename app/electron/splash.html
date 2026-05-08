@@ -32,6 +32,7 @@
       bottom: 0; left: 0; right: 0;
       padding: 0 36px 28px;
       background: linear-gradient(to top, rgba(15,27,45,0.72) 0%, transparent 100%);
+      transition: opacity 0.55s ease, transform 0.55s ease;
     }
 
     .progress-header {
@@ -67,6 +68,15 @@
       background: linear-gradient(90deg, #a8c5b0, #ffffff);
       border-radius: 99px;
       width: 0%;
+    }
+
+    body.fading-out {
+      opacity: 0;
+    }
+
+    body.fading-out .footer {
+      opacity: 0;
+      transform: translateY(10px);
     }
 
   </style>
@@ -144,7 +154,10 @@
       target = 100;
       _scheduleAnimate();
       status.textContent = '¡Todo listo!';
-      setTimeout(() => { document.body.style.opacity = '0'; }, 400);
+    }
+
+    function fadeOutSplash() {
+      document.body.classList.add('fading-out');
     }
 
     function showError(msg) {
