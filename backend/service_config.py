@@ -30,7 +30,7 @@ class ServiceSettings:
 
 	openai_api_key: str | None = os.getenv("OPENAI_API_KEY", None)
 	openai_gia_model: str = os.getenv("OPENAI_GIA_MODEL", "gpt-4o-mini")
-	openai_image_model: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-4o-mini")
+	openai_image_model: str = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
 	gia_storage_dir: str = os.getenv("GIA_STORAGE_DIR", os.path.join(os.getcwd(), "storage", "gia"))
 	frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:4200")
 

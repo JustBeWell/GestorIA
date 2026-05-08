@@ -34,6 +34,10 @@ export class GiaService {
     return this.http.get<GiaConversationDetail>(`${this.apiUrl}/ai/gia/conversations/${id}`);
   }
 
+  deleteConversation(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/ai/gia/conversations/${id}`);
+  }
+
   sendMessage(conversationId: string, message: string, mode: GiaMode, files: File[]): Observable<GiaMessageResponse> {
     const formData = new FormData();
     formData.set('message', message);

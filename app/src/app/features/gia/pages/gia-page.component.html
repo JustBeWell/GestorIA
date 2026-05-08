@@ -7,115 +7,275 @@
         <div class="breadcrumbs">Inicio / <strong>GIA</strong></div>
       </header>
 
-      <section class="page-header gia-header">
-        <div>
-          <h1 class="page-title">GIA</h1>
-          <p class="page-subtitle">Portal de IA con memoria, lectura de archivos y generación de PDF e imágenes</p>
-        </div>
-        <button type="button" class="primary-button gia-new" (click)="createConversation()">+ Nueva conversación</button>
-      </section>
+      <section class="gia-shell" [class.gia-shell--blocked]="busy()">
+        <!-- ── Sidebar de conversaciones ───────────────────────── -->
+        <aside class="gia-sidebar" [class.gia-sidebar--open]="mobileSidebarOpen()">
+          <div class="gia-sidebar__head">
+            <div>
+              <h2>GIA</h2>
+              <span>Tu portal de IA</span>
+            </div>
+            <button
+              type="button"
+              class="gia-new-btn"
+              [disabled]="busy()"
+              (click)="createConversation()"
+              title="Nueva conversación">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span>Nueva</span>
+            </button>
+          </div>
 
-      <section class="gia-layout">
-        <aside class="gia-conversations">
-          <h2>Conversaciones</h2>
-          @if (loading()) {
-            <p class="muted">Cargando conversaciones...</p>
-          } @else {
-            <div class="conversation-list">
+          <div class="gia-sidebar__list">
+            @if (loading()) {
+              <p class="gia-muted">Cargando conversaciones...</p>
+            } @else if (!conversations().length) {
+              <p class="gia-muted">Sin conversaciones todavía.</p>
+            } @else {
               @for (item of conversations(); track item.id) {
                 <button
                   type="button"
-                  class="conversation-item"
-                  [class.conversation-item--active]="activeConversationId() === item.id"
+                  class="gia-conv-item"
+                  [class.gia-conv-item--active]="activeConversationId() === item.id"
+                  [class.gia-conv-item--deleting]="deletingId() === item.id"
+                  [disabled]="busy() && activeConversationId() !== item.id"
                   (click)="openConversation(item.id)">
-                  <strong>{{ item.titulo }}</strong>
-                  <span>{{ item.last_message || 'Sin mensajes todavía' }}</span>
+                  <div class="gia-conv-item__avatar">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <div class="gia-conv-item__body">
+                    <strong>{{ item.titulo }}</strong>
+                    <span>{{ item.last_message || 'Sin mensajes todavía' }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="gia-conv-item__delete"
+                    [disabled]="busy()"
+                    aria-label="Eliminar conversación"
+                    title="Eliminar conversación"
+                    (click)="deleteConversation($event, item.id)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/><path d="M14 11v6"/>
+                      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
                 </button>
               }
-            </div>
-          }
+            }
+          </div>
         </aside>
 
+        <!-- ── Chat principal ──────────────────────────────────── -->
         <section class="gia-chat">
+          <header class="gia-chat__header">
+            <button
+              type="button"
+              class="gia-chat__menu"
+              aria-label="Mostrar conversaciones"
+              (click)="toggleMobileSidebar()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+            <div class="gia-chat__avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a8 8 0 0 0-8 8c0 1.7.5 3.3 1.5 4.7L4 20l5.3-1.5A8 8 0 1 0 12 2z"/>
+              </svg>
+            </div>
+            <div class="gia-chat__title">
+              <strong>GIA · Asistente fiscal</strong>
+              <span>Memoria, lectura de archivos y generación de PDF e imágenes</span>
+            </div>
+            @if (busy()) {
+              <span class="gia-chat__status">
+                @if (sending()) { Pensando... }
+                @else if (deletingId()) { Eliminando... }
+              </span>
+            }
+          </header>
+
           @if (error()) {
             <div class="gia-error">{{ error() }}</div>
           }
 
-          <div class="message-list">
+          <div class="gia-message-list" #messageList>
             @for (message of messages(); track message.id) {
-              <article class="message" [class.message--user]="message.role === 'user'">
-                <div class="message-bubble">
-                  <span class="message-role">{{ message.role === 'user' ? 'Tú' : 'GIA' }}</span>
+              <article class="gia-message" [class.gia-message--user]="message.role === 'user'">
+                <div class="gia-message__avatar">
+                  @if (message.role === 'user') {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                  } @else {
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                    </svg>
+                  }
+                </div>
+                <div class="gia-message__bubble">
                   <p>{{ message.content }}</p>
                   @if (message.files.length) {
-                    <div class="message-files">
+                    <div class="gia-message__files">
                       @for (file of message.files; track file.id) {
-                        <a [href]="downloadUrl(file)" target="_blank" rel="noopener">
+                        <a [href]="downloadUrl(file)" target="_blank" rel="noopener" class="gia-file-chip">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                          </svg>
                           {{ file.nombre_original }}
                         </a>
                       }
                     </div>
                   }
+                  <time class="gia-message__time">{{ formatTime(message.created_at) }}</time>
                 </div>
               </article>
             } @empty {
-              <section class="gia-empty">
-                <strong>Empieza una conversación con GIA</strong>
-                <span>Pregunta sobre clientes, trabajos, facturas o adjunta un archivo para analizarlo.</span>
-              </section>
+              @if (!loading()) {
+                <section class="gia-empty">
+                  <div class="gia-empty__icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
+                  <strong>Empieza una conversación con GIA</strong>
+                  <span>Pregunta sobre clientes, trabajos, facturas o adjunta un archivo para analizarlo.</span>
+                </section>
+              }
+            }
+
+            @if (sending()) {
+              <article class="gia-message">
+                <div class="gia-message__avatar">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div class="gia-message__bubble gia-message__bubble--typing" aria-live="polite">
+                  <span class="gia-typing">
+                    <span></span><span></span><span></span>
+                  </span>
+                </div>
+              </article>
             }
           </div>
 
-          <footer class="composer">
-            <div class="mode-tabs" aria-label="Modo de respuesta">
-              <button type="button" [class.active]="mode === 'respuesta'" (click)="setMode('respuesta')">Respuesta</button>
-              <button type="button" [class.active]="mode === 'pdf'" (click)="setMode('pdf')">Generar PDF</button>
-              <button type="button" [class.active]="mode === 'imagen'" (click)="setMode('imagen')">Generar imagen</button>
+          <!-- ── Composer ──────────────────────────────────────── -->
+          <footer class="gia-composer" [class.gia-composer--disabled]="busy()">
+            <div class="gia-composer__modes" aria-label="Modo de respuesta">
+              <button
+                type="button"
+                [class.active]="mode === 'respuesta'"
+                [disabled]="busy()"
+                (click)="setMode('respuesta')">
+                Respuesta
+              </button>
+              <button
+                type="button"
+                [class.active]="mode === 'pdf'"
+                [disabled]="busy()"
+                (click)="setMode('pdf')">
+                Generar PDF
+              </button>
+              <button
+                type="button"
+                [class.active]="mode === 'imagen'"
+                [disabled]="busy()"
+                (click)="setMode('imagen')">
+                Generar imagen
+              </button>
             </div>
 
             @if (selectedFiles.length) {
-              <div class="selected-files">
+              <div class="gia-composer__files">
                 @for (file of selectedFiles; track file.name) {
-                  <span>{{ file.name }}</span>
+                  <span class="gia-file-tag">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    {{ file.name }}
+                  </span>
                 }
-                <button type="button" (click)="clearFiles()">Limpiar</button>
+                <button type="button" class="gia-file-clear" [disabled]="busy()" (click)="clearFiles()">Limpiar</button>
               </div>
             }
 
-            <textarea
-              [(ngModel)]="prompt"
-              rows="4"
-              placeholder="Pide a GIA que analice un PDF, redacte un escrito, genere una imagen o consulte datos internos..."></textarea>
+            <div class="gia-composer__input">
+              <textarea
+                [(ngModel)]="prompt"
+                (keydown)="onPromptKeydown($event)"
+                rows="2"
+                [disabled]="busy() || !activeConversationId()"
+                [placeholder]="busy() ? 'GIA está procesando tu mensaje...' : 'Pregunta a GIA o adjunta un archivo (Enter para enviar, Shift+Enter para nueva línea)'"></textarea>
+            </div>
 
-            <div class="composer-actions">
-              <label class="secondary-button upload-button">
-                Adjuntar
-                <input #fileInput type="file" multiple (change)="onFilesSelected($event)" />
+            <div class="gia-composer__actions">
+              <label class="gia-attach" [class.gia-attach--disabled]="busy()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+                <span>Adjuntar</span>
+                <input
+                  #fileInput
+                  type="file"
+                  multiple
+                  [disabled]="busy()"
+                  (change)="onFilesSelected($event)" />
               </label>
-              <button type="button" class="primary-button" [disabled]="sending() || !prompt.trim()" (click)="send()">
-                {{ sending() ? 'Pensando...' : 'Enviar' }}
+              <button
+                type="button"
+                class="gia-send"
+                [disabled]="busy() || !prompt.trim() || !activeConversationId()"
+                (click)="send()">
+                @if (sending()) {
+                  <span class="gia-typing gia-typing--white">
+                    <span></span><span></span><span></span>
+                  </span>
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  <span>Enviar</span>
+                }
               </button>
             </div>
           </footer>
         </section>
 
+        <!-- ── Panel lateral de archivos ───────────────────────── -->
         <aside class="gia-assets">
-          <h2>Archivos</h2>
-          <div class="asset-list">
+          <header class="gia-assets__head">
+            <h2>Archivos</h2>
+            <span>{{ files().length }}</span>
+          </header>
+          <div class="gia-assets__list">
             @for (file of files(); track file.id) {
-              <a class="asset-item" [href]="downloadUrl(file)" target="_blank" rel="noopener">
-                @if (isImage(file)) {
-                  <img [src]="downloadUrl(file)" [alt]="file.nombre_original" />
-                } @else {
-                  <span>{{ file.tipo.toUpperCase() }}</span>
-                }
-                <div>
+              <a class="gia-asset" [href]="downloadUrl(file)" target="_blank" rel="noopener">
+                <div class="gia-asset__thumb">
+                  @if (isImage(file)) {
+                    <img [src]="downloadUrl(file)" [alt]="file.nombre_original" />
+                  } @else {
+                    <span>{{ file.tipo.toUpperCase() }}</span>
+                  }
+                </div>
+                <div class="gia-asset__body">
                   <strong>{{ file.nombre_original }}</strong>
                   <small>{{ fileSize(file.tamano_bytes) }}</small>
                 </div>
               </a>
             } @empty {
-              <p class="muted">Los PDFs, imágenes y adjuntos aparecerán aquí.</p>
+              <p class="gia-muted">Los PDFs, imágenes y adjuntos aparecerán aquí.</p>
             }
           </div>
         </aside>

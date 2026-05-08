@@ -523,6 +523,14 @@ def gia_send_message(
     )
 
 
+@router.delete("/gia/conversations/{conversation_id}", status_code=204)
+def gia_delete_conversation(conversation_id: str, current_user=Depends(get_current_user)):
+    deleted = GiaService.delete_conversation(current_user.user_id, conversation_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return None
+
+
 @router.get("/gia/files/{file_id}/download")
 def gia_download_file(file_id: str, current_user=Depends(get_current_user)):
     file_info = GiaService.get_file_for_download(current_user.user_id, file_id)

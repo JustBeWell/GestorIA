@@ -861,6 +861,121 @@ El repositorio contiene **87 commits** hasta `40fcbeb` en 2026-05-07. Historial 
 - `05b6436` · 2026-05-07 · Angel · feat: splash screen con barra dinámica RAF y mensajes realistas por pasos
 - `26be1d2` · 2026-05-07 · Angel · fix: CORS nginx gateway + mover entry-points de backend/main/ a backend/
 - `40fcbeb` · 2026-05-07 · Angel · refactor
+- `pendiente` · 2026-05-08 · Angel · feat(gia): rediseño UI módulo GIA (header chat, burbujas tipo mensajería, panel archivos, sidebar conversaciones), indicador de typing animado, bloqueo total de interacción durante envío (textarea, modos, adjuntar y cambio de conversación), eliminación de conversaciones con confirmación y borrado en cascada (servicio + endpoint DELETE `/ai/gia/conversations/:id`), refuerzo de aislamiento por `user_id` ya existente y limpieza best-effort del directorio físico de adjuntos al borrar.
+
+### 20.1 Cambios módulo GIA (2026-05-08)
+
+**Backend**
+
+- `backend/services/gia_service.py` · método estático `delete_conversation(user_id, conversation_id)` que ejecuta `DELETE FROM gia_conversaciones WHERE id = %s AND user_id = %s`. La tabla tiene `ON DELETE CASCADE` sobre `gia_mensajes` y `gia_archivos`, así que mensajes y registros de archivos se eliminan automáticamente. Tras el commit, hace `shutil.rmtree` best-effort del directorio físico (`settings.gia_storage_dir/<conversation_id>`). Devuelve `True` si la fila existía y pertenecía al usuario, `False` en caso contrario para permitir un 404 limpio.
+- `backend/routes/ai.py` · nuevo `DELETE /ai/gia/conversations/{conversation_id}` con `status_code=204`. Usa `Depends(get_current_user)` y delega en el servicio. Devuelve 404 si `delete_conversation` retorna `False` (conversación inexistente o de otro usuario), garantizando aislamiento.
+
+**Aislamiento por usuario** (verificado, no se modifica)
+
+Todas las consultas del servicio GIA filtran por `user_id`:
+
+- `list_conversations`: `WHERE c.user_id = %s AND c.archivada = FALSE`.
+- `_get_owned_conversation` (usado por `get_conversation` y `send_message`): `WHERE id = %s AND user_id = %s`.
+- `get_file_for_download`: `JOIN gia_conversaciones c ON c.id = a.conversacion_id WHERE a.id = %s AND c.user_id = %s`.
+
+Esto hace imposible que un usuario consulte, lea, escriba, descargue o borre conversaciones/archivos de otro usuario.
+
+**Frontend**
+
+- `app/src/app/core/services/gia.service.ts` · método `deleteConversation(id)` que hace `DELETE` al endpoint.
+- `app/src/app/features/gia/pages/gia-page.component.ts` · refactor:
+  - Nuevos signals `deletingId` y `mobileSidebarOpen`; computed `busy = sending() || deletingId() !== null` que centraliza el estado de bloqueo.
+  - `deleteConversation(event, id)` con `confirm()`, `stopPropagation()`, sincronización local de `conversations` y reapertura automática de la siguiente conversación o creación de una nueva si era la última.
+  - Toda interacción (`createConversation`, `openConversation`, `setMode`, `onFilesSelected`, `send`) se aborta si `busy()` es true.
+  - Auto-scroll al final del chat con `AfterViewChecked + shouldScroll` para no parpadear en cada CD.
+  - Atajo Enter (Shift+Enter = nueva línea) gestionado desde `onPromptKeydown`.
+  - Helper `formatTime` para el timestamp en cada burbuja.
+- `app/src/app/features/gia/pages/gia-page.component.html` · estructura totalmente nueva:
+  - Sidebar de conversaciones con avatar, título, último mensaje y botón eliminar (visible al hover y conversación activa).
+  - Cabecera de chat con avatar GIA, título y badge "Pensando.../Eliminando..." cuando `busy()`.
+  - Mensajes en formato burbuja con avatar lateral, hora y chips de archivos adjuntos.
+  - Burbuja de typing (tres puntos animados) que aparece debajo del último mensaje mientras `sending()`.
+  - Composer con tabs de modo, input grande, botón adjuntar (label fileInput) y botón enviar (con dots blancos durante envío).
+  - Todos los controles bindean `[disabled]="busy()"` y los containers de modo y composer reciben `--disabled` para feedback visual.
+- `app/src/app/features/gia/pages/gia-page.component.css` · diseño completamente nuevo:
+  - Variables CSS centralizadas (`--gia-primary`, `--gia-accent`, `--gia-radius`, sombras, etc.) alineadas con la paleta `intranet-pro-shell.css` (verde `#1a3528`, dorado `#d89d37`).
+  - Layout grid de tres columnas (sidebar 280 / chat / archivos 280) con altura `calc(100vh - 110px)` y colapso a 2 columnas en <1180px y a 1 columna + sidebar deslizable en <820px.
+  - Animación `gia-bounce` para typing dots y `gia-pulse` para el badge de estado.
+  - Estados hover, activo, deshabilitado y deleting trabajados con transiciones suaves.
+
+**Arquitectura / decisiones de diseño**
+
+- *Aislamiento*: se confía en el servidor (no en el front) — el filtro por `user_id` está en cada query SQL. El front solo envía el ID y recibe 404 si la conversación no le pertenece.
+- *Borrado*: el endpoint usa `DELETE` REST estándar y devuelve 204. La cascada SQL evita orquestar borrados manuales (evita drift entre tablas si se añadiera lógica futura).
+- *Bloqueo de UI*: un único computed (`busy`) gobierna `[disabled]` de todos los controles, evitando estados inconsistentes (p. ej. bloqueando textarea pero no el botón enviar). Toda mutación pasa por una guard al inicio.
+- *Performance*: el typing dot es CSS puro (animation), sin polling ni timers en TS.
+
+### 20.2 Fixes módulo GIA (2026-05-08, segunda iteración)
+
+**Bug 1 — Textarea desbordando el card del chat**
+
+`gia-page.component.css`: el componente Angular es standalone y no heredaba `box-sizing: border-box` del `intranet-pro-shell.css` (que solo aplica a su propio `:host *`). El textarea con `width: 100%` + padding usaba `content-box` por defecto y desbordaba el contenedor.
+
+Fix: añadido `:host, :host *, :host *::before, :host *::after { box-sizing: border-box }` al inicio del CSS. Adicionalmente se añadió `min-width: 0` y `max-width: 100%` al wrapper `.gia-composer__input` y al propio `textarea` para que respete el ancho del grid aunque el contenido tienda a expandir.
+
+**Bug 2 — Botón "Nueva" con aspecto pobre**
+
+Mejoras en `.gia-new-btn`: padding horizontal a 14px, altura fija 32px, `text-transform: none` y `letter-spacing: 0` explícitos para protegerlo de cualquier estilo global, `flex-shrink: 0` para que no se aplaste cuando el sidebar es estrecho.
+
+**Bug 3 — Mensaje del usuario desaparece hasta que llega la respuesta**
+
+`gia-page.component.ts`: el método `send()` solo añadía el mensaje del usuario a la lista en el callback `next`, así que durante toda la espera del agente el chat parecía vacío.
+
+Fix: optimistic update. Al disparar `send()`:
+
+1. Se construye un `GiaMessageItem` temporal con `id = tmp-{timestamp}` y `role = 'user'`, mapeando los `File` seleccionados a `GiaFileItem` stubs (con `download_url: ''` que no se puede pulsar pero muestra el chip con nombre y tamaño).
+2. Se inserta en `messages()` inmediatamente y se limpia el composer (textarea y archivos).
+3. En `next`, se filtra el mensaje optimista por `id` y se añaden los reales (`response.user_message`, `response.assistant_message`).
+4. En `error`, se revierte el optimistic update y se devuelve el texto al composer (`this.prompt = text`) para que el usuario pueda reintentar sin reescribir.
+
+Ventaja arquitectónica: la burbuja de typing dots (que aparece cuando `sending() === true`) se renderiza ahora *después* del mensaje del usuario, dando una experiencia conversacional natural.
+
+### 20.3 Fix generación PDF e imagen GIA (2026-05-08)
+
+**Diagnóstico**
+
+- *Imagen*: `service_config.py` definía `OPENAI_IMAGE_MODEL` con default `"gpt-4o-mini"` (modelo de chat, no de imagen). `_generate_image` usaba `client.responses.create(...)` con tool `image_generation`, una API que requiere SDK ≥ 1.50 y un modelo agéntico compatible (gpt-4.1, gpt-4o, o3 — `gpt-4o-mini` NO está soportado). Resultado: 502 silencioso "Error al contactar con OpenAI" cada vez que se elegía modo imagen.
+- *PDF*: `fpdf2` con fuentes core (Helvetica) solo soporta Latin-1. `_pdf_safe` aplicaba `encode('latin-1', errors='replace')`, lo que sustituye comillas tipográficas, em dashes, emojis, comilla simple Unicode, etc. por `?`. Documentos profesionales con `?` en lugar de caracteres Unicode. Formato pobre (sin márgenes definidos, sin separación visual, todo a 11pt).
+- *Errores genéricos*: la cláusula `except Exception` en `_run_openai` capturaba cualquier fallo de imagen y devolvía siempre `"Error al contactar con OpenAI"` sin detalle, dificultando el diagnóstico.
+
+**Cambios**
+
+- `backend/requirements.txt` · `+ reportlab>=4.0.0`. fpdf2 se conserva por si otros módulos lo usan (no encontrado, candidato a remoción futura).
+- `backend/service_config.py` · default `openai_image_model = "gpt-image-1"` (estándar OpenAI Images API). Comentario explícito advirtiendo de no usar modelos de chat aquí.
+- `backend/services/gia_service.py`:
+  - **`_create_pdf` reescrito con reportlab**. Usa `SimpleDocTemplate` (A4, 2cm márgenes), `Paragraph` con estilos custom (`title_style` 18pt verde corporativo `#1a3528`, `meta_style` con fecha y firma "GestorIA · GIA", `body_style` 11pt/16leading), `HRFlowable` separador y respeto de párrafos (regex `\n\s*\n` para párrafos, `<br/>` dentro). UTF-8 nativo: acentos, comillas, em dashes, símbolos preservados. Helper `_html_escape` para escapar `&<>` antes de pasar a `Paragraph` (que parsea mini-HTML).
+  - **`_generate_image` reescrito con `client.images.generate(...)`**. API estándar compatible con SDK ≥ 1.0. Bloqueo defensivo de modelos de chat (`gpt-4*`, `o1*`, `o3*`) con mensaje claro 503. Soporta tanto `b64_json` (gpt-image-1 por defecto) como `url` (dall-e-3 por defecto): si llega URL, descarga con `urllib.request` (timeout 30s). `prompt[:4000]` para respetar el límite de la API. Cada error tiene su `logger.exception` y propaga `HTTPException` con detalle real.
+  - **Eliminado `_pdf_safe` y el import `from fpdf import FPDF`** (código muerto tras la migración).
+  - **`_run_openai`**: `except Exception` ahora hace `logger.exception` y devuelve el detalle del error (`f"Error al contactar con OpenAI: {exc}"`) en lugar del mensaje genérico, para facilitar debugging desde la UI.
+
+**Decisiones arquitectónicas**
+
+- *reportlab vs fpdf2 con fuentes Unicode*: reportlab gana porque (a) UTF-8 nativo sin embeber TTFs, (b) layout declarativo (Platypus) más mantenible que el modo imperativo de fpdf2, (c) soporta tablas, imágenes, headers/footers de forma trivial si más adelante GIA debe generar facturas o documentos estructurados. fpdf2 con TTFs requería distribuir DejaVuSans.ttf en el repo.
+- *images.generate vs responses.create + tool*: la API clásica `images.generate` es estable desde SDK 1.0, soporta tanto `gpt-image-1` como `dall-e-3` con la misma firma, y no depende de la disponibilidad del tool agéntico (que cambia con cada release del SDK). Se sacrifica algo de orquestación (no hay loop de tool calls que decida cuándo generar imagen) a cambio de fiabilidad.
+- *Bloqueo defensivo de modelos en `_generate_image`*: prevenimos que un mal `OPENAI_IMAGE_MODEL` en `.env` cause un 502 oscuro. Mejor un 503 explicativo.
+- *`logger.exception` en lugar de prints*: los servicios usan `logging` para integrar con el stack centralizado (uvicorn / docker logs).
+
+**Variables de entorno relevantes**
+
+- `OPENAI_IMAGE_MODEL` (default `"gpt-image-1"`). Para usar DALL·E 3: `OPENAI_IMAGE_MODEL=dall-e-3`.
+- `OPENAI_GIA_MODEL` (sin cambios, default `"gpt-4o-mini"`).
+- `OPENAI_API_KEY` (obligatorio para que GIA funcione).
+
+**Acción operativa requerida**
+
+Tras hacer pull, reconstruir el contenedor `backend-ai` (o todos los `backend-*` si comparten `Dockerfile`/`requirements.txt`):
+
+```bash
+docker compose build backend-ai
+docker compose up -d backend-ai
+```
+
+Si la variable `OPENAI_IMAGE_MODEL` está fijada en el `.env` con valor antiguo (`gpt-4o-mini`), **eliminarla o cambiarla a `gpt-image-1`** — si no, el bloqueo defensivo devolverá 503 con mensaje claro.
 
 ---
 

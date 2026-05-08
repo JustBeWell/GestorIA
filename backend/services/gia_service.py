@@ -2,20 +2,23 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import mimetypes
 import os
 import re
 import shutil
+import urllib.request
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile
-from fpdf import FPDF
 from psycopg2.extras import RealDictCursor
 
 from database import db_connection
 from service_config import settings
+
+logger = logging.getLogger(__name__)
 
 
 TEXT_MIME_PREFIXES = ("text/",)
@@ -162,6 +165,38 @@ class GiaService:
         }
 
     @staticmethod
+    def delete_conversation(user_id: str, conversation_id: str) -> bool:
+        """Elimina una conversación y sus mensajes/archivos asociados.
+
+        Verifica la propiedad por ``user_id`` antes de borrar y limpia el
+        directorio físico donde se guardaron los adjuntos. Las filas
+        relacionadas se eliminan en cascada gracias a ``ON DELETE CASCADE``.
+        """
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                GiaService._ensure_schema(cursor)
+                cursor.execute(
+                    """
+                    DELETE FROM gia_conversaciones
+                    WHERE id = %s AND user_id = %s
+                    RETURNING id::text
+                    """,
+                    (conversation_id, user_id),
+                )
+                deleted = cursor.fetchone()
+                connection.commit()
+        if not deleted:
+            return False
+        # Limpieza best-effort del directorio de archivos asociados
+        try:
+            storage_dir = Path(settings.gia_storage_dir) / re.sub(r"[^a-zA-Z0-9-]", "", conversation_id)
+            if storage_dir.exists():
+                shutil.rmtree(storage_dir, ignore_errors=True)
+        except Exception:
+            pass
+        return True
+
+    @staticmethod
     def get_file_for_download(user_id: str, file_id: str) -> dict | None:
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -253,6 +288,8 @@ class GiaService:
 
             generated_image = None
             if mode == "imagen":
+                # _generate_image lanza HTTPException con detalle si falla;
+                # se propaga gracias a la cláusula `except HTTPException: raise`.
                 generated_image = GiaService._generate_image(client, message + context)
                 if not answer.strip():
                     answer = "He generado la imagen solicitada y la he adjuntado a esta conversación."
@@ -260,22 +297,75 @@ class GiaService:
         except HTTPException:
             raise
         except Exception as exc:
-            raise HTTPException(status_code=502, detail="Error al contactar con OpenAI") from exc
+            logger.exception("Fallo inesperado al contactar con OpenAI (modo=%s)", mode)
+            raise HTTPException(
+                status_code=502,
+                detail=f"Error al contactar con OpenAI: {exc}",
+            ) from exc
 
     @staticmethod
     def _generate_image(client, prompt: str) -> bytes:
-        response = client.responses.create(
-            model=settings.openai_image_model,
-            input=prompt,
-            tools=[{"type": "image_generation", "size": "1024x1024", "quality": "medium"}],
-            tool_choice={"type": "image_generation"},
-        )
-        for output in getattr(response, "output", []):
-            if getattr(output, "type", None) == "image_generation_call":
-                result = getattr(output, "result", None)
-                if result:
-                    return base64.b64decode(result)
-        raise HTTPException(status_code=502, detail="OpenAI no devolvió una imagen")
+        """Genera una imagen vía la API estándar ``client.images.generate``.
+
+        Usa el endpoint clásico de OpenAI Images (compatible con SDK ≥ 1.0).
+        Soporta los modelos ``gpt-image-1`` (b64_json por defecto) y
+        ``dall-e-3`` (URL por defecto). Cuando la respuesta es URL, descarga
+        los bytes; cuando es b64, los decodifica.
+        """
+        model = settings.openai_image_model
+        # gpt-image-1 / dall-e-3 son los modelos válidos de generación de imagen.
+        # Bloqueamos modelos de chat para fallar rápido con un mensaje claro.
+        if model.startswith("gpt-4") or model.startswith("o1") or model.startswith("o3"):
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"OPENAI_IMAGE_MODEL='{model}' no es un modelo de generación de "
+                    "imagen. Configura 'gpt-image-1' o 'dall-e-3'."
+                ),
+            )
+
+        try:
+            response = client.images.generate(
+                model=model,
+                prompt=prompt[:4000],  # límite del prompt en la API
+                size="1024x1024",
+                n=1,
+            )
+        except Exception as exc:
+            logger.exception("Fallo en client.images.generate (modelo=%s)", model)
+            raise HTTPException(
+                status_code=502,
+                detail=f"OpenAI rechazó la generación de imagen: {exc}",
+            ) from exc
+
+        data = getattr(response, "data", None) or []
+        if not data:
+            raise HTTPException(status_code=502, detail="OpenAI no devolvió ninguna imagen")
+
+        item = data[0]
+        b64 = getattr(item, "b64_json", None)
+        if b64:
+            try:
+                return base64.b64decode(b64)
+            except Exception as exc:
+                logger.exception("b64_json inválido en respuesta de OpenAI")
+                raise HTTPException(
+                    status_code=502, detail="Respuesta de imagen corrupta"
+                ) from exc
+
+        url = getattr(item, "url", None)
+        if url:
+            try:
+                with urllib.request.urlopen(url, timeout=30) as resp:
+                    return resp.read()
+            except Exception as exc:
+                logger.exception("No se pudo descargar la imagen desde %s", url)
+                raise HTTPException(
+                    status_code=502,
+                    detail="No se pudo descargar la imagen generada",
+                ) from exc
+
+        raise HTTPException(status_code=502, detail="OpenAI no devolvió una imagen utilizable")
 
     @staticmethod
     def _store_upload(cursor, conversation_id: str, message_id: str, user_id: str, upload: UploadFile) -> dict:
@@ -324,19 +414,90 @@ class GiaService:
 
     @staticmethod
     def _create_pdf(cursor, conversation_id: str, message_id: str, user_id: str, content: str) -> dict:
+        """Genera un PDF profesional con el contenido devuelto por GIA.
+
+        Usa ``reportlab`` (UTF-8 nativo) en lugar de fpdf2 + Latin-1 para
+        preservar acentos, comillas tipográficas, em dashes, símbolos, etc.
+        El layout incluye un encabezado con la fecha, título, separador y el
+        cuerpo respetando los párrafos del texto original.
+        """
+        try:
+            from reportlab.lib.enums import TA_LEFT
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+            from reportlab.lib.units import cm
+            from reportlab.platypus import (
+                HRFlowable,
+                Paragraph,
+                SimpleDocTemplate,
+                Spacer,
+            )
+        except ImportError as exc:
+            logger.exception("reportlab no instalado")
+            raise HTTPException(
+                status_code=503,
+                detail="Falta la dependencia 'reportlab' para generar PDFs.",
+            ) from exc
+
         storage_dir = GiaService._conversation_dir(conversation_id)
         stored_name = f"gia-documento-{uuid4().hex}.pdf"
         path = storage_dir / stored_name
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
-        pdf.set_font("Helvetica", "B", 16)
-        pdf.multi_cell(0, 10, GiaService._pdf_safe("Documento generado por GIA"))
-        pdf.ln(4)
-        pdf.set_font("Helvetica", "", 11)
-        for paragraph in content.split("\n"):
-            pdf.multi_cell(0, 7, GiaService._pdf_safe(paragraph))
-        pdf.output(str(path))
+
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "GiaTitle",
+            parent=styles["Heading1"],
+            fontName="Helvetica-Bold",
+            fontSize=18,
+            leading=22,
+            spaceAfter=4,
+            textColor="#1a3528",
+        )
+        meta_style = ParagraphStyle(
+            "GiaMeta",
+            parent=styles["Normal"],
+            fontName="Helvetica",
+            fontSize=9,
+            leading=12,
+            textColor="#6b7280",
+            spaceAfter=12,
+        )
+        body_style = ParagraphStyle(
+            "GiaBody",
+            parent=styles["BodyText"],
+            fontName="Helvetica",
+            fontSize=11,
+            leading=16,
+            alignment=TA_LEFT,
+            spaceAfter=8,
+        )
+
+        story = [
+            Paragraph("Documento generado por GIA", title_style),
+            Paragraph(f"Generado el {date.today().strftime('%d/%m/%Y')} · GestorIA", meta_style),
+            HRFlowable(width="100%", thickness=0.6, color="#dce8e0", spaceAfter=10),
+        ]
+
+        # Cada párrafo (separado por línea en blanco) se renderiza por separado;
+        # los saltos de línea simples se respetan con <br/>.
+        text = (content or "").strip() or "(Sin contenido)"
+        for raw in re.split(r"\n\s*\n", text):
+            paragraph = GiaService._html_escape(raw).replace("\n", "<br/>")
+            story.append(Paragraph(paragraph, body_style))
+            story.append(Spacer(1, 4))
+
+        doc = SimpleDocTemplate(
+            str(path),
+            pagesize=A4,
+            leftMargin=2 * cm,
+            rightMargin=2 * cm,
+            topMargin=2 * cm,
+            bottomMargin=2 * cm,
+            title="Documento GIA",
+            author="GestorIA · GIA",
+        )
+        doc.build(story)
+
         return GiaService._insert_file(
             cursor,
             conversation_id,
@@ -349,6 +510,15 @@ class GiaService:
             str(path),
             "pdf",
             content,
+        )
+
+    @staticmethod
+    def _html_escape(value: str) -> str:
+        """Escapa caracteres especiales para reportlab Paragraph (acepta mini-HTML)."""
+        return (
+            value.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
         )
 
     @staticmethod
@@ -615,7 +785,3 @@ class GiaService:
     def _title_from_message(message: str) -> str:
         clean = " ".join(message.strip().split())
         return clean[:80] or "Nueva conversación"
-
-    @staticmethod
-    def _pdf_safe(value: str) -> str:
-        return value.encode("latin-1", errors="replace").decode("latin-1")
