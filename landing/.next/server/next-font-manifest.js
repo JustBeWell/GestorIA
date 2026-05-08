@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/Users/anico/Documents/GitHub/GestorIA/landing/app/layout":["static/media/98e207f02528a563-s.p.woff2","static/media/db96af6b531dc71f-s.p.woff2","static/media/d3ebbfd689654d3a-s.p.woff2","static/media/4c9affa5bc8f420e-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';

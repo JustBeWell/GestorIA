@@ -5,11 +5,23 @@
 /tmp
 /out-tsc
 /bazel-out
+/out
+/build
+/release
+/releases
+*.AppImage
+*.blockmap
+*.exe
+*.dmg
+*.pkg
+*.zip
+*.tar.gz
 
 # Node
 /node_modules
 npm-debug.log
 yarn-error.log
+pnpm-debug.log
 
 # IDEs and editors
 .idea/
