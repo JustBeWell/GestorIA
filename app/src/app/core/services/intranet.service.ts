@@ -9,6 +9,7 @@ import {
   AdminCorreccionResponse,
   AdminFichajesResponse,
   AdminResumenResponse,
+  CalendarioFiscalResponse,
   ClienteCreate,
   ClienteDetailItem,
   ClientesTabResponse,
@@ -350,6 +351,26 @@ export class IntranetService {
   getDeudaViva(): Observable<DeudaVivaPorCliente[]> {
     return this.http.get<DeudaVivaPorCliente[]>(`${this.apiUrl}/intranet/deuda`);
   }
+
+  // ── Calendario fiscal ────────────────────────────────────────────────────
+
+  getCalendarioFiscal(params: { year?: number; month?: number } = {}): Observable<CalendarioFiscalResponse> {
+    const sp = new URLSearchParams();
+    if (params.year) sp.set('year', String(params.year));
+    if (params.month) sp.set('month', String(params.month));
+    const q = sp.toString();
+    return this.http.get<CalendarioFiscalResponse>(
+      `${this.apiUrl}/intranet/calendario-fiscal${q ? '?' + q : ''}`
+    );
+  }
+
+  exportCalendarioFiscalICS(year: number, month: number): Observable<Blob> {
+    return this.http.get(
+      `${this.apiUrl}/intranet/calendario-fiscal/export/ics?year=${year}&month=${month}`,
+      { responseType: 'blob' },
+    );
+  }
+
   // ── Auditoría ──────────────────────────────────────────────
 
   getAuditoria(params: {

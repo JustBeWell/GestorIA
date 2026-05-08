@@ -647,6 +647,55 @@ class DeudaVivaPorClienteItem(BaseModel):
 	facturas_vencidas: int
 
 
+# ── Calendario fiscal ─────────────────────────────────────────────────────────
+
+class CalendarioFiscalPeriodo(BaseModel):
+	year: int
+	month: int
+	month_label: str
+	subtitle: str
+
+
+class CalendarioFiscalVencimientoItem(BaseModel):
+	id: str
+	fecha: date
+	modelo: str
+	titulo: str
+	descripcion: str | None = None
+	categoria: str
+	periodo: str
+	prioridad: str
+	estado: str
+	clientes_afectados: int
+	fuente: str
+	fuente_url: str | None = None
+
+
+class CalendarioFiscalDiaItem(BaseModel):
+	fecha: date
+	dia: int
+	fuera_mes: bool
+	es_hoy: bool
+	es_fin_semana: bool
+	vencimientos: list[CalendarioFiscalVencimientoItem]
+
+
+class CalendarioFiscalResumen(BaseModel):
+	vencimientos_mes: int
+	presentados: int
+	pendientes_alta_prioridad: int
+	clientes_afectados_alta_prioridad: int
+	proximo_vencimiento: CalendarioFiscalVencimientoItem | None = None
+
+
+class CalendarioFiscalResponse(BaseModel):
+	periodo: CalendarioFiscalPeriodo
+	resumen: CalendarioFiscalResumen
+	dias: list[CalendarioFiscalDiaItem]
+	vencimientos: list[CalendarioFiscalVencimientoItem]
+	proximos: list[CalendarioFiscalVencimientoItem]
+
+
 # ── Auditoría ─────────────────────────────────────────────────────────────────
 
 class AuditoriaEventoItem(BaseModel):
@@ -664,4 +713,3 @@ class AuditoriaEventoItem(BaseModel):
 class AuditoriaResponse(BaseModel):
 	eventos: list[AuditoriaEventoItem]
 	paginacion: PaginacionMeta
-

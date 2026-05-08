@@ -126,6 +126,7 @@ class TestIntranetTabs:
             "trabajos": [
                 {
                     "trabajo_id": "55555555-5555-5555-5555-555555555555",
+                    "nro_trabajo": 1,
                     "titulo": "Nóminas marzo",
                     "estado": "en_curso",
                     "prioridad": "alta",
@@ -222,6 +223,61 @@ class TestIntranetTabs:
         assert body["facturas"][0]["pendiente"] == 500.0
         assert body["pagos_recientes"][0]["importe"] == 500.0
         assert body["paginacion_facturas"]["total_pages"] == 1
+
+    @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.get_month")
+    def test_calendario_fiscal_tab(self, mock_service, mock_decode):
+        mock_decode.return_value = _token_data()
+        mock_service.return_value = {
+            "periodo": {
+                "year": 2026,
+                "month": 5,
+                "month_label": "Mayo 2026",
+                "subtitle": "Vencimientos AEAT · mayo 2026",
+            },
+            "resumen": {
+                "vencimientos_mes": 1,
+                "presentados": 0,
+                "pendientes_alta_prioridad": 1,
+                "clientes_afectados_alta_prioridad": 3,
+                "proximo_vencimiento": {
+                    "id": "88888888-8888-8888-8888-888888888888",
+                    "fecha": "2026-05-20",
+                    "modelo": "111",
+                    "titulo": "Retenciones de trabajo y actividades",
+                    "descripcion": "Abril 2026",
+                    "categoria": "Renta y Sociedades",
+                    "periodo": "Abril 2026",
+                    "prioridad": "alta",
+                    "estado": "pendiente",
+                    "clientes_afectados": 3,
+                    "fuente": "AEAT",
+                    "fuente_url": "https://sede.agenciatributaria.gob.es/",
+                },
+            },
+            "dias": [
+                {
+                    "fecha": "2026-05-20",
+                    "dia": 20,
+                    "fuera_mes": False,
+                    "es_hoy": False,
+                    "es_fin_semana": False,
+                    "vencimientos": [],
+                }
+            ],
+            "vencimientos": [],
+            "proximos": [],
+        }
+
+        response = client.get(
+            "/intranet/calendario-fiscal?year=2026&month=5",
+            headers=_auth_headers(),
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["periodo"]["month_label"] == "Mayo 2026"
+        assert body["resumen"]["vencimientos_mes"] == 1
 
     @patch("services.auth_service.TokenService.decode_token")
     @patch("routes.intranet.PagosService.get_pagos_tab_filtered")

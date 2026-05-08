@@ -65,6 +65,49 @@ export interface IntranetHomeResponse {
   pagos: PagosResumen;
 }
 
+export interface CalendarioFiscalVencimiento {
+  id: string;
+  fecha: string;
+  modelo: string;
+  titulo: string;
+  descripcion: string | null;
+  categoria: string;
+  periodo: string;
+  prioridad: 'alta' | 'media' | 'baja';
+  estado: 'pendiente' | 'presentado' | 'en_preparacion' | 'no_aplica';
+  clientes_afectados: number;
+  fuente: string;
+  fuente_url: string | null;
+}
+
+export interface CalendarioFiscalDia {
+  fecha: string;
+  dia: number;
+  fuera_mes: boolean;
+  es_hoy: boolean;
+  es_fin_semana: boolean;
+  vencimientos: CalendarioFiscalVencimiento[];
+}
+
+export interface CalendarioFiscalResponse {
+  periodo: {
+    year: number;
+    month: number;
+    month_label: string;
+    subtitle: string;
+  };
+  resumen: {
+    vencimientos_mes: number;
+    presentados: number;
+    pendientes_alta_prioridad: number;
+    clientes_afectados_alta_prioridad: number;
+    proximo_vencimiento: CalendarioFiscalVencimiento | null;
+  };
+  dias: CalendarioFiscalDia[];
+  vencimientos: CalendarioFiscalVencimiento[];
+  proximos: CalendarioFiscalVencimiento[];
+}
+
 export interface FichajeEventoItem {
   id: string;
   tipo_evento: string;

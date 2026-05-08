@@ -168,10 +168,12 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 ### HU-M10-01 - Calendario fiscal
 
-- [ ] Modelo de datos para calendario fiscal.
-- [ ] Endpoints CRUD o al menos consulta por ano.
-- [x] UI estatica rediseñada segun prototipo visual.
-- [ ] UI con datos reales desde backend.
+- [x] Modelo de datos para calendario fiscal.
+- [x] Microservicio `backend-calendario` y ruta de gateway.
+- [x] Endpoint de consulta por ano/mes.
+- [x] Exportacion ICS desde backend.
+- [x] UI rediseñada segun prototipo visual y conectada a datos reales.
+- [ ] CRUD administrativo de vencimientos fiscales.
 
 ### HU-M10-02 - Documentos
 
@@ -238,5 +240,5 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 | Sprint 4 | 2026-05-07 | Completado | Auditoria y exportaciones. |
 | Refactor microservicios | 2026-05-07 | Completado | Docker + nginx gateway + launcher adaptado. |
 | Sprint 5 · limpieza repo | 2026-05-08 | Completado | `.gitignore` ampliado y outputs `landing/.next`/`landing/out` fuera del indice. |
-| Sprint 5 · calendario fiscal UI | 2026-05-08 | Completado | Pantalla estatica alineada con prototipo; pendiente backend y persistencia. |
+| Sprint 5 · calendario fiscal end-to-end | 2026-05-08 | Completado | Microservicio, migracion `V011`, gateway, endpoint mensual, exportacion ICS y UI conectada a backend. Pendiente CRUD administrativo. |
 | Sprint 5 | 2026-05-08 | En curso | M10, tests y despliegue productivo. |

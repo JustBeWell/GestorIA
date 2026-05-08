@@ -10,14 +10,14 @@
       <section class="page-header tools-page-header">
         <div>
           <h1 class="page-title">Calendario fiscal</h1>
-          <p class="page-subtitle">Vencimientos AEAT · abril 2026</p>
+          <p class="page-subtitle">{{ periodo().subtitle }}</p>
         </div>
         <div class="tools-actions">
-          <button type="button" class="secondary-button tool-action">
+          <button type="button" class="secondary-button tool-action" (click)="exportIcs()" [disabled]="!data()">
             <span aria-hidden="true">↓</span>
             Exportar ICS
           </button>
-          <button type="button" class="primary-button tool-action">
+          <button type="button" class="primary-button tool-action" disabled>
             <span aria-hidden="true">+</span>
             Añadir vencimiento
           </button>
@@ -25,16 +25,27 @@
       </section>
 
       <section class="module-container fiscal-board">
+        @if (loading()) {
+          <section class="tool-state">
+            <strong>Cargando calendario fiscal…</strong>
+            <span>Consultando vencimientos del microservicio.</span>
+          </section>
+        } @else if (error()) {
+          <section class="tool-state tool-state--error">
+            <strong>{{ error() }}</strong>
+            <button type="button" class="secondary-button" (click)="load()">Reintentar</button>
+          </section>
+        } @else {
         <section class="fiscal-kpis" aria-label="Resumen de calendario fiscal">
           <article class="metric-card">
             <div class="metric-card__head">
               <span>Vencimientos del mes</span>
               <span class="metric-icon metric-icon--blue" aria-hidden="true">▣</span>
             </div>
-            <strong>6</strong>
+            <strong>{{ resumen().vencimientos_mes }}</strong>
             <div class="metric-card__footer">
-              <span>2 fechas críticas</span>
-              <span>20 abr · 30 abr</span>
+              <span>{{ resumen().pendientes_alta_prioridad }} alta prioridad</span>
+              <span>{{ periodo().month_label }}</span>
             </div>
           </article>
 
@@ -43,9 +54,9 @@
               <span>Presentados</span>
               <span class="metric-icon metric-icon--green" aria-hidden="true">✓</span>
             </div>
-            <strong>2 <small>/ 6</small></strong>
+            <strong>{{ resumen().presentados }} <small>/ {{ resumen().vencimientos_mes }}</small></strong>
             <div class="progress-track" aria-hidden="true">
-              <span style="width: 34%"></span>
+              <span [style.width.%]="presentedRatio()"></span>
             </div>
           </article>
 
@@ -54,10 +65,10 @@
               <span>Pendientes alta prioridad</span>
               <span class="metric-icon metric-icon--amber" aria-hidden="true">△</span>
             </div>
-            <strong>2</strong>
+            <strong>{{ resumen().pendientes_alta_prioridad }}</strong>
             <div class="metric-card__footer">
               <span>Clientes afectados</span>
-              <span>22</span>
+              <span>{{ resumen().clientes_afectados_alta_prioridad }}</span>
             </div>
           </article>
 
@@ -66,9 +77,20 @@
               <span>Próximo vencimiento</span>
               <span class="metric-icon metric-icon--gold" aria-hidden="true">↯</span>
             </div>
-            <strong>30 abr <small>· 2 días</small></strong>
+            <strong>
+              {{ dateLabel(resumen().proximo_vencimiento) }}
+              @if (resumen().proximo_vencimiento) {
+                <small>· {{ deadlineDistance(resumen().proximo_vencimiento!) }}</small>
+              }
+            </strong>
             <div class="metric-card__footer">
-              <span>Modelo 202 · Modelo 349</span>
+              <span>
+                @if (resumen().proximo_vencimiento) {
+                  Modelo {{ resumen().proximo_vencimiento!.modelo }}
+                } @else {
+                  Sin pendientes
+                }
+              </span>
             </div>
           </article>
         </section>
@@ -76,11 +98,11 @@
         <section class="fiscal-main-grid">
           <article class="calendar-panel">
             <header class="panel-heading">
-              <h2>Mes en vista <span>· abril 2026</span></h2>
+              <h2>Mes en vista <span>· {{ periodo().month_label }}</span></h2>
               <div class="month-switch" aria-label="Navegación de mes">
-                <button type="button" aria-label="Mes anterior">‹</button>
-                <span>Abr 2026</span>
-                <button type="button" aria-label="Mes siguiente">›</button>
+                <button type="button" aria-label="Mes anterior" (click)="previousMonth()">‹</button>
+                <span>{{ periodo().month_label }}</span>
+                <button type="button" aria-label="Mes siguiente" (click)="nextMonth()">›</button>
               </div>
             </header>
 
@@ -95,54 +117,24 @@
             </div>
 
             <div class="calendar-grid calendar-days">
-              <div class="day day--muted"><span>29</span></div>
-              <div class="day day--muted"><span>30</span></div>
-              <div class="day"><span>1</span></div>
-              <div class="day"><span>2</span></div>
-              <div class="day"><span>3</span></div>
-              <div class="day day--weekend"><span>4</span></div>
-              <div class="day day--weekend"><span>5</span></div>
-
-              <div class="day"><span>6</span></div>
-              <div class="day"><span>7</span></div>
-              <div class="day"><span>8</span></div>
-              <div class="day"><span>9</span></div>
-              <div class="day"><span>10</span></div>
-              <div class="day day--weekend"><span>11</span></div>
-              <div class="day day--weekend"><span>12</span></div>
-
-              <div class="day"><span>13</span></div>
-              <div class="day"><span>14</span></div>
-              <div class="day"><span>15</span></div>
-              <div class="day"><span>16</span></div>
-              <div class="day"><span>17</span></div>
-              <div class="day day--weekend"><span>18</span></div>
-              <div class="day day--weekend"><span>19</span></div>
-
-              <div class="day day--busy">
-                <span>20</span>
-                <em class="event event--high">Modelo 111</em>
-                <em class="event event--medium">Modelo 115</em>
-                <small>+2</small>
-              </div>
-              <div class="day"><span>21</span></div>
-              <div class="day"><span>22</span></div>
-              <div class="day"><span>23</span></div>
-              <div class="day"><span>24</span></div>
-              <div class="day day--weekend"><span>25</span></div>
-              <div class="day day--weekend"><span>26</span></div>
-
-              <div class="day"><span>27</span></div>
-              <div class="day day--today"><span>28</span></div>
-              <div class="day"><span>29</span></div>
-              <div class="day day--busy">
-                <span>30</span>
-                <em class="event event--medium">Modelo 202</em>
-                <em class="event event--low">Modelo 349</em>
-              </div>
-              <div class="day day--muted"><span>1</span></div>
-              <div class="day day--muted day--weekend"><span>2</span></div>
-              <div class="day day--muted day--weekend"><span>3</span></div>
+              @for (day of dias(); track trackDay($index, day)) {
+                <div
+                  class="day"
+                  [class.day--muted]="day.fuera_mes"
+                  [class.day--weekend]="day.es_fin_semana"
+                  [class.day--today]="day.es_hoy"
+                  [class.day--busy]="day.vencimientos.length">
+                  <span>{{ day.dia }}</span>
+                  @for (event of visibleEvents(day); track trackVencimiento($index, event)) {
+                    <em class="event" [class]="'event event--' + event.prioridad">
+                      Modelo {{ event.modelo }}
+                    </em>
+                  }
+                  @if (hiddenEventsCount(day) > 0) {
+                    <small>+{{ hiddenEventsCount(day) }}</small>
+                  }
+                </div>
+              }
             </div>
 
             <footer class="calendar-legend">
@@ -156,76 +148,38 @@
           <aside class="due-panel">
             <header class="panel-heading">
               <h2>Próximos vencimientos</h2>
-              <span class="status-chip"><i></i> 4 pendientes</span>
+              <span class="status-chip"><i></i> {{ proximos().length }} pendientes</span>
             </header>
 
             <div class="due-list">
-              <article class="due-item due-item--high">
-                <div class="date-box">
-                  <span>ABR</span>
-                  <strong>20</strong>
-                </div>
-                <div class="due-copy">
-                  <div>
-                    <strong>Modelo 130</strong>
-                    <span>· 8 clientes</span>
+              @for (item of proximos(); track trackVencimiento($index, item)) {
+                <article class="due-item" [class]="'due-item due-item--' + item.prioridad">
+                  <div class="date-box">
+                    <span>{{ monthCode(item.fecha) }}</span>
+                    <strong>{{ dayNumber(item.fecha) }}</strong>
                   </div>
-                  <h3>Pago fraccionado IRPF</h3>
-                  <p>Estimación directa · 1T</p>
-                </div>
-                <span class="due-time due-time--late">hace 8d</span>
-              </article>
-
-              <article class="due-item due-item--high">
-                <div class="date-box">
-                  <span>ABR</span>
-                  <strong>20</strong>
-                </div>
-                <div class="due-copy">
-                  <div>
-                    <strong>Modelo 303</strong>
-                    <span>· 14 clientes</span>
+                  <div class="due-copy">
+                    <div>
+                      <strong>Modelo {{ item.modelo }}</strong>
+                      <span>· {{ item.clientes_afectados }} clientes</span>
+                    </div>
+                    <h3>{{ item.titulo }}</h3>
+                    <p>{{ item.periodo }}</p>
                   </div>
-                  <h3>IVA · 1T 2026</h3>
-                  <p>Autoliquidación trimestral</p>
+                  <span class="due-time" [class.due-time--late]="deadlineDistance(item).startsWith('hace')">
+                    {{ deadlineDistance(item) }}
+                  </span>
+                </article>
+              } @empty {
+                <div class="empty-due">
+                  <strong>Sin vencimientos pendientes</strong>
+                  <span>Este mes no tiene obligaciones fiscales registradas.</span>
                 </div>
-                <span class="due-time due-time--late">hace 8d</span>
-              </article>
-
-              <article class="due-item due-item--medium">
-                <div class="date-box">
-                  <span>ABR</span>
-                  <strong>30</strong>
-                </div>
-                <div class="due-copy">
-                  <div>
-                    <strong>Modelo 202</strong>
-                    <span>· 3 clientes</span>
-                  </div>
-                  <h3>Pago a cuenta IS</h3>
-                  <p>Sociedades · 1P</p>
-                </div>
-                <span class="due-time">en 2d</span>
-              </article>
-
-              <article class="due-item due-item--low">
-                <div class="date-box">
-                  <span>ABR</span>
-                  <strong>30</strong>
-                </div>
-                <div class="due-copy">
-                  <div>
-                    <strong>Modelo 349</strong>
-                    <span>· 1 clientes</span>
-                  </div>
-                  <h3>Operaciones intracomunitarias</h3>
-                  <p>Marzo 2026</p>
-                </div>
-                <span class="due-time">en 2d</span>
-              </article>
+              }
             </div>
           </aside>
         </section>
+        }
       </section>
     </section>
   </section>

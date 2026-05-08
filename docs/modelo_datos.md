@@ -2,7 +2,7 @@
 
 Documento de referencia del modelo relacional actual de GestorIA.
 
-**Ultima revision:** 2026-05-07
+**Ultima revision:** 2026-05-08
 
 ---
 
@@ -18,6 +18,7 @@ trabajos 1:N comentarios_trabajo
 facturas 1:N pagos
 usuarios 1:N auditoria_eventos
 usuarios 1:N comentarios_trabajo   via autor_id
+calendario_fiscal_vencimientos -> clientes via aplica_tipo_cliente
 ```
 
 ---
@@ -36,6 +37,7 @@ usuarios 1:N comentarios_trabajo   via autor_id
 | `facturas` | Facturas emitidas a clientes. | FK a `clientes`; 1:N con `pagos`. |
 | `pagos` | Pagos parciales o totales de facturas. | FK a `facturas`. |
 | `auditoria_eventos` | Log de acciones criticas del sistema. | FK logica a `usuarios` mediante `actor_id`. |
+| `calendario_fiscal_vencimientos` | Vencimientos fiscales oficiales usados por la herramienta de calendario. | Relacion logica con `clientes.tipo_cliente` mediante `aplica_tipo_cliente`. |
 
 ---
 
@@ -51,6 +53,8 @@ usuarios 1:N comentarios_trabajo   via autor_id
 | `estado_factura` | `borrador`, `emitida`, `pagada_parcial`, `pagada`, `anulada` |
 | `metodo_pago` | `transferencia`, `efectivo`, `tarjeta`, `domiciliacion`, `otro` |
 | `accion_auditoria` | `crear`, `editar`, `eliminar`, `login`, `logout`, `correccion_fichaje`, `cambio_estado` |
+| `prioridad_calendario_fiscal` | `alta`, `media`, `baja` |
+| `estado_calendario_fiscal` | `pendiente`, `presentado`, `en_preparacion`, `no_aplica` |
 
 ---
 
@@ -61,6 +65,7 @@ usuarios 1:N comentarios_trabajo   via autor_id
 3. **Estado automatico de factura:** `trg_actualizar_estado_factura` actualiza la factura a `pagada_parcial` o `pagada`.
 4. **Timestamps de actualizacion:** triggers de `updated_at` en entidades principales.
 5. **Campos calculados:** `importe_iva` y `total` se calculan como columnas generadas en `facturas`.
+6. **Calendario fiscal:** cada vencimiento es unico por `fecha`, `modelo`, `periodo` y `titulo`; `aplica_tipo_cliente` permite calcular clientes afectados sin duplicar vencimientos por cliente.
 
 ---
 
@@ -90,6 +95,7 @@ usuarios 1:N comentarios_trabajo   via autor_id
 | `V008__trabajos_nro_comentarios.sql` | Secuencia `nro_trabajo` y tabla `comentarios_trabajo`. |
 | `V009__cascade_delete_cliente.sql` | Cascada en relaciones de cliente con trabajos, facturas y pagos. |
 | `V010__auditoria_eventos.sql` | Tabla de auditoria. |
+| `V011__calendario_fiscal.sql` | Tabla y semillas iniciales AEAT 2026 para calendario fiscal. |
 
 > Nota: existen dos migraciones con prefijo `V003`. Si se adopta una herramienta estricta de migraciones, conviene renumerarlas o consolidarlas.
 
@@ -103,4 +109,3 @@ usuarios 1:N comentarios_trabajo   via autor_id
 - Borrado logico en usuarios, empleados y clientes cuando aplica.
 - Borrado en cascada para eliminar dependencias de cliente segun `V009`.
 - Reglas criticas duplicadas en backend y base de datos cuando la integridad lo requiere.
-

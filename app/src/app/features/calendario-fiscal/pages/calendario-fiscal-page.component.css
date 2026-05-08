@@ -29,6 +29,30 @@
   gap: 20px;
 }
 
+.tool-state {
+  background: #ffffff;
+  border: 1px solid #dce8e0;
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: #64748b;
+  text-align: center;
+}
+
+.tool-state strong {
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.tool-state--error {
+  border-color: #fecaca;
+  background: #fff7f7;
+}
+
 .fiscal-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -252,16 +276,18 @@
   margin-top: 2px;
 }
 
-.event--high {
+.event--high,
+.event--alta {
   background: #dca7a5;
-  text-decoration: line-through;
 }
 
-.event--medium {
+.event--medium,
+.event--media {
   background: #e2a56b;
 }
 
-.event--low {
+.event--low,
+.event--baja {
   background: #3d77ae;
 }
 
@@ -366,15 +392,18 @@
 }
 
 .due-item--high .date-box,
+.due-item--alta .date-box,
 .due-time--late {
   color: #c44f4c;
 }
 
-.due-item--medium .date-box {
+.due-item--medium .date-box,
+.due-item--media .date-box {
   color: #db8e38;
 }
 
-.due-item--low .date-box {
+.due-item--low .date-box,
+.due-item--baja .date-box {
   color: #2f6dad;
 }
 
@@ -413,6 +442,18 @@
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.empty-due {
+  display: grid;
+  gap: 6px;
+  padding: 24px 22px;
+  border-top: 1px solid #dce3e8;
+  color: #64748b;
+}
+
+.empty-due strong {
+  color: #0f172a;
 }
 
 @media (max-width: 1280px) {

@@ -26,6 +26,7 @@ Todos los microservicios comparten el mismo codigo base y la misma base de datos
 | `backend-clientes` | `main_clientes:app` | Clientes. |
 | `backend-trabajos` | `main_trabajos:app` | Trabajos, asignaciones y comentarios. |
 | `backend-pagos` | `main_pagos:app` | Pagos, facturas y deuda viva. |
+| `backend-calendario` | `main_calendario:app` | Calendario fiscal. |
 | `backend-admin` | `main_admin:app` | Panel admin, auditoria y cierre mensual. |
 | `backend-ai` | `main_ai:app` | Chat IA. |
 
@@ -43,6 +44,7 @@ El gateway nginx escucha en `http://localhost:8008` y enruta por prefijo:
 | `/intranet/clientes` | `backend-clientes` |
 | `/intranet/trabajos` | `backend-trabajos` |
 | `/intranet/pagos`, `/intranet/deuda`, `/intranet/facturas` | `backend-pagos` |
+| `/intranet/calendario-fiscal` | `backend-calendario` |
 | `/intranet/admin` | `backend-admin` |
 | `/ai` | `backend-ai` |
 
@@ -198,6 +200,11 @@ Rutas publicas principales:
 - `DELETE /intranet/facturas/{factura_id}`
 - `POST /intranet/facturas/{factura_id}/pagos`
 
+### Calendario fiscal
+
+- `GET /intranet/calendario-fiscal?year=&month=`
+- `GET /intranet/calendario-fiscal/export/ics?year=&month=`
+
 ### Admin
 
 - `GET /intranet/admin/resumen`
@@ -232,4 +239,3 @@ Tests existentes:
 - `tests/test_user_service.py`
 
 La cobertura debe ampliarse especialmente en endpoints de escritura, auditoria, clientes, trabajos, facturas y pagos.
-

@@ -34,6 +34,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/migrations/V001__schema_inicial.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+      - ./db/migrations/V011__calendario_fiscal.sql:/docker-entrypoint-initdb.d/011_calendario_fiscal.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gestoria -d GestorIA"]
       interval: 5s
@@ -72,6 +73,11 @@ services:
     container_name: gestoria-backend-pagos
     command: ["uvicorn", "main_pagos:app", "--host", "0.0.0.0", "--port", "8008"]
 
+  backend-calendario:
+    <<: *backend-common
+    container_name: gestoria-backend-calendario
+    command: ["uvicorn", "main_calendario:app", "--host", "0.0.0.0", "--port", "8008"]
+
   backend-admin:
     <<: *backend-common
     container_name: gestoria-backend-admin
@@ -94,6 +100,7 @@ services:
       - backend-clientes
       - backend-trabajos
       - backend-pagos
+      - backend-calendario
       - backend-admin
       - backend-ai
     ports:

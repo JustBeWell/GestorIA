@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | En curso | Calendario fiscal ya tiene UI alineada con prototipo; documentos y ajustes pendientes de rediseño, y todo M10 sigue sin backend/persistencia completa. |
+| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos y ajustes siguen pendientes de rediseño y persistencia. |
 
 ---
 
@@ -49,6 +49,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 | `main_clientes.py` | Clientes. |
 | `main_trabajos.py` | Trabajos. |
 | `main_pagos.py` | Pagos, deuda y facturas. |
+| `main_calendario.py` | Calendario fiscal. |
 | `main_admin.py` | Admin, auditoria y cierre. |
 | `main_ai.py` | Chat IA. |
 
@@ -62,6 +63,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - `/intranet/clientes` -> `backend-clientes`
 - `/intranet/trabajos` -> `backend-trabajos`
 - `/intranet/pagos`, `/intranet/deuda`, `/intranet/facturas` -> `backend-pagos`
+- `/intranet/calendario-fiscal` -> `backend-calendario`
 - `/intranet/admin` -> `backend-admin`
 - `/ai` -> `backend-ai`
 
@@ -167,8 +169,10 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ### M10 - Herramientas
 
-- [x] Calendario fiscal: UI estatica rediseñada segun prototipo visual de herramientas.
-- [ ] Calendario fiscal: sin modelo, endpoints ni datos reales desde backend.
+- [x] Calendario fiscal: UI rediseñada segun prototipo visual de herramientas.
+- [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
+- [x] Calendario fiscal: datos reales servidos desde backend, con semillas AEAT 2026 en BD.
+- [ ] Calendario fiscal: CRUD administrativo de vencimientos.
 - [ ] Documentos: UI placeholder, sin almacenamiento ni endpoints.
 - [ ] Ajustes: UI estatica, sin persistencia.
 
@@ -207,6 +211,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] OTP 2FA.
 - [x] Cascada para eliminar datos dependientes de cliente.
 - [x] Auditoria.
+- [x] Calendario fiscal con `calendario_fiscal_vencimientos`.
 - [ ] Revisar duplicidad de numeracion de migraciones `V003`.
 
 ### Repositorio
@@ -218,11 +223,14 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ## Iteraciones Sprint 5
 
-### 2026-05-08 · HU-M10-01 Calendario fiscal UI
+### 2026-05-08 · HU-M10-01 Calendario fiscal end-to-end
 
 - Rediseñada la pantalla `calendario-fiscal` para seguir la estructura del prototipo: KPIs superiores, calendario mensual, vencimientos laterales y leyenda de prioridad.
-- Se mantiene como UI estatica con datos de ejemplo; quedan pendientes modelo de datos, endpoints y conexion a backend.
-- Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+- Creado el microservicio `backend-calendario` con endpoint `GET /intranet/calendario-fiscal`, exportacion `GET /intranet/calendario-fiscal/export/ics`, ruta nginx y servicio Docker Compose.
+- Anadida la migracion `V011__calendario_fiscal.sql` y un arranque defensivo de tabla/semillas para instalaciones locales sin migrador automatico.
+- Conectada la UI Angular a `IntranetService`, eliminando datos hardcodeados de la pantalla.
+- Pendiente: CRUD administrativo para mantener vencimientos desde la aplicacion.
+- Verificacion: `npm run build` en `app/` correcto y tests backend del endpoint en `tests/test_intranet_tabs.py`. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ---
 
