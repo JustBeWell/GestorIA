@@ -2,7 +2,7 @@
 
 ## La gestion de tu asesoria, clara desde el primer minuto
 
-GestorIA es una aplicacion de escritorio pensada para asesorias que quieren dejar atras hojas de calculo, documentos sueltos y procesos repetidos a mano. Reune en un unico lugar el control horario, clientes, trabajos, facturacion, pagos, deuda viva, auditoria y cierre mensual.
+GestorIA es una aplicacion de escritorio pensada para asesorias que quieren dejar atras hojas de calculo, documentos sueltos y procesos repetidos a mano. Reune en un unico lugar el control horario, clientes, trabajos, facturacion, pagos, deuda viva, auditoria, cierre mensual y el portal GIA de asistencia IA con conversaciones y archivos.
 
 <p align="center">
   <img src="landing/public/app-banner.png" alt="Banner principal de GestorIA" width="920">
@@ -114,4 +114,3 @@ Para profundizar en arquitectura, backend, frontend, modelo de datos y flujo de 
 - [`docs/DESARROLLO.md`](docs/DESARROLLO.md)
 - [`docs/PLAN_SPRINTS.md`](docs/PLAN_SPRINTS.md)
 - [`docs/modelo_datos.md`](docs/modelo_datos.md)
-

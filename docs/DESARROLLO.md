@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos y ajustes tienen UI alineada con prototipos; documentos/ajustes siguen pendientes de persistencia. |
+| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; GIA sustituye a Documentos con conversaciones/archivos reales; ajustes tiene UI alineada con prototipo y sigue pendiente de persistencia. |
 
 ---
 
@@ -51,7 +51,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 | `main_pagos.py` | Pagos, deuda y facturas. |
 | `main_calendario.py` | Calendario fiscal. |
 | `main_admin.py` | Admin, auditoria y cierre. |
-| `main_ai.py` | Chat IA. |
+| `main_ai.py` | Chat IA y portal GIA. |
 
 ### Gateway
 
@@ -173,8 +173,9 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
 - [x] Calendario fiscal: datos reales servidos desde backend, con semillas AEAT 2026 en BD.
 - [ ] Calendario fiscal: CRUD administrativo de vencimientos.
-- [x] Documentos: UI rediseñada segun prototipo visual de herramientas.
-- [ ] Documentos: sin almacenamiento ni endpoints.
+- [x] GIA: sustituye al antiguo modulo Documentos.
+- [x] GIA: conversaciones persistidas, mensajes, adjuntos, descargas y generacion de PDF/imagenes.
+- [x] GIA: frontend conectado al microservicio `backend-ai`.
 - [x] Ajustes: UI rediseñada segun prototipos de seguridad y apariencia.
 - [ ] Ajustes: sin persistencia.
 
@@ -238,8 +239,16 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 - Rediseñada la pantalla `documentos` para seguir el prototipo: acciones superiores, carpetas fijadas, panel de almacenamiento, archivos recientes y tabla de carpetas.
 - Se mantiene dentro de los patrones existentes de intranet con sidebar/topbar compartidos.
-- Pendiente: modelo `documentos`, subida/descarga real, asociacion con clientes/trabajos y baja logica.
+- Nota: iteracion supersedida por el portal GIA; el modulo Documentos ya no forma parte de la app.
 - Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+
+### 2026-05-08 · HU-M10-02 GIA portal IA
+
+- Sustituido el modulo `documentos` por `gia`; `/documentos` queda como redireccion legacy.
+- Ampliado `backend-ai` con endpoints `/ai/gia/*` para conversaciones, mensajes, adjuntos y descargas.
+- Anadida migracion `V012__gia_portal.sql` con `gia_conversaciones`, `gia_mensajes` y `gia_archivos`.
+- GIA puede usar texto/PDF/imagenes adjuntas como contexto, generar PDFs con `fpdf2` y generar imagenes mediante OpenAI.
+- Verificacion: `pytest -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ### 2026-05-08 · HU-M10-03 Ajustes UI
 
@@ -252,7 +261,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ## Proximos pasos recomendados
 
-1. Completar M10: calendario fiscal, documentos y ajustes con backend real.
+1. Completar persistencia real de Ajustes.
 2. Ampliar tests de integracion de escritura.
 3. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
 4. Conectar `v_resumen_mensual` al Home o documentar por que no se usa.

@@ -19,6 +19,9 @@ facturas 1:N pagos
 usuarios 1:N auditoria_eventos
 usuarios 1:N comentarios_trabajo   via autor_id
 calendario_fiscal_vencimientos -> clientes via aplica_tipo_cliente
+usuarios 1:N gia_conversaciones
+gia_conversaciones 1:N gia_mensajes
+gia_conversaciones 1:N gia_archivos
 ```
 
 ---
@@ -38,6 +41,9 @@ calendario_fiscal_vencimientos -> clientes via aplica_tipo_cliente
 | `pagos` | Pagos parciales o totales de facturas. | FK a `facturas`. |
 | `auditoria_eventos` | Log de acciones criticas del sistema. | FK logica a `usuarios` mediante `actor_id`. |
 | `calendario_fiscal_vencimientos` | Vencimientos fiscales oficiales usados por la herramienta de calendario. | Relacion logica con `clientes.tipo_cliente` mediante `aplica_tipo_cliente`. |
+| `gia_conversaciones` | Conversaciones persistidas del portal GIA. | FK a `usuarios`. |
+| `gia_mensajes` | Mensajes de usuario/asistente dentro de una conversacion GIA. | FK a `gia_conversaciones`. |
+| `gia_archivos` | Adjuntos subidos y archivos generados por GIA. | FK a `gia_conversaciones`, `gia_mensajes` y `usuarios`. |
 
 ---
 
@@ -96,6 +102,7 @@ calendario_fiscal_vencimientos -> clientes via aplica_tipo_cliente
 | `V009__cascade_delete_cliente.sql` | Cascada en relaciones de cliente con trabajos, facturas y pagos. |
 | `V010__auditoria_eventos.sql` | Tabla de auditoria. |
 | `V011__calendario_fiscal.sql` | Tabla y semillas iniciales AEAT 2026 para calendario fiscal. |
+| `V012__gia_portal.sql` | Conversaciones, mensajes y archivos generados/subidos del portal GIA. |
 
 > Nota: existen dos migraciones con prefijo `V003`. Si se adopta una herramienta estricta de migraciones, conviene renumerarlas o consolidarlas.
 

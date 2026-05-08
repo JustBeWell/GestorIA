@@ -696,6 +696,57 @@ class CalendarioFiscalResponse(BaseModel):
 	proximos: list[CalendarioFiscalVencimientoItem]
 
 
+# ── GIA portal IA ─────────────────────────────────────────────────────────────
+
+class GiaFileItem(BaseModel):
+	id: str
+	nombre_original: str
+	mime_type: str
+	tamano_bytes: int
+	tipo: str
+	download_url: str
+	created_at: datetime
+
+
+class GiaMessageItem(BaseModel):
+	id: str
+	role: str
+	content: str
+	created_at: datetime
+	files: list[GiaFileItem] = []
+
+
+class GiaConversationSummary(BaseModel):
+	id: str
+	titulo: str
+	updated_at: datetime
+	last_message: str | None = None
+	message_count: int = 0
+
+
+class GiaConversationDetail(BaseModel):
+	id: str
+	titulo: str
+	created_at: datetime
+	updated_at: datetime
+	messages: list[GiaMessageItem]
+	files: list[GiaFileItem]
+
+
+class GiaConversationCreateResponse(BaseModel):
+	id: str
+	titulo: str
+	created_at: datetime
+	updated_at: datetime
+
+
+class GiaMessageResponse(BaseModel):
+	conversation: GiaConversationSummary
+	user_message: GiaMessageItem
+	assistant_message: GiaMessageItem
+	generated_files: list[GiaFileItem] = []
+
+
 # ── Auditoría ─────────────────────────────────────────────────────────────────
 
 class AuditoriaEventoItem(BaseModel):

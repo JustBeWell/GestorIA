@@ -1,0 +1,125 @@
+<main class="module-layout">
+  <section class="intranet-shell">
+    <app-intranet-sidebar />
+
+    <section class="content">
+      <header class="topbar">
+        <div class="breadcrumbs">Inicio / <strong>GIA</strong></div>
+      </header>
+
+      <section class="page-header gia-header">
+        <div>
+          <h1 class="page-title">GIA</h1>
+          <p class="page-subtitle">Portal de IA con memoria, lectura de archivos y generación de PDF e imágenes</p>
+        </div>
+        <button type="button" class="primary-button gia-new" (click)="createConversation()">+ Nueva conversación</button>
+      </section>
+
+      <section class="gia-layout">
+        <aside class="gia-conversations">
+          <h2>Conversaciones</h2>
+          @if (loading()) {
+            <p class="muted">Cargando conversaciones...</p>
+          } @else {
+            <div class="conversation-list">
+              @for (item of conversations(); track item.id) {
+                <button
+                  type="button"
+                  class="conversation-item"
+                  [class.conversation-item--active]="activeConversationId() === item.id"
+                  (click)="openConversation(item.id)">
+                  <strong>{{ item.titulo }}</strong>
+                  <span>{{ item.last_message || 'Sin mensajes todavía' }}</span>
+                </button>
+              }
+            </div>
+          }
+        </aside>
+
+        <section class="gia-chat">
+          @if (error()) {
+            <div class="gia-error">{{ error() }}</div>
+          }
+
+          <div class="message-list">
+            @for (message of messages(); track message.id) {
+              <article class="message" [class.message--user]="message.role === 'user'">
+                <div class="message-bubble">
+                  <span class="message-role">{{ message.role === 'user' ? 'Tú' : 'GIA' }}</span>
+                  <p>{{ message.content }}</p>
+                  @if (message.files.length) {
+                    <div class="message-files">
+                      @for (file of message.files; track file.id) {
+                        <a [href]="downloadUrl(file)" target="_blank" rel="noopener">
+                          {{ file.nombre_original }}
+                        </a>
+                      }
+                    </div>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <section class="gia-empty">
+                <strong>Empieza una conversación con GIA</strong>
+                <span>Pregunta sobre clientes, trabajos, facturas o adjunta un archivo para analizarlo.</span>
+              </section>
+            }
+          </div>
+
+          <footer class="composer">
+            <div class="mode-tabs" aria-label="Modo de respuesta">
+              <button type="button" [class.active]="mode === 'respuesta'" (click)="setMode('respuesta')">Respuesta</button>
+              <button type="button" [class.active]="mode === 'pdf'" (click)="setMode('pdf')">Generar PDF</button>
+              <button type="button" [class.active]="mode === 'imagen'" (click)="setMode('imagen')">Generar imagen</button>
+            </div>
+
+            @if (selectedFiles.length) {
+              <div class="selected-files">
+                @for (file of selectedFiles; track file.name) {
+                  <span>{{ file.name }}</span>
+                }
+                <button type="button" (click)="clearFiles()">Limpiar</button>
+              </div>
+            }
+
+            <textarea
+              [(ngModel)]="prompt"
+              rows="4"
+              placeholder="Pide a GIA que analice un PDF, redacte un escrito, genere una imagen o consulte datos internos..."></textarea>
+
+            <div class="composer-actions">
+              <label class="secondary-button upload-button">
+                Adjuntar
+                <input #fileInput type="file" multiple (change)="onFilesSelected($event)" />
+              </label>
+              <button type="button" class="primary-button" [disabled]="sending() || !prompt.trim()" (click)="send()">
+                {{ sending() ? 'Pensando...' : 'Enviar' }}
+              </button>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="gia-assets">
+          <h2>Archivos</h2>
+          <div class="asset-list">
+            @for (file of files(); track file.id) {
+              <a class="asset-item" [href]="downloadUrl(file)" target="_blank" rel="noopener">
+                @if (isImage(file)) {
+                  <img [src]="downloadUrl(file)" [alt]="file.nombre_original" />
+                } @else {
+                  <span>{{ file.tipo.toUpperCase() }}</span>
+                }
+                <div>
+                  <strong>{{ file.nombre_original }}</strong>
+                  <small>{{ fileSize(file.tamano_bytes) }}</small>
+                </div>
+              </a>
+            } @empty {
+              <p class="muted">Los PDFs, imágenes y adjuntos aparecerán aquí.</p>
+            }
+          </div>
+        </aside>
+      </section>
+    </section>
+  </section>
+</main>

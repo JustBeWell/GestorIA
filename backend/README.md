@@ -28,7 +28,7 @@ Todos los microservicios comparten el mismo codigo base y la misma base de datos
 | `backend-pagos` | `main_pagos:app` | Pagos, facturas y deuda viva. |
 | `backend-calendario` | `main_calendario:app` | Calendario fiscal. |
 | `backend-admin` | `main_admin:app` | Panel admin, auditoria y cierre mensual. |
-| `backend-ai` | `main_ai:app` | Chat IA. |
+| `backend-ai` | `main_ai:app` | Chat IA y portal GIA con conversaciones/archivos. |
 
 La factoria comun `app_factory.py` centraliza CORS, rate limiting, middleware de autenticacion y health checks.
 
@@ -81,6 +81,9 @@ Definidas en `service_config.py`:
 - `JWT_EXPIRATION_HOURS`
 - `FRONTEND_URL`
 - `OPENAI_API_KEY`
+- `OPENAI_GIA_MODEL`
+- `OPENAI_IMAGE_MODEL`
+- `GIA_STORAGE_DIR`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
 - `TWILIO_FROM_NUMBER`
@@ -217,6 +220,11 @@ Rutas publicas principales:
 ### IA
 
 - `POST /ai/chat`
+- `GET /ai/gia/conversations`
+- `POST /ai/gia/conversations`
+- `GET /ai/gia/conversations/{conversation_id}`
+- `POST /ai/gia/conversations/{conversation_id}/messages`
+- `GET /ai/gia/files/{file_id}/download`
 
 ## Scope por rol
 

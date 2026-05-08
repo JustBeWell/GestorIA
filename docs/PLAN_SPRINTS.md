@@ -175,13 +175,14 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 - [x] UI rediseñada segun prototipo visual y conectada a datos reales.
 - [ ] CRUD administrativo de vencimientos fiscales.
 
-### HU-M10-02 - Documentos
+### HU-M10-02 - GIA
 
-- [x] UI rediseñada segun prototipo visual de herramientas.
-- [ ] Modelo `documentos`.
-- [ ] Subida y descarga de archivos.
-- [ ] Asociacion opcional a clientes/trabajos.
-- [ ] Baja logica.
+- [x] Sustituir el modulo Documentos por el portal GIA.
+- [x] Modelo de conversaciones, mensajes y archivos `gia_*`.
+- [x] Endpoints de conversaciones, mensajes, adjuntos y descargas.
+- [x] Lectura de archivos de texto/PDF e imagenes adjuntas para contexto de IA.
+- [x] Generacion de PDF e imagenes mediante OpenAI.
+- [x] UI de portal IA con historial y adjuntos.
 
 ### HU-M10-03 - Ajustes
 

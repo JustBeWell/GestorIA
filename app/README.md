@@ -41,7 +41,8 @@ La aplicacion esta organizada por capas:
 | `/pagos` | Facturas, pagos y deuda viva. |
 | `/admin` | Gestion de empleados, fichajes globales, auditoria y cierre mensual. |
 | `/calendario-fiscal` | Placeholder de calendario fiscal. |
-| `/documentos` | Placeholder de documentos. |
+| `/gia` | Portal GIA de IA con conversaciones, adjuntos y generación de PDF/imagen. |
+| `/documentos` | Redirección legacy a `/gia`. |
 | `/ajustes` | Placeholder de ajustes. |
 
 ## Modulos implementados
@@ -113,4 +114,3 @@ Para levantar la pila completa desde la raiz del repositorio:
 ```bash
 docker-compose up --build
 ```
-

@@ -41,9 +41,13 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/pagos/pages/pagos-page.component').then((m) => m.PagosPageComponent),
 	},
 	{
-		path: 'documentos',
+		path: 'gia',
 		canActivate: [authGuard],
-		loadComponent: () => import('./features/documentos/pages/documentos-page.component').then((m) => m.DocumentosPageComponent),
+		loadComponent: () => import('./features/gia/pages/gia-page.component').then((m) => m.GiaPageComponent),
+	},
+	{
+		path: 'documentos',
+		redirectTo: 'gia',
 	},
 	{
 		path: 'ajustes',

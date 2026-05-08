@@ -1,13 +1,21 @@
 import json
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
 from database import db_connection
 from services.auth_service import get_current_user
+from services.gia_service import GiaService
 from service_config import settings
+from models import (
+    GiaConversationCreateResponse,
+    GiaConversationDetail,
+    GiaConversationSummary,
+    GiaMessageResponse,
+)
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -473,3 +481,55 @@ def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
             status_code=502,
             detail="Error al contactar con el servicio de IA. Inténtalo de nuevo.",
         ) from exc
+
+
+# ─── GIA Portal ───────────────────────────────────────────────────────────────
+
+@router.get("/gia/conversations", response_model=list[GiaConversationSummary])
+def gia_list_conversations(current_user=Depends(get_current_user)):
+    return GiaService.list_conversations(current_user.user_id)
+
+
+@router.post("/gia/conversations", response_model=GiaConversationCreateResponse, status_code=201)
+def gia_create_conversation(
+    title: str | None = None,
+    current_user=Depends(get_current_user),
+):
+    return GiaService.create_conversation(current_user.user_id, title)
+
+
+@router.get("/gia/conversations/{conversation_id}", response_model=GiaConversationDetail)
+def gia_get_conversation(conversation_id: str, current_user=Depends(get_current_user)):
+    result = GiaService.get_conversation(current_user.user_id, conversation_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Conversación no encontrada")
+    return result
+
+
+@router.post("/gia/conversations/{conversation_id}/messages", response_model=GiaMessageResponse)
+def gia_send_message(
+    conversation_id: str,
+    message: str = Form(..., min_length=1),
+    mode: str = Form(default="respuesta"),
+    files: list[UploadFile] | None = File(default=None),
+    current_user=Depends(get_current_user),
+):
+    return GiaService.send_message(
+        current_user.user_id,
+        conversation_id,
+        message,
+        mode,
+        files or [],
+    )
+
+
+@router.get("/gia/files/{file_id}/download")
+def gia_download_file(file_id: str, current_user=Depends(get_current_user)):
+    file_info = GiaService.get_file_for_download(current_user.user_id, file_id)
+    if not file_info:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    return FileResponse(
+        file_info["ruta_archivo"],
+        media_type=file_info["mime_type"],
+        filename=file_info["nombre_original"],
+    )

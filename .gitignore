@@ -218,6 +218,9 @@ app/*.pkg
 app/*.zip
 app/*.tar.gz
 
+# Runtime generated files
+backend/storage/
+
 # Docker and local deploy noise
 .docker/
 docker-data/

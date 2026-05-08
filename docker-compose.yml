@@ -20,6 +20,7 @@ x-backend-common: &backend-common
     TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
     TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
     TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+    GIA_STORAGE_DIR: /data/gia
 
 services:
   db:
@@ -35,6 +36,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db/migrations/V001__schema_inicial.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
       - ./db/migrations/V011__calendario_fiscal.sql:/docker-entrypoint-initdb.d/011_calendario_fiscal.sql:ro
+      - ./db/migrations/V012__gia_portal.sql:/docker-entrypoint-initdb.d/012_gia_portal.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gestoria -d GestorIA"]
       interval: 5s
@@ -87,6 +89,8 @@ services:
     <<: *backend-common
     container_name: gestoria-backend-ai
     command: ["uvicorn", "main_ai:app", "--host", "0.0.0.0", "--port", "8008"]
+    volumes:
+      - gia_data:/data/gia
 
   # ── API Gateway ────────────────────────────────────────────────────────────
 
@@ -124,3 +128,4 @@ services:
 
 volumes:
   postgres_data:
+  gia_data:
