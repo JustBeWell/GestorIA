@@ -7,105 +7,180 @@
         <div class="breadcrumbs">Inicio / <strong>Ajustes</strong></div>
       </header>
 
-      <section class="page-header">
+      <section class="page-header settings-page-header">
         <div>
           <h1 class="page-title">Ajustes</h1>
-          <p class="page-subtitle">Parametros y preferencias de la intranet</p>
+          <p class="page-subtitle">Configuración de tu cuenta de empleado</p>
         </div>
       </section>
 
-      <section class="module-container">
-        <section class="settings-hero">
-          <div>
-            <p class="settings-kicker">Control central</p>
-            <h2>Preferencias, seguridad y permisos</h2>
-            <p class="settings-lead">Gestiona accesos, alertas y reglas internas de operativa.</p>
-          </div>
-          <div class="settings-badge">
-            <span>Perfil activo</span>
-            <strong>Empleado · Equipo fiscal</strong>
-          </div>
-        </section>
+      <section class="settings-layout">
+        <aside class="settings-menu" aria-label="Secciones de ajustes">
+          <button
+            type="button"
+            [class.settings-menu__item--active]="activeSection === 'seguridad'"
+            class="settings-menu__item"
+            (click)="activeSection = 'seguridad'">
+            <span aria-hidden="true">△</span>
+            Seguridad
+          </button>
+          <button
+            type="button"
+            [class.settings-menu__item--active]="activeSection === 'apariencia'"
+            class="settings-menu__item"
+            (click)="activeSection = 'apariencia'">
+            <span aria-hidden="true">☼</span>
+            Apariencia
+          </button>
+        </aside>
 
-        <section class="settings-columns">
-          <div class="settings-column">
-            <h3>Perfil y seguridad</h3>
-            <div class="settings-row">
-              <div>
-                <strong>Datos personales</strong>
-                <span>Nombre, rol y contacto principal.</span>
+        <section class="settings-content">
+          @if (activeSection === 'seguridad') {
+            <section class="settings-panel password-panel">
+              <h2>Contraseña</h2>
+              <div class="password-row">
+                <div>
+                  <h3>Contraseña de acceso</h3>
+                  <p>Última actualización: 12 mar 2026 · Hace 47 días</p>
+                </div>
+                <button type="button" class="primary-button settings-button">Cambiar contraseña</button>
               </div>
-              <span class="status-pill">Actual</span>
-            </div>
-            <div class="settings-row">
-              <div>
-                <strong>Contrasena</strong>
-                <span>Actualizacion cada 90 dias.</span>
-              </div>
-              <span class="status-pill warning">Pendiente</span>
-            </div>
-            <div class="settings-row">
-              <div>
-                <strong>Sesiones activas</strong>
-                <span>Ultimo acceso hoy 08:42.</span>
-              </div>
-              <span class="status-pill">1 abierta</span>
-            </div>
-          </div>
-          <div class="settings-column">
-            <h3>Preferencias de fichaje</h3>
-            <ul class="settings-list">
-              <li>Horario objetivo diario configurado.</li>
-              <li>Politicas de pausa con alertas al reingreso.</li>
-              <li>Recordatorios si hay turno abierto.</li>
-            </ul>
-          </div>
-        </section>
 
-        <section class="settings-columns">
-          <div class="settings-column">
-            <h3>Notificaciones</h3>
-            <div class="settings-row">
-              <div>
-                <strong>Facturas vencidas</strong>
-                <span>Alertas diarias al responsable.</span>
+              <div class="settings-divider"></div>
+
+              <div class="password-row password-row--compact">
+                <div>
+                  <h3>Caducidad automática</h3>
+                  <p>Tu contraseña caducará cada 90 días</p>
+                </div>
+                <span class="state-pill state-pill--success"><i></i> Activa</span>
               </div>
-              <span class="status-pill success">Activo</span>
-            </div>
-            <div class="settings-row">
-              <div>
-                <strong>Tareas pendientes</strong>
-                <span>Resumen semanal cada lunes.</span>
+
+              <div class="settings-divider"></div>
+
+              <div class="strength-row">
+                <span>Fortaleza actual</span>
+                <div class="strength-track" aria-hidden="true"><i></i></div>
+                <strong>Fuerte</strong>
               </div>
-              <span class="status-pill">Activo</span>
-            </div>
-            <div class="settings-row">
-              <div>
-                <strong>Actividad critica</strong>
-                <span>Notificacion inmediata por email.</span>
+            </section>
+
+            <section class="settings-panel twofa-panel">
+              <header>
+                <h2>Verificación en dos pasos (2FA)</h2>
+                <span class="state-pill state-pill--success"><i></i> Activado</span>
+              </header>
+
+              <div class="security-list">
+                <article>
+                  <div>
+                    <h3>App de autenticación</h3>
+                    <p>Configurado · Google Authenticator</p>
+                  </div>
+                  <button type="button" class="secondary-button settings-button">Reconfigurar</button>
+                </article>
+                <article>
+                  <div>
+                    <h3>SMS de respaldo</h3>
+                    <p>••• ••• 456</p>
+                  </div>
+                  <span class="state-pill state-pill--neutral"><i></i> No configurado</span>
+                </article>
+                <article>
+                  <div>
+                    <h3>Códigos de recuperación</h3>
+                    <p>8 de 10 códigos disponibles</p>
+                  </div>
+                  <button type="button" class="secondary-button settings-button">Ver códigos</button>
+                </article>
               </div>
-              <span class="status-pill danger">Prioritario</span>
-            </div>
-          </div>
-          <div class="settings-column">
-            <h3>Integraciones y permisos</h3>
-            <p class="settings-note">Conexion con herramientas contables y perfiles de acceso.</p>
-            <div class="settings-tags">
-              <span>Contabilidad</span>
-              <span>Firmas digitales</span>
-              <span>Correo corporativo</span>
-            </div>
-            <div class="settings-meta">
-              <div>
-                <strong>Permisos por modulo</strong>
-                <span>Fiscal, Laboral, Mercantil</span>
+            </section>
+
+            <section class="settings-panel sessions-panel">
+              <h2>Sesiones activas</h2>
+              <div class="sessions-list">
+                @for (session of sessions; track session.device) {
+                  <article class="session-row">
+                    <div>
+                      <h3>
+                        {{ session.device }}
+                        @if (session.status) {
+                          <span class="state-pill state-pill--success"><i></i> {{ session.status }}</span>
+                        }
+                      </h3>
+                      <p>{{ session.meta }}</p>
+                    </div>
+                    <div class="session-meta">
+                      <span>{{ session.time }}</span>
+                      @if (session.action) {
+                        <button type="button">{{ session.action }}</button>
+                      }
+                    </div>
+                  </article>
+                }
               </div>
-              <div>
-                <strong>Auditoria</strong>
-                <span>Registro completo de cambios</span>
+            </section>
+          } @else {
+            <section class="settings-panel theme-panel">
+              <h2>Tema</h2>
+              <div class="theme-grid">
+                <button type="button" class="theme-card theme-card--active">
+                  <span class="theme-preview theme-preview--light"></span>
+                  <strong>Claro</strong>
+                  <i aria-hidden="true"></i>
+                </button>
+                <button type="button" class="theme-card">
+                  <span class="theme-preview theme-preview--dark"></span>
+                  <strong>Oscuro</strong>
+                </button>
+                <button type="button" class="theme-card">
+                  <span class="theme-preview theme-preview--system"></span>
+                  <strong>Sistema</strong>
+                </button>
               </div>
-            </div>
-          </div>
+            </section>
+
+            <section class="settings-panel accent-panel">
+              <h2>Color de acento</h2>
+              <div class="accent-list">
+                @for (accent of accents; track accent.label) {
+                  <button type="button" [class.accent-chip--active]="accent.active" class="accent-chip">
+                    <i [class]="'accent-dot accent-dot--' + accent.tone"></i>
+                    {{ accent.label }}
+                  </button>
+                }
+              </div>
+            </section>
+
+            <section class="settings-panel language-panel">
+              <h2>Idioma</h2>
+              <div class="language-list">
+                @for (language of languages; track language.code) {
+                  <article class="language-row">
+                    <span>{{ language.code }}</span>
+                    <strong>{{ language.name }}</strong>
+                    @if (language.selected) {
+                      <em><i></i> Seleccionado</em>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+
+            <section class="settings-panel density-panel">
+              <h2>Densidad de la interfaz</h2>
+              <div class="density-grid">
+                <button type="button" class="density-card density-card--active">
+                  <strong>Cómoda</strong>
+                  <span>Más espacio, lectura relajada</span>
+                </button>
+                <button type="button" class="density-card">
+                  <strong>Compacta</strong>
+                  <span>Más datos por pantalla</span>
+                </button>
+              </div>
+            </section>
+          }
         </section>
       </section>
     </section>

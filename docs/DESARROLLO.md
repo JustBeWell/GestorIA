@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos tiene UI alineada con prototipo; ajustes sigue pendiente de rediseño y documentos/ajustes siguen pendientes de persistencia. |
+| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; documentos y ajustes tienen UI alineada con prototipos; documentos/ajustes siguen pendientes de persistencia. |
 
 ---
 
@@ -175,7 +175,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [ ] Calendario fiscal: CRUD administrativo de vencimientos.
 - [x] Documentos: UI rediseñada segun prototipo visual de herramientas.
 - [ ] Documentos: sin almacenamiento ni endpoints.
-- [ ] Ajustes: UI estatica, sin persistencia.
+- [x] Ajustes: UI rediseñada segun prototipos de seguridad y apariencia.
+- [ ] Ajustes: sin persistencia.
 
 ---
 
@@ -238,6 +239,13 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Rediseñada la pantalla `documentos` para seguir el prototipo: acciones superiores, carpetas fijadas, panel de almacenamiento, archivos recientes y tabla de carpetas.
 - Se mantiene dentro de los patrones existentes de intranet con sidebar/topbar compartidos.
 - Pendiente: modelo `documentos`, subida/descarga real, asociacion con clientes/trabajos y baja logica.
+- Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+
+### 2026-05-08 · HU-M10-03 Ajustes UI
+
+- Rediseñada la pantalla `ajustes` como vista con navegacion interna `Seguridad`/`Apariencia`, reflejando ambos prototipos.
+- Seguridad incluye contraseña, 2FA y sesiones activas; Apariencia incluye tema, color de acento, idioma y densidad.
+- Pendiente: modelo de configuracion y endpoints de lectura/escritura para persistir estos ajustes.
 - Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ---

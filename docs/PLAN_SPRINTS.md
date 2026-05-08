@@ -185,6 +185,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 ### HU-M10-03 - Ajustes
 
+- [x] UI rediseñada segun prototipos de seguridad y apariencia.
 - [ ] Modelo de configuracion.
 - [ ] Endpoints de lectura/escritura para admin.
 - [ ] Persistencia de nombre de empresa, logo, jornada estandar, IVA por defecto u otros parametros.
