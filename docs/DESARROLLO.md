@@ -257,6 +257,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Pendiente: modelo de configuracion y endpoints de lectura/escritura para persistir estos ajustes.
 - Verificacion: `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
+### 2026-05-11 · Hotfix calendario fiscal gateway
+
+- Corregido el 404 de `/intranet/calendario-fiscal` anadiendo una ruta explicita en nginx hacia `backend-calendario`.
+- Diagnostico por logs Docker: el 404 se producia en `gestoria-gateway` y no llegaba a `gestoria-backend-calendario`.
+- Verificacion: `nginx -t` correcto, reload del gateway y `GET /intranet/calendario-fiscal?year=2026&month=5` con token local devuelve `200 OK`.
+
 ---
 
 ## Proximos pasos recomendados
