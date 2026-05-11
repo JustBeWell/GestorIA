@@ -259,7 +259,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ### 2026-05-11 · Hotfix calendario fiscal gateway
 
-- Corregido el 404 de `/intranet/calendario-fiscal` anadiendo una ruta explicita en nginx hacia `backend-calendario`.
+- Corregido el 404 de `/intranet/calendario-fiscal` anadiendo una ruta explicita en nginx hacia `backend-calendario` con resolucion dinamica del DNS de Docker.
 - Diagnostico por logs Docker: el 404 se producia en `gestoria-gateway` y no llegaba a `gestoria-backend-calendario`.
 - Verificacion: `nginx -t` correcto, reload del gateway y `GET /intranet/calendario-fiscal?year=2026&month=5` con token local devuelve `200 OK`.
 
