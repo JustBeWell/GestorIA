@@ -172,7 +172,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Calendario fiscal: UI rediseñada segun prototipo visual de herramientas.
 - [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
 - [x] Calendario fiscal/laboral: datos reales servidos desde backend, con semillas 2026 para AEAT y TGSS.
-- [ ] Calendario fiscal: CRUD administrativo de vencimientos.
+- [x] Calendario fiscal: alta manual de vencimientos extra y cambio de estado pendiente/realizado.
+- [ ] Calendario fiscal: edicion y borrado administrativo de vencimientos.
 - [x] GIA: sustituye al antiguo modulo Documentos.
 - [x] GIA: conversaciones persistidas, mensajes, adjuntos, descargas y generacion de PDF/imagenes.
 - [x] GIA: frontend conectado al microservicio `backend-ai`.
@@ -268,6 +269,14 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Ampliadas las semillas del calendario 2026 con obligaciones habituales de asesoria: modelos 100/102, 111, 115, 130/131, 180/190, 200/202, 303/322/349/353/390, 347 y vencimientos TGSS/RETA.
 - Anadida migracion `V013__calendario_asesoria_fiscal_laboral.sql` para nuevas instalaciones.
 - El microservicio `backend-calendario` reinyecta estas semillas de forma idempotente en instalaciones existentes.
+
+### 2026-05-11 · Calendario fiscal operativo
+
+- Anadida navegacion por mes y ano anterior/siguiente en la pantalla de calendario fiscal.
+- Separados los trabajos del mes en pendientes y realizados, con acciones para marcar como presentado o reabrir.
+- Anadido alta manual de vencimientos extra desde la pantalla, persistida en `calendario_fiscal_vencimientos` mediante el microservicio `backend-calendario`.
+- Actualizado el boton ICS para usar el patron visual de exportacion del resto de modulos.
+- Verificacion: `pytest tests/test_intranet_tabs.py -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
 ---
 

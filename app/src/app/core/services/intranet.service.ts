@@ -10,6 +10,8 @@ import {
   AdminFichajesResponse,
   AdminResumenResponse,
   CalendarioFiscalResponse,
+  CalendarioFiscalVencimiento,
+  CalendarioFiscalVencimientoCreate,
   ClienteCreate,
   ClienteDetailItem,
   ClientesTabResponse,
@@ -368,6 +370,20 @@ export class IntranetService {
     return this.http.get(
       `${this.apiUrl}/intranet/calendario-fiscal/export/ics?year=${year}&month=${month}`,
       { responseType: 'blob' },
+    );
+  }
+
+  createCalendarioFiscalVencimiento(payload: CalendarioFiscalVencimientoCreate): Observable<CalendarioFiscalVencimiento> {
+    return this.http.post<CalendarioFiscalVencimiento>(`${this.apiUrl}/intranet/calendario-fiscal`, payload);
+  }
+
+  updateCalendarioFiscalEstado(
+    id: string,
+    estado: CalendarioFiscalVencimiento['estado'],
+  ): Observable<CalendarioFiscalVencimiento> {
+    return this.http.patch<CalendarioFiscalVencimiento>(
+      `${this.apiUrl}/intranet/calendario-fiscal/${id}/estado`,
+      { estado },
     );
   }
 

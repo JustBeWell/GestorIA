@@ -24,6 +24,68 @@
   min-height: 38px;
 }
 
+.export-wrapper {
+  position: relative;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid #dce8e0;
+  background: #ffffff;
+  color: #374151;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.export-button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1px solid #dce8e0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.export-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.export-menu button:hover {
+  background: #f8fafc;
+}
+
 .fiscal-board {
   display: grid;
   gap: 20px;
@@ -211,6 +273,11 @@
   cursor: pointer;
 }
 
+.month-switch button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -358,6 +425,21 @@
   display: grid;
 }
 
+.due-section-title {
+  padding: 12px 22px;
+  border-top: 1px solid #dce3e8;
+  background: #fbfcfd;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.due-section-title--done {
+  background: #f7fbf8;
+}
+
 .due-item {
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr) auto;
@@ -444,6 +526,50 @@
   white-space: nowrap;
 }
 
+.due-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.mini-action {
+  min-height: 30px;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #374151;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mini-action:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.mini-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.due-item--done {
+  background: #f8fbf9;
+}
+
+.due-item--done .date-box,
+.done-chip {
+  color: #4f9a68;
+}
+
+.done-chip {
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .empty-due {
   display: grid;
   gap: 6px;
@@ -454,6 +580,104 @@
 
 .empty-due strong {
   color: #0f172a;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.calendar-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #dce8e0;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.25);
+}
+
+.calendar-modal header,
+.calendar-modal footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+.calendar-modal header {
+  border-bottom: 1px solid #e5edf0;
+}
+
+.calendar-modal footer {
+  border-top: 1px solid #e5edf0;
+}
+
+.calendar-modal h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.calendar-modal p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.modal-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.form-grid {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-grid--wide {
+  grid-column: 1 / -1;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 7px;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  border: 1px solid #dce8e0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-grid textarea {
+  resize: vertical;
 }
 
 @media (max-width: 1280px) {
@@ -493,7 +717,18 @@
     grid-template-columns: 52px 1fr;
   }
 
-  .due-time {
+  .due-actions {
     grid-column: 2;
+    justify-items: start;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-modal header,
+  .calendar-modal footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

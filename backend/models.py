@@ -671,6 +671,22 @@ class CalendarioFiscalVencimientoItem(BaseModel):
 	fuente_url: str | None = None
 
 
+class CalendarioFiscalVencimientoCreate(BaseModel):
+	fecha: date
+	modelo: str = Field(min_length=1, max_length=20)
+	titulo: str = Field(min_length=1, max_length=255)
+	descripcion: str | None = Field(default=None, max_length=1000)
+	categoria: str = Field(default="Extra", min_length=1, max_length=120)
+	periodo: str = Field(min_length=1, max_length=80)
+	prioridad: Literal["alta", "media", "baja"] = "media"
+	estado: Literal["pendiente", "presentado", "en_preparacion", "no_aplica"] = "pendiente"
+	fuente_url: str | None = Field(default=None, max_length=500)
+
+
+class CalendarioFiscalEstadoUpdate(BaseModel):
+	estado: Literal["pendiente", "presentado", "en_preparacion", "no_aplica"]
+
+
 class CalendarioFiscalDiaItem(BaseModel):
 	fecha: date
 	dia: int

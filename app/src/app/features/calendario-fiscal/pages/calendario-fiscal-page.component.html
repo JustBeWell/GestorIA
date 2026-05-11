@@ -13,11 +13,31 @@
           <p class="page-subtitle">{{ periodo().subtitle }}</p>
         </div>
         <div class="tools-actions">
-          <button type="button" class="secondary-button tool-action" (click)="exportIcs()" [disabled]="!data()">
-            <span aria-hidden="true">↓</span>
-            Exportar ICS
-          </button>
-          <button type="button" class="primary-button tool-action" disabled>
+          <div class="export-wrapper">
+            <button type="button" class="export-button" (click)="toggleExportMenu()" [disabled]="busy() || !data()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            @if (showExportMenu()) {
+              <div class="export-menu" role="menu">
+                <button type="button" role="menuitem" (click)="exportIcs()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  Exportar ICS
+                </button>
+              </div>
+            }
+          </div>
+          <button type="button" class="primary-button tool-action" (click)="openCreate()" [disabled]="busy()">
             <span aria-hidden="true">+</span>
             Añadir vencimiento
           </button>
@@ -100,9 +120,11 @@
             <header class="panel-heading">
               <h2>Mes en vista <span>· {{ periodo().month_label }}</span></h2>
               <div class="month-switch" aria-label="Navegación de mes">
-                <button type="button" aria-label="Mes anterior" (click)="previousMonth()">‹</button>
+                <button type="button" aria-label="Año anterior" (click)="previousYear()" [disabled]="busy()">«</button>
+                <button type="button" aria-label="Mes anterior" (click)="previousMonth()" [disabled]="busy()">‹</button>
                 <span>{{ periodo().month_label }}</span>
-                <button type="button" aria-label="Mes siguiente" (click)="nextMonth()">›</button>
+                <button type="button" aria-label="Mes siguiente" (click)="nextMonth()" [disabled]="busy()">›</button>
+                <button type="button" aria-label="Año siguiente" (click)="nextYear()" [disabled]="busy()">»</button>
               </div>
             </header>
 
@@ -147,12 +169,13 @@
 
           <aside class="due-panel">
             <header class="panel-heading">
-              <h2>Próximos vencimientos</h2>
-              <span class="status-chip"><i></i> {{ proximos().length }} pendientes</span>
+              <h2>Trabajos del mes</h2>
+              <span class="status-chip"><i></i> {{ pendientes().length }} pendientes</span>
             </header>
 
             <div class="due-list">
-              @for (item of proximos(); track trackVencimiento($index, item)) {
+              <div class="due-section-title">Pendientes</div>
+              @for (item of pendientes(); track trackVencimiento($index, item)) {
                 <article class="due-item" [class]="'due-item due-item--' + item.prioridad">
                   <div class="date-box">
                     <span>{{ monthCode(item.fecha) }}</span>
@@ -166,14 +189,48 @@
                     <h3>{{ item.titulo }}</h3>
                     <p>{{ item.periodo }}</p>
                   </div>
-                  <span class="due-time" [class.due-time--late]="deadlineDistance(item).startsWith('hace')">
-                    {{ deadlineDistance(item) }}
-                  </span>
+                  <div class="due-actions">
+                    <span class="due-time" [class.due-time--late]="deadlineDistance(item).startsWith('hace')">
+                      {{ deadlineDistance(item) }}
+                    </span>
+                    <button type="button" class="mini-action" (click)="updateEstado(item, 'presentado')" [disabled]="busy()">
+                      Marcar realizado
+                    </button>
+                  </div>
                 </article>
               } @empty {
                 <div class="empty-due">
                   <strong>Sin vencimientos pendientes</strong>
-                  <span>Este mes no tiene obligaciones fiscales registradas.</span>
+                  <span>Este mes no tiene obligaciones pendientes registradas.</span>
+                </div>
+              }
+
+              <div class="due-section-title due-section-title--done">Realizados</div>
+              @for (item of realizados(); track trackVencimiento($index, item)) {
+                <article class="due-item due-item--done">
+                  <div class="date-box">
+                    <span>{{ monthCode(item.fecha) }}</span>
+                    <strong>{{ dayNumber(item.fecha) }}</strong>
+                  </div>
+                  <div class="due-copy">
+                    <div>
+                      <strong>Modelo {{ item.modelo }}</strong>
+                      <span>· {{ item.estado === 'presentado' ? 'presentado' : 'no aplica' }}</span>
+                    </div>
+                    <h3>{{ item.titulo }}</h3>
+                    <p>{{ item.periodo }}</p>
+                  </div>
+                  <div class="due-actions">
+                    <span class="done-chip">Realizado</span>
+                    <button type="button" class="mini-action" (click)="updateEstado(item, 'pendiente')" [disabled]="busy()">
+                      Reabrir
+                    </button>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty-due">
+                  <strong>Sin trabajos realizados</strong>
+                  <span>Marca vencimientos como realizados cuando estén presentados.</span>
                 </div>
               }
             </div>
@@ -183,4 +240,73 @@
       </section>
     </section>
   </section>
+
+  @if (showCreateModal()) {
+    <section class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Añadir vencimiento">
+      <form class="calendar-modal" (ngSubmit)="createVencimiento()">
+        <header>
+          <div>
+            <h2>Añadir vencimiento</h2>
+            <p>Registra una obligación extra en el calendario fiscal/laboral.</p>
+          </div>
+          <button type="button" class="modal-close" aria-label="Cerrar" (click)="closeCreate()" [disabled]="saving()">×</button>
+        </header>
+
+        <div class="form-grid">
+          <label>
+            <span>Fecha</span>
+            <input type="date" name="fecha" [(ngModel)]="createForm.fecha" required [disabled]="saving()" />
+          </label>
+          <label>
+            <span>Modelo / código</span>
+            <input type="text" name="modelo" [(ngModel)]="createForm.modelo" placeholder="303, TGSS, interno..." required [disabled]="saving()" />
+          </label>
+          <label class="form-grid--wide">
+            <span>Título</span>
+            <input type="text" name="titulo" [(ngModel)]="createForm.titulo" placeholder="Declaración, presentación o tarea" required [disabled]="saving()" />
+          </label>
+          <label>
+            <span>Categoría</span>
+            <input type="text" name="categoria" [(ngModel)]="createForm.categoria" placeholder="IVA, Laboral..." [disabled]="saving()" />
+          </label>
+          <label>
+            <span>Periodo</span>
+            <input type="text" name="periodo" [(ngModel)]="createForm.periodo" placeholder="2T 2026" required [disabled]="saving()" />
+          </label>
+          <label>
+            <span>Prioridad</span>
+            <select name="prioridad" [(ngModel)]="createForm.prioridad" [disabled]="saving()">
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
+            </select>
+          </label>
+          <label>
+            <span>Estado</span>
+            <select name="estado" [(ngModel)]="createForm.estado" [disabled]="saving()">
+              <option value="pendiente">Pendiente</option>
+              <option value="en_preparacion">En preparación</option>
+              <option value="presentado">Realizado</option>
+              <option value="no_aplica">No aplica</option>
+            </select>
+          </label>
+          <label class="form-grid--wide">
+            <span>Descripción</span>
+            <textarea name="descripcion" rows="3" [(ngModel)]="createForm.descripcion" [disabled]="saving()"></textarea>
+          </label>
+          <label class="form-grid--wide">
+            <span>URL fuente</span>
+            <input type="url" name="fuente_url" [(ngModel)]="createForm.fuente_url" placeholder="https://..." [disabled]="saving()" />
+          </label>
+        </div>
+
+        <footer>
+          <button type="button" class="secondary-button" (click)="closeCreate()" [disabled]="saving()">Cancelar</button>
+          <button type="submit" class="primary-button" [disabled]="saving() || !createForm.fecha || !createForm.modelo || !createForm.titulo">
+            {{ saving() ? 'Guardando...' : 'Guardar vencimiento' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  }
 </main>

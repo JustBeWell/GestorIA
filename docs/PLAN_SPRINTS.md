@@ -173,7 +173,8 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 - [x] Endpoint de consulta por ano/mes.
 - [x] Exportacion ICS desde backend.
 - [x] UI rediseñada segun prototipo visual y conectada a datos reales AEAT/TGSS.
-- [ ] CRUD administrativo de vencimientos fiscales.
+- [x] Navegacion por mes/ano, alta manual de vencimientos extra y seguimiento pendiente/realizado.
+- [ ] Edicion y borrado administrativo de vencimientos fiscales.
 
 ### HU-M10-02 - GIA
 

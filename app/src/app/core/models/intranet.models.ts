@@ -80,6 +80,18 @@ export interface CalendarioFiscalVencimiento {
   fuente_url: string | null;
 }
 
+export interface CalendarioFiscalVencimientoCreate {
+  fecha: string;
+  modelo: string;
+  titulo: string;
+  descripcion?: string | null;
+  categoria: string;
+  periodo: string;
+  prioridad: 'alta' | 'media' | 'baja';
+  estado: 'pendiente' | 'presentado' | 'en_preparacion' | 'no_aplica';
+  fuente_url?: string | null;
+}
+
 export interface CalendarioFiscalDia {
   fecha: string;
   dia: number;

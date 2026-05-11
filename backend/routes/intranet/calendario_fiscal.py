@@ -2,7 +2,12 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from models import CalendarioFiscalResponse
+from models import (
+    CalendarioFiscalEstadoUpdate,
+    CalendarioFiscalResponse,
+    CalendarioFiscalVencimientoCreate,
+    CalendarioFiscalVencimientoItem,
+)
 from services.auth_service import get_current_user
 from services.calendario_fiscal_service import CalendarioFiscalService
 
@@ -38,3 +43,23 @@ def intranet_calendario_fiscal_export_ics(
             "Content-Disposition": f'attachment; filename="calendario-fiscal-{export_year}-{export_month:02d}.ics"',
         },
     )
+
+
+@router.post("/calendario-fiscal", response_model=CalendarioFiscalVencimientoItem, status_code=201)
+def intranet_calendario_fiscal_create(
+    payload: CalendarioFiscalVencimientoCreate,
+    current_user=Depends(get_current_user),
+):
+    return CalendarioFiscalService.create_vencimiento(payload)
+
+
+@router.patch("/calendario-fiscal/{vencimiento_id}/estado", response_model=CalendarioFiscalVencimientoItem)
+def intranet_calendario_fiscal_update_estado(
+    vencimiento_id: str,
+    payload: CalendarioFiscalEstadoUpdate,
+    current_user=Depends(get_current_user),
+):
+    result = CalendarioFiscalService.update_estado(vencimiento_id, payload.estado)
+    if not result:
+        raise HTTPException(status_code=404, detail="Vencimiento no encontrado")
+    return result

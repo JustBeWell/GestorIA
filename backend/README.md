@@ -206,6 +206,8 @@ Rutas publicas principales:
 ### Calendario fiscal/laboral
 
 - `GET /intranet/calendario-fiscal?year=&month=`
+- `POST /intranet/calendario-fiscal`
+- `PATCH /intranet/calendario-fiscal/{vencimiento_id}/estado`
 - `GET /intranet/calendario-fiscal/export/ics?year=&month=`
 
 ### Admin

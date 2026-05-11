@@ -280,6 +280,70 @@ class TestIntranetTabs:
         assert body["resumen"]["vencimientos_mes"] == 1
 
     @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.create_vencimiento")
+    def test_calendario_fiscal_create_vencimiento(self, mock_service, mock_decode):
+        mock_decode.return_value = _token_data()
+        mock_service.return_value = {
+            "id": "99999999-9999-9999-9999-999999999999",
+            "fecha": "2026-05-24",
+            "modelo": "INT",
+            "titulo": "Revisión interna de impuestos",
+            "descripcion": "Preparar documentación del cliente.",
+            "categoria": "Extra",
+            "periodo": "Mayo 2026",
+            "prioridad": "media",
+            "estado": "pendiente",
+            "clientes_afectados": 0,
+            "fuente": "Manual",
+            "fuente_url": None,
+        }
+
+        response = client.post(
+            "/intranet/calendario-fiscal",
+            headers=_auth_headers(),
+            json={
+                "fecha": "2026-05-24",
+                "modelo": "INT",
+                "titulo": "Revisión interna de impuestos",
+                "categoria": "Extra",
+                "periodo": "Mayo 2026",
+                "prioridad": "media",
+                "estado": "pendiente",
+            },
+        )
+
+        assert response.status_code == 201
+        assert response.json()["fuente"] == "Manual"
+
+    @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.update_estado")
+    def test_calendario_fiscal_update_estado(self, mock_service, mock_decode):
+        mock_decode.return_value = _token_data()
+        mock_service.return_value = {
+            "id": "99999999-9999-9999-9999-999999999999",
+            "fecha": "2026-05-24",
+            "modelo": "INT",
+            "titulo": "Revisión interna de impuestos",
+            "descripcion": None,
+            "categoria": "Extra",
+            "periodo": "Mayo 2026",
+            "prioridad": "media",
+            "estado": "presentado",
+            "clientes_afectados": 0,
+            "fuente": "Manual",
+            "fuente_url": None,
+        }
+
+        response = client.patch(
+            "/intranet/calendario-fiscal/99999999-9999-9999-9999-999999999999/estado",
+            headers=_auth_headers(),
+            json={"estado": "presentado"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["estado"] == "presentado"
+
+    @patch("services.auth_service.TokenService.decode_token")
     @patch("routes.intranet.PagosService.get_pagos_tab_filtered")
     def test_tab_returns_404_when_user_not_found(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()

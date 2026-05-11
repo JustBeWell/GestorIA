@@ -185,6 +185,59 @@ class CalendarioFiscalService:
         return ("\r\n".join(lines) + "\r\n").encode("utf-8")
 
     @staticmethod
+    def create_vencimiento(payload) -> dict:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                CalendarioFiscalService._ensure_schema(cursor)
+                cursor.execute(
+                    """
+                    INSERT INTO calendario_fiscal_vencimientos
+                        (fecha, modelo, titulo, descripcion, categoria, periodo,
+                         prioridad, estado, aplica_tipo_cliente, fuente, fuente_url)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NULL, 'Manual', %s)
+                    RETURNING
+                        id::text, fecha, modelo, titulo, descripcion, categoria,
+                        periodo, prioridad, estado, fuente, fuente_url,
+                        0 AS clientes_afectados
+                    """,
+                    (
+                        payload.fecha,
+                        payload.modelo.strip(),
+                        payload.titulo.strip(),
+                        payload.descripcion.strip() if payload.descripcion else None,
+                        payload.categoria.strip(),
+                        payload.periodo.strip(),
+                        payload.prioridad,
+                        payload.estado,
+                        payload.fuente_url,
+                    ),
+                )
+                row = dict(cursor.fetchone())
+                connection.commit()
+        return CalendarioFiscalService._vencimiento_item(row)
+
+    @staticmethod
+    def update_estado(vencimiento_id: str, estado: str) -> dict | None:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                CalendarioFiscalService._ensure_schema(cursor)
+                cursor.execute(
+                    """
+                    UPDATE calendario_fiscal_vencimientos
+                    SET estado = %s, updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING
+                        id::text, fecha, modelo, titulo, descripcion, categoria,
+                        periodo, prioridad, estado, fuente, fuente_url,
+                        0 AS clientes_afectados
+                    """,
+                    (estado, vencimiento_id),
+                )
+                row = cursor.fetchone()
+                connection.commit()
+        return CalendarioFiscalService._vencimiento_item(row) if row else None
+
+    @staticmethod
     def _get_vencimientos(cursor: RealDictCursor, start: date, end: date) -> list[dict]:
         cursor.execute(
             """
@@ -214,13 +267,13 @@ class CalendarioFiscalService:
             (start, end),
         )
         rows = cursor.fetchall()
-        return [
-            {
-                **dict(row),
-                "clientes_afectados": int(row["clientes_afectados"] or 0),
-            }
-            for row in rows
-        ]
+        return [CalendarioFiscalService._vencimiento_item(row) for row in rows]
+
+    @staticmethod
+    def _vencimiento_item(row) -> dict:
+        data = dict(row)
+        data["clientes_afectados"] = int(data.get("clientes_afectados") or 0)
+        return data
 
     @staticmethod
     def _build_days(start: date, end: date, by_date: dict[date, list[dict]], today: date) -> list[dict]:
