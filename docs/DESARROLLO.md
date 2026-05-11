@@ -20,7 +20,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M7 Home | Completo | Resumen operativo, graficas, calendario y panel admin historico. |
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
-| M10 Herramientas | En curso | Calendario fiscal ya esta conectado a microservicio y BD; GIA sustituye a Documentos con conversaciones/archivos reales; ajustes tiene UI alineada con prototipo y sigue pendiente de persistencia. |
+| M10 Herramientas | En curso | Calendario fiscal/laboral ya esta conectado a microservicio y BD; GIA sustituye a Documentos con conversaciones/archivos reales; ajustes tiene UI alineada con prototipo y sigue pendiente de persistencia. |
 
 ---
 
@@ -171,7 +171,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 - [x] Calendario fiscal: UI rediseñada segun prototipo visual de herramientas.
 - [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
-- [x] Calendario fiscal: datos reales servidos desde backend, con semillas AEAT 2026 en BD.
+- [x] Calendario fiscal/laboral: datos reales servidos desde backend, con semillas 2026 para AEAT y TGSS.
 - [ ] Calendario fiscal: CRUD administrativo de vencimientos.
 - [x] GIA: sustituye al antiguo modulo Documentos.
 - [x] GIA: conversaciones persistidas, mensajes, adjuntos, descargas y generacion de PDF/imagenes.
@@ -262,6 +262,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Corregido el 404 de `/intranet/calendario-fiscal` anadiendo una ruta explicita en nginx hacia `backend-calendario` con resolucion dinamica del DNS de Docker.
 - Diagnostico por logs Docker: el 404 se producia en `gestoria-gateway` y no llegaba a `gestoria-backend-calendario`.
 - Verificacion: `nginx -t` correcto, reload del gateway y `GET /intranet/calendario-fiscal?year=2026&month=5` con token local devuelve `200 OK`.
+
+### 2026-05-11 · Calendario fiscal/laboral de asesoria
+
+- Ampliadas las semillas del calendario 2026 con obligaciones habituales de asesoria: modelos 100/102, 111, 115, 130/131, 180/190, 200/202, 303/322/349/353/390, 347 y vencimientos TGSS/RETA.
+- Anadida migracion `V013__calendario_asesoria_fiscal_laboral.sql` para nuevas instalaciones.
+- El microservicio `backend-calendario` reinyecta estas semillas de forma idempotente en instalaciones existentes.
 
 ---
 

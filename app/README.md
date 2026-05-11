@@ -40,7 +40,7 @@ La aplicacion esta organizada por capas:
 | `/trabajos` | Kanban y gestion de trabajos. |
 | `/pagos` | Facturas, pagos y deuda viva. |
 | `/admin` | Gestion de empleados, fichajes globales, auditoria y cierre mensual. |
-| `/calendario-fiscal` | Placeholder de calendario fiscal. |
+| `/calendario-fiscal` | Calendario fiscal/laboral conectado al microservicio `backend-calendario`. |
 | `/gia` | Portal GIA de IA con conversaciones, adjuntos y generación de PDF/imagen. |
 | `/documentos` | Redirección legacy a `/gia`. |
 | `/ajustes` | Placeholder de ajustes. |

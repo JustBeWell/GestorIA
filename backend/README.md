@@ -26,7 +26,7 @@ Todos los microservicios comparten el mismo codigo base y la misma base de datos
 | `backend-clientes` | `main_clientes:app` | Clientes. |
 | `backend-trabajos` | `main_trabajos:app` | Trabajos, asignaciones y comentarios. |
 | `backend-pagos` | `main_pagos:app` | Pagos, facturas y deuda viva. |
-| `backend-calendario` | `main_calendario:app` | Calendario fiscal. |
+| `backend-calendario` | `main_calendario:app` | Calendario fiscal/laboral. |
 | `backend-admin` | `main_admin:app` | Panel admin, auditoria y cierre mensual. |
 | `backend-ai` | `main_ai:app` | Chat IA y portal GIA con conversaciones/archivos. |
 
@@ -203,7 +203,7 @@ Rutas publicas principales:
 - `DELETE /intranet/facturas/{factura_id}`
 - `POST /intranet/facturas/{factura_id}/pagos`
 
-### Calendario fiscal
+### Calendario fiscal/laboral
 
 - `GET /intranet/calendario-fiscal?year=&month=`
 - `GET /intranet/calendario-fiscal/export/ics?year=&month=`

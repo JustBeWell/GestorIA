@@ -37,6 +37,7 @@ services:
       - ./db/migrations/V001__schema_inicial.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
       - ./db/migrations/V011__calendario_fiscal.sql:/docker-entrypoint-initdb.d/011_calendario_fiscal.sql:ro
       - ./db/migrations/V012__gia_portal.sql:/docker-entrypoint-initdb.d/012_gia_portal.sql:ro
+      - ./db/migrations/V013__calendario_asesoria_fiscal_laboral.sql:/docker-entrypoint-initdb.d/013_calendario_asesoria_fiscal_laboral.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gestoria -d GestorIA"]
       interval: 5s
