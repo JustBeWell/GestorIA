@@ -169,22 +169,26 @@
         </section>
 
         <section class="worklist-toggle">
-          <label class="toggle-check">
-            <input
-              type="checkbox"
-              [checked]="showWorkList()"
-              (change)="setWorkListVisibility($event)" />
-            <span>Mostrar listado de trabajos del mes</span>
-          </label>
-          <span>
-            {{ pendientes().length }} fiscales pendientes ·
-            {{ realizados().length }} fiscales realizados ·
-            {{ trabajosEmpleadosTotal() }} trabajos asignados
-          </span>
+          <button
+            type="button"
+            class="worklist-toggle-button"
+            (click)="toggleWorkList()"
+            [attr.aria-expanded]="showWorkList()"
+            aria-controls="calendar-worklist">
+            <span class="worklist-toggle-title">
+              <i aria-hidden="true" [class.worklist-toggle-arrow--open]="showWorkList()">▾</i>
+              {{ showWorkList() ? 'Ocultar listado de trabajos del mes' : 'Mostrar listado de trabajos del mes' }}
+            </span>
+            <span class="worklist-toggle-summary">
+              {{ pendientes().length }} fiscales pendientes ·
+              {{ realizados().length }} fiscales realizados ·
+              {{ trabajosEmpleadosTotal() }} trabajos asignados
+            </span>
+          </button>
         </section>
 
         @if (showWorkList()) {
-          <section class="due-panel">
+          <section class="due-panel" id="calendar-worklist">
             <header class="panel-heading">
               <h2>Trabajos del mes</h2>
               <span class="status-chip"><i></i> {{ pendientes().length + trabajosEmpleadosPendientes() }} pendientes</span>

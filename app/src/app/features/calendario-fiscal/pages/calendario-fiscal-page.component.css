@@ -432,34 +432,61 @@
 }
 
 .worklist-toggle {
+  padding: 2px 0;
+}
+
+.worklist-toggle-button {
+  width: 100%;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 0 2px;
+  gap: 16px;
+  border: 0;
+  border-top: 1px solid #dce3e8;
+  border-bottom: 1px solid #dce3e8;
+  background: transparent;
   color: #64748b;
+  padding: 0;
   font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
+  text-align: left;
 }
 
-.worklist-toggle > span {
-  text-align: right;
+.worklist-toggle-button:hover {
+  color: #374151;
 }
 
-.toggle-check {
+.worklist-toggle-title,
+.worklist-toggle-summary {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: #374151;
-  cursor: pointer;
-  user-select: none;
 }
 
-.toggle-check input {
-  width: 16px;
-  height: 16px;
-  accent-color: #163d2d;
-  cursor: pointer;
+.worklist-toggle-title {
+  gap: 8px;
+  color: #374151;
+  font-weight: 850;
+}
+
+.worklist-toggle-title i {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  font-style: normal;
+  transition: transform 0.16s ease;
+}
+
+.worklist-toggle-title i:not(.worklist-toggle-arrow--open) {
+  transform: rotate(-90deg);
+}
+
+.worklist-toggle-summary {
+  text-align: right;
+  justify-content: flex-end;
 }
 
 .due-section-title {
@@ -795,14 +822,15 @@
     min-width: 720px;
   }
 
-  .worklist-toggle,
+  .worklist-toggle-button,
   .employee-work-group > header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .worklist-toggle > span {
+  .worklist-toggle-summary {
     text-align: left;
+    justify-content: flex-start;
   }
 
   .due-item {

@@ -135,9 +135,8 @@ export class CalendarioFiscalPageComponent implements OnInit {
     this.showExportMenu.update((value) => !value);
   }
 
-  protected setWorkListVisibility(event: Event): void {
-    const input = event.target as HTMLInputElement | null;
-    this.showWorkList.set(Boolean(input?.checked));
+  protected toggleWorkList(): void {
+    this.showWorkList.update((value) => !value);
   }
 
   protected exportIcs(): void {
