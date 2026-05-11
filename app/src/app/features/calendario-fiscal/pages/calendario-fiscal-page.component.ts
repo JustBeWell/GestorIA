@@ -32,7 +32,6 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly showCreateModal = signal(false);
   protected readonly saving = signal(false);
   protected readonly updatingId = signal<string | null>(null);
-  protected createForm = this.emptyCreateForm();
 
   protected readonly periodo = computed(() => this.data()?.periodo ?? {
     year: this.selectedYear(),
@@ -40,6 +39,8 @@ export class CalendarioFiscalPageComponent implements OnInit {
     month_label: '',
     subtitle: 'Vencimientos AEAT',
   });
+
+  protected createForm = this.emptyCreateForm();
 
   protected readonly resumen = computed(() => this.data()?.resumen ?? {
     vencimientos_mes: 0,
