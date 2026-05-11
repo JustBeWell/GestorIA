@@ -278,6 +278,13 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Actualizado el boton ICS para usar el patron visual de exportacion del resto de modulos.
 - Verificacion: `pytest tests/test_intranet_tabs.py -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
+### 2026-05-11 · Calendario fiscal listado por empleado
+
+- Reordenada la pantalla para que el calendario ocupe todo el ancho y el listado de trabajos quede debajo como seccion plegable.
+- Anadido `trabajos_por_empleado` al endpoint mensual, leyendo trabajos reales con `fecha_objetivo` desde `trabajos` y `trabajo_empleado`.
+- El listado inferior separa vencimientos fiscales y trabajos por empleado, respetando permisos de administrador/empleado.
+- Verificacion: `pytest tests/test_intranet_tabs.py -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+
 ---
 
 ## Proximos pasos recomendados

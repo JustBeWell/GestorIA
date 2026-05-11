@@ -80,6 +80,27 @@ export interface CalendarioFiscalVencimiento {
   fuente_url: string | null;
 }
 
+export interface CalendarioFiscalTrabajoEmpleado {
+  trabajo_id: string;
+  nro_trabajo: number;
+  titulo: string;
+  estado: EstadoTrabajo;
+  prioridad: PrioridadTrabajo;
+  cliente_id: string;
+  cliente_nombre: string;
+  fecha_objetivo: string;
+  empleado_id: string | null;
+  empleado_nombre: string;
+}
+
+export interface CalendarioFiscalTrabajosEmpleado {
+  empleado_id: string | null;
+  nombre_completo: string;
+  pendientes: number;
+  realizados: number;
+  trabajos: CalendarioFiscalTrabajoEmpleado[];
+}
+
 export interface CalendarioFiscalVencimientoCreate {
   fecha: string;
   modelo: string;
@@ -118,6 +139,7 @@ export interface CalendarioFiscalResponse {
   dias: CalendarioFiscalDia[];
   vencimientos: CalendarioFiscalVencimiento[];
   proximos: CalendarioFiscalVencimiento[];
+  trabajos_por_empleado: CalendarioFiscalTrabajosEmpleado[];
 }
 
 export interface FichajeEventoItem {

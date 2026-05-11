@@ -671,6 +671,27 @@ class CalendarioFiscalVencimientoItem(BaseModel):
 	fuente_url: str | None = None
 
 
+class CalendarioFiscalTrabajoEmpleadoItem(BaseModel):
+	trabajo_id: str
+	nro_trabajo: int
+	titulo: str
+	estado: str
+	prioridad: str
+	cliente_id: str
+	cliente_nombre: str
+	fecha_objetivo: date
+	empleado_id: str | None = None
+	empleado_nombre: str
+
+
+class CalendarioFiscalTrabajosEmpleado(BaseModel):
+	empleado_id: str | None = None
+	nombre_completo: str
+	pendientes: int
+	realizados: int
+	trabajos: list[CalendarioFiscalTrabajoEmpleadoItem]
+
+
 class CalendarioFiscalVencimientoCreate(BaseModel):
 	fecha: date
 	modelo: str = Field(min_length=1, max_length=20)
@@ -710,6 +731,7 @@ class CalendarioFiscalResponse(BaseModel):
 	dias: list[CalendarioFiscalDiaItem]
 	vencimientos: list[CalendarioFiscalVencimientoItem]
 	proximos: list[CalendarioFiscalVencimientoItem]
+	trabajos_por_empleado: list[CalendarioFiscalTrabajosEmpleado]
 
 
 # ── GIA portal IA ─────────────────────────────────────────────────────────────

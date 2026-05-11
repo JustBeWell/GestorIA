@@ -166,11 +166,28 @@
               <span><i class="legend-dot legend-dot--today"></i> Hoy</span>
             </footer>
           </article>
+        </section>
 
-          <aside class="due-panel">
+        <section class="worklist-toggle">
+          <label class="toggle-check">
+            <input
+              type="checkbox"
+              [checked]="showWorkList()"
+              (change)="setWorkListVisibility($event)" />
+            <span>Mostrar listado de trabajos del mes</span>
+          </label>
+          <span>
+            {{ pendientes().length }} fiscales pendientes ·
+            {{ realizados().length }} fiscales realizados ·
+            {{ trabajosEmpleadosTotal() }} trabajos asignados
+          </span>
+        </section>
+
+        @if (showWorkList()) {
+          <section class="due-panel">
             <header class="panel-heading">
               <h2>Trabajos del mes</h2>
-              <span class="status-chip"><i></i> {{ pendientes().length }} pendientes</span>
+              <span class="status-chip"><i></i> {{ pendientes().length + trabajosEmpleadosPendientes() }} pendientes</span>
             </header>
 
             <div class="due-list">
@@ -233,9 +250,45 @@
                   <span>Marca vencimientos como realizados cuando estén presentados.</span>
                 </div>
               }
+
+              <div class="due-section-title due-section-title--employee">Trabajos por empleado</div>
+              @for (group of trabajosPorEmpleado(); track group.empleado_id) {
+                <section class="employee-work-group">
+                  <header>
+                    <h3>{{ group.nombre_completo }}</h3>
+                    <span>{{ group.pendientes }} pendientes · {{ group.realizados }} realizados</span>
+                  </header>
+                  @for (trabajo of group.trabajos; track trabajo.trabajo_id) {
+                    <article class="due-item due-item--trabajo" [class]="'due-item due-item--trabajo due-item--' + trabajoPrioridadClass(trabajo.prioridad)">
+                      <div class="date-box">
+                        <span>{{ monthCode(trabajo.fecha_objetivo) }}</span>
+                        <strong>{{ dayNumber(trabajo.fecha_objetivo) }}</strong>
+                      </div>
+                      <div class="due-copy">
+                        <div>
+                          <strong>#{{ trabajo.nro_trabajo }}</strong>
+                          <span>· {{ trabajo.cliente_nombre }}</span>
+                        </div>
+                        <h3>{{ trabajo.titulo }}</h3>
+                        <p>{{ trabajoEstadoLabel(trabajo.estado) }}</p>
+                      </div>
+                      <div class="due-actions">
+                        <span class="due-time" [class.done-chip]="trabajo.estado === 'finalizado'" [class.due-time--late]="trabajo.estado !== 'finalizado' && dateDistance(trabajo.fecha_objetivo).startsWith('hace')">
+                          {{ trabajo.estado === 'finalizado' ? 'Realizado' : dateDistance(trabajo.fecha_objetivo) }}
+                        </span>
+                      </div>
+                    </article>
+                  }
+                </section>
+              } @empty {
+                <div class="empty-due">
+                  <strong>Sin trabajos asignados este mes</strong>
+                  <span>No hay trabajos con fecha objetivo dentro de {{ periodo().month_label }}.</span>
+                </div>
+              }
             </div>
-          </aside>
-        </section>
+          </section>
+        }
         }
       </section>
     </section>

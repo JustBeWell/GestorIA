@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from psycopg2.extras import RealDictCursor, execute_values
 
 from database import db_connection
+from services._shared import get_usuario
 
 MONTH_NAMES_ES = [
     "enero",
@@ -109,7 +110,7 @@ class CalendarioFiscalService:
     """Consulta vencimientos fiscales desde base de datos y compone el calendario mensual."""
 
     @staticmethod
-    def get_month(year: int | None = None, month: int | None = None) -> dict:
+    def get_month(year: int | None = None, month: int | None = None, user_id: str | None = None) -> dict:
         today = date.today()
         year = year or today.year
         month = month or today.month
@@ -124,6 +125,13 @@ class CalendarioFiscalService:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 CalendarioFiscalService._ensure_schema(cursor)
                 vencimientos = CalendarioFiscalService._get_vencimientos(cursor, start, end)
+                usuario = get_usuario(cursor, user_id) if user_id else None
+                trabajos_por_empleado = CalendarioFiscalService._get_trabajos_por_empleado(
+                    cursor,
+                    start,
+                    end,
+                    usuario,
+                )
                 connection.commit()
 
         by_date: dict[date, list[dict]] = defaultdict(list)
@@ -156,6 +164,7 @@ class CalendarioFiscalService:
             "dias": dias,
             "vencimientos": vencimientos,
             "proximos": proximos,
+            "trabajos_por_empleado": trabajos_por_empleado,
         }
 
     @staticmethod
@@ -274,6 +283,90 @@ class CalendarioFiscalService:
         data = dict(row)
         data["clientes_afectados"] = int(data.get("clientes_afectados") or 0)
         return data
+
+    @staticmethod
+    def _get_trabajos_por_empleado(
+        cursor: RealDictCursor,
+        start: date,
+        end: date,
+        usuario: dict | None,
+    ) -> list[dict]:
+        if not usuario:
+            return []
+
+        is_admin = usuario["rol"] == "administrador"
+        if is_admin:
+            cursor.execute(
+                """
+                SELECT
+                    t.id::text AS trabajo_id,
+                    t.nro_trabajo,
+                    t.titulo,
+                    t.estado::text AS estado,
+                    t.prioridad::text AS prioridad,
+                    c.id::text AS cliente_id,
+                    c.nombre_fiscal AS cliente_nombre,
+                    t.fecha_objetivo,
+                    te.empleado_id::text AS empleado_id,
+                    COALESCE(NULLIF(TRIM(e.nombre || ' ' || e.apellidos), ''), 'Sin asignar') AS empleado_nombre
+                FROM trabajos t
+                JOIN clientes c ON c.id = t.cliente_id
+                LEFT JOIN trabajo_empleado te ON te.trabajo_id = t.id AND te.desasignado_en IS NULL
+                LEFT JOIN empleados e ON e.id = te.empleado_id
+                WHERE t.fecha_objetivo BETWEEN %s AND %s
+                AND t.estado <> 'cancelado'
+                ORDER BY empleado_nombre, t.fecha_objetivo, t.nro_trabajo
+                """,
+                (start, end),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    t.id::text AS trabajo_id,
+                    t.nro_trabajo,
+                    t.titulo,
+                    t.estado::text AS estado,
+                    t.prioridad::text AS prioridad,
+                    c.id::text AS cliente_id,
+                    c.nombre_fiscal AS cliente_nombre,
+                    t.fecha_objetivo,
+                    te.empleado_id::text AS empleado_id,
+                    COALESCE(NULLIF(TRIM(e.nombre || ' ' || e.apellidos), ''), 'Sin asignar') AS empleado_nombre
+                FROM trabajo_empleado te
+                JOIN trabajos t ON t.id = te.trabajo_id
+                JOIN clientes c ON c.id = t.cliente_id
+                JOIN empleados e ON e.id = te.empleado_id
+                WHERE te.empleado_id = %s
+                AND te.desasignado_en IS NULL
+                AND t.fecha_objetivo BETWEEN %s AND %s
+                AND t.estado <> 'cancelado'
+                ORDER BY empleado_nombre, t.fecha_objetivo, t.nro_trabajo
+                """,
+                (usuario["empleado_id"], start, end),
+            )
+
+        groups: dict[str, dict] = {}
+        for row in cursor.fetchall():
+            item = dict(row)
+            key = item.get("empleado_id") or "sin-asignar"
+            group = groups.setdefault(
+                key,
+                {
+                    "empleado_id": item.get("empleado_id"),
+                    "nombre_completo": item["empleado_nombre"],
+                    "pendientes": 0,
+                    "realizados": 0,
+                    "trabajos": [],
+                },
+            )
+            if item["estado"] == "finalizado":
+                group["realizados"] += 1
+            else:
+                group["pendientes"] += 1
+            group["trabajos"].append(item)
+
+        return list(groups.values())
 
     @staticmethod
     def _build_days(start: date, end: date, by_date: dict[date, list[dict]], today: date) -> list[dict]:

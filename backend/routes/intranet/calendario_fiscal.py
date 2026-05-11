@@ -21,7 +21,7 @@ def intranet_calendario_fiscal(
     current_user=Depends(get_current_user),
 ):
     try:
-        return CalendarioFiscalService.get_month(year=year, month=month)
+        return CalendarioFiscalService.get_month(year=year, month=month, user_id=current_user.user_id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

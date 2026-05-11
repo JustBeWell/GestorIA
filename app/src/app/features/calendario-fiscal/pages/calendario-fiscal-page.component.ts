@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import {
   CalendarioFiscalDia,
   CalendarioFiscalResponse,
+  CalendarioFiscalTrabajoEmpleado,
   CalendarioFiscalVencimiento,
   CalendarioFiscalVencimientoCreate,
 } from '../../../core/models/intranet.models';
@@ -30,6 +31,7 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly selectedMonth = signal(today.getMonth() + 1);
   protected readonly showExportMenu = signal(false);
   protected readonly showCreateModal = signal(false);
+  protected readonly showWorkList = signal(true);
   protected readonly saving = signal(false);
   protected readonly updatingId = signal<string | null>(null);
 
@@ -53,6 +55,13 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly dias = computed(() => this.data()?.dias ?? []);
   protected readonly proximos = computed(() => this.data()?.proximos ?? []);
   protected readonly vencimientos = computed(() => this.data()?.vencimientos ?? []);
+  protected readonly trabajosPorEmpleado = computed(() => this.data()?.trabajos_por_empleado ?? []);
+  protected readonly trabajosEmpleadosTotal = computed(() =>
+    this.trabajosPorEmpleado().reduce((total, group) => total + group.trabajos.length, 0),
+  );
+  protected readonly trabajosEmpleadosPendientes = computed(() =>
+    this.trabajosPorEmpleado().reduce((total, group) => total + group.pendientes, 0),
+  );
   protected readonly pendientes = computed(() =>
     this.vencimientos().filter((item) => item.estado !== 'presentado' && item.estado !== 'no_aplica'),
   );
@@ -124,6 +133,11 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected toggleExportMenu(): void {
     if (this.busy() || !this.data()) return;
     this.showExportMenu.update((value) => !value);
+  }
+
+  protected setWorkListVisibility(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    this.showWorkList.set(Boolean(input?.checked));
   }
 
   protected exportIcs(): void {
@@ -214,7 +228,11 @@ export class CalendarioFiscalPageComponent implements OnInit {
   }
 
   protected deadlineDistance(vencimiento: CalendarioFiscalVencimiento): string {
-    const due = this.parseDate(vencimiento.fecha);
+    return this.dateDistance(vencimiento.fecha);
+  }
+
+  protected dateDistance(value: string): string {
+    const due = this.parseDate(value);
     const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const diffDays = Math.round((due.getTime() - now.getTime()) / 86400000);
     if (diffDays === 0) {
@@ -224,6 +242,21 @@ export class CalendarioFiscalPageComponent implements OnInit {
       return `en ${diffDays}d`;
     }
     return `hace ${Math.abs(diffDays)}d`;
+  }
+
+  protected trabajoEstadoLabel(estado: CalendarioFiscalTrabajoEmpleado['estado']): string {
+    const labels: Record<CalendarioFiscalTrabajoEmpleado['estado'], string> = {
+      pendiente: 'Pendiente',
+      en_curso: 'En curso',
+      bloqueado: 'Bloqueado',
+      finalizado: 'Realizado',
+      cancelado: 'Cancelado',
+    };
+    return labels[estado] ?? estado;
+  }
+
+  protected trabajoPrioridadClass(prioridad: CalendarioFiscalTrabajoEmpleado['prioridad']): string {
+    return prioridad === 'urgente' ? 'alta' : prioridad;
   }
 
   protected formatShortDate(value: string): string {

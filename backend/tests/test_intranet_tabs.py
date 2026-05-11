@@ -267,6 +267,28 @@ class TestIntranetTabs:
             ],
             "vencimientos": [],
             "proximos": [],
+            "trabajos_por_empleado": [
+                {
+                    "empleado_id": "11111111-1111-1111-1111-111111111111",
+                    "nombre_completo": "Ana Gestora",
+                    "pendientes": 1,
+                    "realizados": 0,
+                    "trabajos": [
+                        {
+                            "trabajo_id": "22222222-2222-2222-2222-222222222222",
+                            "nro_trabajo": 42,
+                            "titulo": "Preparar IVA cliente",
+                            "estado": "en_curso",
+                            "prioridad": "alta",
+                            "cliente_id": "33333333-3333-3333-3333-333333333333",
+                            "cliente_nombre": "Cliente Demo SL",
+                            "fecha_objetivo": "2026-05-20",
+                            "empleado_id": "11111111-1111-1111-1111-111111111111",
+                            "empleado_nombre": "Ana Gestora",
+                        }
+                    ],
+                }
+            ],
         }
 
         response = client.get(
@@ -278,6 +300,7 @@ class TestIntranetTabs:
         body = response.json()
         assert body["periodo"]["month_label"] == "Mayo 2026"
         assert body["resumen"]["vencimientos_mes"] == 1
+        assert body["trabajos_por_empleado"][0]["trabajos"][0]["titulo"] == "Preparar IVA cliente"
 
     @patch("services.auth_service.TokenService.decode_token")
     @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.create_vencimiento")
