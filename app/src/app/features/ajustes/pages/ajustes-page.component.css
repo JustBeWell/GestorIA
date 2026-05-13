@@ -2,67 +2,20 @@
   min-height: 100vh;
 }
 
-.settings-page-header {
-  margin-bottom: 34px;
+:host .content {
+  align-content: start;
 }
 
-.settings-layout {
+.settings-content {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-  gap: 24px;
-  align-items: start;
+  gap: 16px;
 }
 
-.settings-menu,
 .settings-panel {
   background: #ffffff;
   border: 1px solid #dbe3ea;
   border-radius: 8px;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
-}
-
-.settings-menu {
-  padding: 8px;
-  display: grid;
-  gap: 6px;
-}
-
-.settings-menu__item {
-  width: 100%;
-  min-height: 58px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #5b6470;
-  font: inherit;
-  font-size: 16px;
-  font-weight: 800;
-  text-align: left;
-  cursor: pointer;
-}
-
-.settings-menu__item span {
-  width: 24px;
-  color: #7a828d;
-  font-size: 22px;
-  text-align: center;
-}
-
-.settings-menu__item--active {
-  background: #f3f2ef;
-  color: #111827;
-}
-
-.settings-content {
-  display: grid;
-  gap: 22px;
-}
-
-.settings-panel {
   padding: 26px 28px;
 }
 
@@ -247,16 +200,6 @@
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
-
-@media (max-width: 1020px) {
-  .settings-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .settings-menu {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 
 @media (max-width: 720px) {
   .settings-panel {

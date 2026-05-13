@@ -22,8 +22,6 @@ export class AjustesPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
 
-  protected activeSection: 'perfil' | 'seguridad' = 'perfil';
-
   protected readonly empleado = signal<EmpleadoModel | null>(null);
   protected readonly editMode = signal(false);
   protected readonly saving = signal(false);

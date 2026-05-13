@@ -7,136 +7,111 @@
         <div class="breadcrumbs">Inicio / <strong>Ajustes</strong></div>
       </header>
 
-      <section class="page-header settings-page-header">
+      <section class="page-header">
         <div>
           <h1 class="page-title">Ajustes</h1>
           <p class="page-subtitle">Configuración de tu cuenta de empleado</p>
         </div>
       </section>
 
-      <section class="settings-layout">
-        <aside class="settings-menu" aria-label="Secciones de ajustes">
-          <button
-            type="button"
-            [class.settings-menu__item--active]="activeSection === 'perfil'"
-            class="settings-menu__item"
-            (click)="activeSection = 'perfil'">
-            <span aria-hidden="true">◎</span>
-            Mi perfil
-          </button>
-          <button
-            type="button"
-            [class.settings-menu__item--active]="activeSection === 'seguridad'"
-            class="settings-menu__item"
-            (click)="activeSection = 'seguridad'">
-            <span aria-hidden="true">△</span>
-            Seguridad
-          </button>
-        </aside>
+      <section class="settings-content">
 
-        <section class="settings-content">
+        <section class="settings-panel">
+          <div class="panel-header">
+            <h2>Mi perfil</h2>
+            @if (!editMode()) {
+              <button type="button" class="secondary-button settings-button" (click)="startEdit()">Editar</button>
+            }
+          </div>
 
-          @if (activeSection === 'perfil') {
-            <section class="settings-panel">
-              <div class="panel-header">
-                <h2>Mi perfil</h2>
-                @if (!editMode()) {
-                  <button type="button" class="secondary-button settings-button" (click)="startEdit()">Editar</button>
-                }
-              </div>
-
-              @if (profileSuccess()) {
-                <p class="feedback feedback--success">Datos guardados correctamente.</p>
-              }
-              @if (profileError()) {
-                <p class="feedback feedback--error">{{ profileError() }}</p>
-              }
-
-              @if (empleado(); as emp) {
-                @if (!editMode()) {
-                  <dl class="profile-grid">
-                    <dt>Nombre</dt>
-                    <dd>{{ emp.nombre }} {{ emp.apellidos }}</dd>
-                    <dt>NIF / NIE</dt>
-                    <dd>{{ emp.nif }}</dd>
-                    <dt>Teléfono</dt>
-                    <dd>{{ emp.telefono ?? '—' }}</dd>
-                    <dt>Rol</dt>
-                    <dd><span class="role-badge">{{ emp.rol }}</span></dd>
-                  </dl>
-                } @else {
-                  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
-                    <div class="form-row">
-                      <label for="nombre">Nombre</label>
-                      <input id="nombre" type="text" formControlName="nombre" autocomplete="given-name" />
-                    </div>
-                    <div class="form-row">
-                      <label for="apellidos">Apellidos</label>
-                      <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
-                    </div>
-                    <div class="form-row">
-                      <label for="telefono">Teléfono</label>
-                      <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="Opcional" />
-                    </div>
-                    <div class="form-actions">
-                      <button type="button" class="secondary-button settings-button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
-                      <button type="submit" class="primary-button settings-button" [disabled]="profileForm.invalid || saving()">
-                        {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
-                      </button>
-                    </div>
-                  </form>
-                }
-              } @else {
-                <p class="loading-text">Cargando datos…</p>
-              }
-            </section>
+          @if (profileSuccess()) {
+            <p class="feedback feedback--success">Datos guardados correctamente.</p>
+          }
+          @if (profileError()) {
+            <p class="feedback feedback--error">{{ profileError() }}</p>
           }
 
-          @if (activeSection === 'seguridad') {
-            <section class="settings-panel">
-              <h2>Cambiar contraseña</h2>
-              <p class="panel-description">Introduce tu contraseña actual para establecer una nueva.</p>
-
-              @if (passwordSuccess()) {
-                <p class="feedback feedback--success">Contraseña actualizada correctamente.</p>
-              }
-              @if (passwordError()) {
-                <p class="feedback feedback--error">{{ passwordError() }}</p>
-              }
-
-              <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
+          @if (empleado(); as emp) {
+            @if (!editMode()) {
+              <dl class="profile-grid">
+                <dt>Nombre</dt>
+                <dd>{{ emp.nombre }} {{ emp.apellidos }}</dd>
+                <dt>NIF / NIE</dt>
+                <dd>{{ emp.nif }}</dd>
+                <dt>Teléfono</dt>
+                <dd>{{ emp.telefono ?? '—' }}</dd>
+                <dt>Rol</dt>
+                <dd><span class="role-badge">{{ emp.rol }}</span></dd>
+              </dl>
+            } @else {
+              <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
                 <div class="form-row">
-                  <label for="current_password">Contraseña actual</label>
-                  <input id="current_password" type="password" formControlName="current_password" autocomplete="current-password" />
+                  <label for="nombre">Nombre</label>
+                  <input id="nombre" type="text" formControlName="nombre" autocomplete="given-name" />
                 </div>
                 <div class="form-row">
-                  <label for="new_password">Nueva contraseña</label>
-                  <input id="new_password" type="password" formControlName="new_password" autocomplete="new-password" />
+                  <label for="apellidos">Apellidos</label>
+                  <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
                 </div>
                 <div class="form-row">
-                  <label for="confirm_password">Confirmar nueva contraseña</label>
-                  <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
+                  <label for="telefono">Teléfono</label>
+                  <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="Opcional" />
                 </div>
-                <div class="form-actions form-actions--right">
-                  <button type="submit" class="primary-button settings-button" [disabled]="passwordForm.invalid || passwordSaving()">
-                    {{ passwordSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
+                <div class="form-actions">
+                  <button type="button" class="secondary-button settings-button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
+                  <button type="submit" class="primary-button settings-button" [disabled]="profileForm.invalid || saving()">
+                    {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
                   </button>
                 </div>
               </form>
-            </section>
+            }
+          } @else {
+            <p class="loading-text">Cargando datos…</p>
+          }
+        </section>
 
-            <section class="settings-panel danger-panel">
-              <div class="panel-header panel-header--center">
-                <div>
-                  <h2>Cerrar sesión</h2>
-                  <p class="panel-description">Salir de la aplicación y volver al acceso.</p>
-                </div>
-                <button type="button" class="danger-button settings-button" (click)="logout()">Cerrar sesión</button>
-              </div>
-            </section>
+        <section class="settings-panel">
+          <h2>Cambiar contraseña</h2>
+          <p class="panel-description">Introduce tu contraseña actual para establecer una nueva.</p>
+
+          @if (passwordSuccess()) {
+            <p class="feedback feedback--success">Contraseña actualizada correctamente.</p>
+          }
+          @if (passwordError()) {
+            <p class="feedback feedback--error">{{ passwordError() }}</p>
           }
 
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
+            <div class="form-row">
+              <label for="current_password">Contraseña actual</label>
+              <input id="current_password" type="password" formControlName="current_password" autocomplete="current-password" />
+            </div>
+            <div class="form-row">
+              <label for="new_password">Nueva contraseña</label>
+              <input id="new_password" type="password" formControlName="new_password" autocomplete="new-password" />
+            </div>
+            <div class="form-row">
+              <label for="confirm_password">Confirmar nueva contraseña</label>
+              <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
+            </div>
+            <div class="form-actions form-actions--right">
+              <button type="submit" class="primary-button settings-button" [disabled]="passwordForm.invalid || passwordSaving()">
+                {{ passwordSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
+              </button>
+            </div>
+          </form>
         </section>
+
+        <section class="settings-panel danger-panel">
+          <div class="panel-header panel-header--center">
+            <div>
+              <h2>Cerrar sesión</h2>
+              <p class="panel-description">Salir de la aplicación y volver al acceso.</p>
+            </div>
+            <button type="button" class="danger-button settings-button" (click)="logout()">Cerrar sesión</button>
+          </div>
+        </section>
+
       </section>
     </section>
   </section>
