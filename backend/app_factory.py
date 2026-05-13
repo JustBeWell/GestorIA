@@ -1,4 +1,3 @@
-"""Shared FastAPI app factory for all microservices."""
 import logging
 
 from fastapi import FastAPI, Request
@@ -25,7 +24,6 @@ _BASE_PUBLIC_PATHS = {
 
 
 def create_app(service_name: str, extra_public_paths: set[str] | None = None) -> FastAPI:
-    """Create a FastAPI app with shared CORS, rate limiting and token middleware."""
     app = FastAPI(
         title=service_name,
         version="1.0.0",

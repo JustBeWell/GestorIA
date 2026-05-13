@@ -174,7 +174,6 @@ TOOLS = [
 # ─── DB Query Helpers ─────────────────────────────────────────────────────────
 
 def _execute_tool(tool_name: str, args: dict) -> str:
-    """Execute a tool by name and return JSON string result."""
     try:
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -307,7 +306,6 @@ def _tool_buscar_facturas(cur, estado=None, cliente_nombre=None, fecha_desde=Non
         LIMIT 40
     """, params)
     rows = [dict(r) for r in cur.fetchall()]
-    # Totals
     cur.execute(f"""
         SELECT COALESCE(SUM(f.base_imponible),0) AS suma_base, COALESCE(SUM(f.total),0) AS suma_total
         FROM facturas f JOIN clientes c ON c.id = f.cliente_id {where}
@@ -351,8 +349,6 @@ def _tool_fichajes_resumen(cur, fecha_desde=None, fecha_hasta=None, empleado_nom
         emp_condition = "AND LOWER(e.nombre || ' ' || e.apellidos) LIKE LOWER(%s)"
         params.append(f"%{empleado_nombre}%")
 
-    # Pair each entrada with the next salida of the same employee on the same day
-    # using LEAD to find the following event. Sum minutes where the pair is entrada→salida.
     cur.execute(f"""
         WITH eventos AS (
             SELECT
@@ -440,7 +436,6 @@ def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
     messages.append({"role": "user", "content": request.message})
 
     try:
-        # Agentic loop: allow up to 5 tool calls
         for _ in range(5):
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -452,11 +447,9 @@ def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
             )
             choice = response.choices[0]
 
-            # No more tool calls — return final answer
             if choice.finish_reason != "tool_calls":
                 return ChatResponse(reply=choice.message.content or "")
 
-            # Process tool calls
             messages.append(choice.message)
             for tool_call in choice.message.tool_calls:
                 args = json.loads(tool_call.function.arguments or "{}")
@@ -467,7 +460,6 @@ def ai_chat(request: ChatRequest, current_user=Depends(get_current_user)):
                     "content": result,
                 })
 
-        # Fallback: final generation without tools
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,

@@ -143,7 +143,6 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Cabecera
     pdf.set_fill_color(*C_PRIMARY)
     pdf.rect(x=0, y=0, w=210, h=28, style="F")
     pdf.set_y(8)
@@ -178,7 +177,6 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
     pdf.cell(0, 4, f"Generado el {today_str}", ln=True)
     pdf.ln(4)
 
-    # Tabla resumen KPIs
     resumen = data.get("resumen", {})
     kpis = [
         ("Facturado", f"{resumen.get('total_facturado', 0):,.2f} EUR"),
@@ -204,7 +202,6 @@ def _build_cierre_pdf(data: dict, year: int, month: int) -> bytes:
 
     pdf.ln(6)
 
-    # Top facturas del mes
     facturas = data.get("facturas", [])
     if facturas:
         pdf.set_font("Helvetica", "B", 10)

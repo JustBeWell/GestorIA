@@ -71,7 +71,6 @@ class ClientesService:
         if not updates:
             return ClientesService.get_cliente_detail(cliente_id)
 
-        # Normalise CIF/NIF to uppercase if present
         if "cif_nif" in updates and updates["cif_nif"]:
             updates["cif_nif"] = updates["cif_nif"].upper()
 
@@ -100,7 +99,6 @@ class ClientesService:
 
     @staticmethod
     def delete_cliente(cliente_id: str) -> bool:
-        """Elimina el cliente y, en cascada, todos sus trabajos y facturas (con sus pagos)."""
         with db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -305,7 +303,6 @@ class ClientesService:
 
     @staticmethod
     def _map_tab_row(row: dict) -> dict:
-        """Map a query row to ClienteTabItem dict."""
         ua = row.get("ultima_actividad")
         return {
             "cliente_id": row["cliente_id"],
@@ -324,7 +321,6 @@ class ClientesService:
 
     @staticmethod
     def _map_detail(cursor: RealDictCursor, row: dict) -> dict:
-        """Build a ClienteDetailItem dict enriched with aggregated counts."""
         cliente_id = row["cliente_id"]
 
         cursor.execute(

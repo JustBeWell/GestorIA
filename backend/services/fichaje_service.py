@@ -505,21 +505,9 @@ class FichajeService:
 
     @staticmethod
     def cerrar_fichajes_abiertos() -> dict:
-        """Close any open shifts (entrada without salida) for the current day
-        and any past days that were left open.
-
-        For each employee who clocked in on a given date but never clocked out:
-          1. If there is an open pause (pausa_inicio without a following pausa_fin),
-             insert a pausa_fin at entrada_hora + 8 h to keep the data consistent.
-          2. Insert a salida at entrada_hora + 8 h with origen='correccion'.
-
-        Returns a summary dict with the number of fichajes closed.
-        """
         closed: list[dict] = []
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Find employees with an entrada on any date but no salida that day.
-                # DISTINCT ON keeps only the earliest entrada per (employee, date).
                 cursor.execute(
                     """
                     SELECT DISTINCT ON (f.empleado_id,
@@ -550,7 +538,6 @@ class FichajeService:
                     entrada_hora: datetime = row["entrada_hora"]
                     salida_hora: datetime = entrada_hora + timedelta(hours=8)
 
-                    # Close any open pause for this employee on that day.
                     cursor.execute(
                         """
                         SELECT tipo_evento::text AS tipo_evento
@@ -575,7 +562,6 @@ class FichajeService:
                             (empleado_id, salida_hora),
                         )
 
-                    # Insert the automatic salida.
                     cursor.execute(
                         """
                         INSERT INTO fichajes (empleado_id, tipo_evento, fecha_hora, origen, observaciones)

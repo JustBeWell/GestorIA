@@ -91,11 +91,6 @@ class TokenResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-	"""Respuesta unificada del endpoint /auth/login.
-
-	Si requires_2fa=True, devuelve session_id y el cliente debe llamar a /auth/otp/verify.
-	Si requires_2fa=False, devuelve el token JWT completo directamente.
-	"""
 
 	requires_2fa: bool = False
 	session_id: str | None = None

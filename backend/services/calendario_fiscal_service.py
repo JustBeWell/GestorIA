@@ -107,7 +107,6 @@ CALENDARIO_FISCAL_SEEDS = [
 
 
 class CalendarioFiscalService:
-    """Consulta vencimientos fiscales desde base de datos y compone el calendario mensual."""
 
     @staticmethod
     def get_month(year: int | None = None, month: int | None = None, user_id: str | None = None) -> dict:
@@ -388,7 +387,6 @@ class CalendarioFiscalService:
 
     @staticmethod
     def _ensure_schema(cursor: RealDictCursor) -> None:
-        """Mantiene operativo el microservicio en instalaciones locales sin migrador automático."""
         cursor.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
         cursor.execute(
             """

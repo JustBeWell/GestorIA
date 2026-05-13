@@ -15,7 +15,6 @@ _logger = logging.getLogger("fichaje.scheduler")
 
 
 async def _daily_fichaje_closer() -> None:
-    """Asyncio background task: every day at 23:00 Madrid time, auto-close open shifts."""
     while True:
         now = datetime.now(_MADRID_TZ)
         target = now.replace(hour=23, minute=0, second=0, microsecond=0)

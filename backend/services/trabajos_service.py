@@ -52,7 +52,6 @@ class TrabajosService:
     def create_trabajo(payload: TrabajoCreate, user_id: str) -> dict:
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Verify client exists and is active
                 cursor.execute(
                     "SELECT id FROM clientes WHERE id = %s AND activo = TRUE",
                     (payload.cliente_id,),
@@ -91,11 +90,9 @@ class TrabajosService:
         if not updates:
             return TrabajosService.get_trabajo_detail(trabajo_id)
 
-        # Map nota_bloqueo to DB column comentarios
         if "nota_bloqueo" in updates:
             updates["comentarios"] = updates.pop("nota_bloqueo")
 
-        # Set fecha_cierre automatically when finalizado/cancelado
         if updates.get("estado") in ("finalizado", "cancelado") and "fecha_cierre" not in updates:
             updates["fecha_cierre_auto"] = True
 
@@ -131,9 +128,6 @@ class TrabajosService:
 
     @staticmethod
     def delete_trabajo(trabajo_id: str, is_admin: bool = False) -> bool:
-        """Baja lógica: cancela el trabajo (no elimina físicamente).
-        Admin puede cancelar cualquier trabajo excepto los ya cancelados.
-        Empleado solo puede cancelar trabajos no terminales."""
         with db_connection() as connection:
             with connection.cursor() as cursor:
                 if is_admin:
@@ -211,11 +205,9 @@ class TrabajosService:
     def assign_empleado(trabajo_id: str, empleado_id: str) -> list[dict]:
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Verify work exists
                 cursor.execute("SELECT id FROM trabajos WHERE id = %s", (trabajo_id,))
                 if not cursor.fetchone():
                     raise ValueError("Trabajo no encontrado")
-                # Verify employee exists and is active
                 cursor.execute(
                     "SELECT id FROM empleados WHERE id = %s AND activo = TRUE",
                     (empleado_id,),
@@ -300,7 +292,7 @@ class TrabajosService:
                 row = cursor.fetchone()
                 connection.commit()
 
-                # Fetch author name
+
                 cursor.execute(
                     """
                     SELECT CONCAT(e.nombre, ' ', e.apellidos) AS autor_nombre
@@ -460,7 +452,6 @@ class TrabajosService:
         cursor.execute(query, (*values, limit, offset))
         rows = [dict(row) for row in cursor.fetchall()]
 
-        # Add employed list per trabajo
         for row in rows:
             row["empleados_asignados"] = TrabajosService._get_empleados_for_trabajo(cursor, row["trabajo_id"])
 

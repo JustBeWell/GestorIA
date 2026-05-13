@@ -166,12 +166,6 @@ class GiaService:
 
     @staticmethod
     def delete_conversation(user_id: str, conversation_id: str) -> bool:
-        """Elimina una conversación y sus mensajes/archivos asociados.
-
-        Verifica la propiedad por ``user_id`` antes de borrar y limpia el
-        directorio físico donde se guardaron los adjuntos. Las filas
-        relacionadas se eliminan en cascada gracias a ``ON DELETE CASCADE``.
-        """
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 GiaService._ensure_schema(cursor)
@@ -187,7 +181,6 @@ class GiaService:
                 connection.commit()
         if not deleted:
             return False
-        # Limpieza best-effort del directorio de archivos asociados
         try:
             storage_dir = Path(settings.gia_storage_dir) / re.sub(r"[^a-zA-Z0-9-]", "", conversation_id)
             if storage_dir.exists():
@@ -288,8 +281,6 @@ class GiaService:
 
             generated_image = None
             if mode == "imagen":
-                # _generate_image lanza HTTPException con detalle si falla;
-                # se propaga gracias a la cláusula `except HTTPException: raise`.
                 generated_image = GiaService._generate_image(client, message + context)
                 if not answer.strip():
                     answer = "He generado la imagen solicitada y la he adjuntado a esta conversación."
@@ -305,16 +296,7 @@ class GiaService:
 
     @staticmethod
     def _generate_image(client, prompt: str) -> bytes:
-        """Genera una imagen vía la API estándar ``client.images.generate``.
-
-        Usa el endpoint clásico de OpenAI Images (compatible con SDK ≥ 1.0).
-        Soporta los modelos ``gpt-image-1`` (b64_json por defecto) y
-        ``dall-e-3`` (URL por defecto). Cuando la respuesta es URL, descarga
-        los bytes; cuando es b64, los decodifica.
-        """
         model = settings.openai_image_model
-        # gpt-image-1 / dall-e-3 son los modelos válidos de generación de imagen.
-        # Bloqueamos modelos de chat para fallar rápido con un mensaje claro.
         if model.startswith("gpt-4") or model.startswith("o1") or model.startswith("o3"):
             raise HTTPException(
                 status_code=503,
@@ -391,9 +373,6 @@ class GiaService:
             "upload",
             extracted,
         )
-        # Añadimos campos internos necesarios para que _run_openai pueda
-        # inyectar el texto extraído y enviar imágenes al modelo de visión.
-        # No se exponen en la respuesta de la API.
         file_item["ruta_archivo"] = str(path)
         file_item["extracted_text"] = extracted
         return file_item
@@ -420,13 +399,6 @@ class GiaService:
 
     @staticmethod
     def _create_pdf(cursor, conversation_id: str, message_id: str, user_id: str, content: str) -> dict:
-        """Genera un PDF profesional con el contenido devuelto por GIA.
-
-        Usa ``reportlab`` (UTF-8 nativo) en lugar de fpdf2 + Latin-1 para
-        preservar acentos, comillas tipográficas, em dashes, símbolos, etc.
-        El layout incluye un encabezado con la fecha, título, separador y el
-        cuerpo respetando los párrafos del texto original.
-        """
         try:
             from reportlab.lib.enums import TA_LEFT
             from reportlab.lib.pagesizes import A4
@@ -484,8 +456,6 @@ class GiaService:
             HRFlowable(width="100%", thickness=0.6, color="#dce8e0", spaceAfter=10),
         ]
 
-        # Cada párrafo (separado por línea en blanco) se renderiza por separado;
-        # los saltos de línea simples se respetan con <br/>.
         text = (content or "").strip() or "(Sin contenido)"
         for raw in re.split(r"\n\s*\n", text):
             paragraph = GiaService._html_escape(raw).replace("\n", "<br/>")
@@ -520,7 +490,6 @@ class GiaService:
 
     @staticmethod
     def _html_escape(value: str) -> str:
-        """Escapa caracteres especiales para reportlab Paragraph (acepta mini-HTML)."""
         return (
             value.replace("&", "&amp;")
             .replace("<", "&lt;")

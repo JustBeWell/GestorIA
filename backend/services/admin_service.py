@@ -379,7 +379,6 @@ class AdminService:
 
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Verify empleado exists
                 cursor.execute(
                     """
                     SELECT e.id::text AS empleado_id,
@@ -430,10 +429,8 @@ class AdminService:
 
     @staticmethod
     def get_cierre_mensual(year: int, month: int) -> dict:
-        """Datos para el PDF de cierre mensual: resumen KPIs + facturas del periodo."""
         periodo = f"{year}-{month:02d}"
         fecha_inicio = f"{year}-{month:02d}-01"
-        # last day: first day of next month
         if month == 12:
             fecha_fin = f"{year + 1}-01-01"
         else:
@@ -441,7 +438,6 @@ class AdminService:
 
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # KPIs from v_resumen_mensual
                 cur.execute(
                     "SELECT * FROM v_resumen_mensual WHERE periodo = %s",
                     (periodo,),
@@ -459,7 +455,6 @@ class AdminService:
                     if k in resumen and resumen[k] is not None:
                         resumen[k] = float(resumen[k])
 
-                # Facturas del periodo
                 cur.execute(
                     """
                     SELECT

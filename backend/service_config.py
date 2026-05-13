@@ -1,9 +1,3 @@
-"""
-Service configuration for user-service.
-
-Loads PostgreSQL settings from environment variables.
-"""
-
 from dataclasses import dataclass
 import os
 
@@ -14,7 +8,6 @@ load_dotenv()
 
 @dataclass(frozen=True)
 class ServiceSettings:
-	"""Environment-driven settings for the service."""
 
 	postgres_host: str = os.getenv("POSTGRES_HOST")
 	postgres_port: int = int(os.getenv("POSTGRES_PORT"))
@@ -40,7 +33,6 @@ class ServiceSettings:
 
 	@property
 	def effective_database_url(self) -> str:
-		"""Get explicit DATABASE_URL or build one from PostgreSQL parts."""
 		if self.database_url:
 			return self.database_url
 

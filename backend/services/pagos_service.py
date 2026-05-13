@@ -376,7 +376,6 @@ class PagosService:
 
     @staticmethod
     def _get_next_numero_factura(cursor: RealDictCursor) -> str:
-        """Genera el siguiente número correlativo de factura con formato F-YYYY-XXXX."""
         from datetime import date as _date
         year = _date.today().year
         cursor.execute(
@@ -393,11 +392,9 @@ class PagosService:
 
     @staticmethod
     def create_factura(payload, user_id: str) -> dict:
-        """Crea una nueva factura. Devuelve el detalle completo."""
         from models import FacturaCreate
         assert isinstance(payload, FacturaCreate)
 
-        # Verificar que el cliente existe
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("SELECT id, nombre_fiscal FROM clientes WHERE id = %s AND activo = TRUE", (payload.cliente_id,))
@@ -434,7 +431,6 @@ class PagosService:
 
     @staticmethod
     def update_factura(factura_id: str, payload) -> dict | None:
-        """Actualiza datos editables de una factura (solo en estado borrador o emitida)."""
         from models import FacturaUpdate
         assert isinstance(payload, FacturaUpdate)
 
@@ -474,9 +470,6 @@ class PagosService:
 
     @staticmethod
     def delete_factura(factura_id: str, is_admin: bool = False) -> bool:
-        """Anula (estado='anulada') una factura.
-        Admin puede anular cualquier factura no anulada, incluso con pagos.
-        Empleado solo puede anular facturas sin pagos."""
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 if not is_admin:
@@ -498,7 +491,6 @@ class PagosService:
 
     @staticmethod
     def get_factura_detail(factura_id: str) -> dict | None:
-        """Devuelve el detalle completo de una factura con sus pagos."""
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
@@ -536,7 +528,6 @@ class PagosService:
                 if not row:
                     return None
 
-                # Pagos de esta factura
                 cur.execute(
                     """
                     SELECT
@@ -573,13 +564,11 @@ class PagosService:
 
     @staticmethod
     def create_pago(factura_id: str, payload) -> dict:
-        """Registra un pago sobre una factura. El trigger de DB actualiza el estado automáticamente."""
         from models import PagoCreate
         assert isinstance(payload, PagoCreate)
 
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # Verificar que la factura existe y no está anulada ni ya pagada
                 cur.execute(
                     "SELECT id, estado::text AS estado, total FROM facturas WHERE id = %s",
                     (factura_id,),
@@ -611,7 +600,6 @@ class PagosService:
                 pago_id = row["pago_id"]
                 conn.commit()
 
-                # Obtener detalle del pago creado
                 cur.execute(
                     """
                     SELECT
@@ -639,7 +627,6 @@ class PagosService:
 
     @staticmethod
     def get_deuda_viva(user_id: str, is_admin: bool) -> list[dict]:
-        """Devuelve el resumen de deuda pendiente agrupado por cliente."""
         with db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 usuario = get_usuario(cur, user_id)
@@ -711,7 +698,6 @@ class PagosService:
         vencidas_solo: bool = False,
         is_admin: bool = False,
     ) -> list[dict]:
-        """Devuelve todas las facturas (sin paginación) para exportar a CSV."""
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 usuario = get_usuario(cursor, user_id)

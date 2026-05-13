@@ -14,7 +14,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def login(request: Request, payload: LoginRequest):
     current_user = authenticate_user(payload.dni, payload.password)
 
-    # Si Twilio está configurado, comprobar si el usuario tiene 2FA activo y teléfono
     if TwoFactorService.is_configured():
         with db_connection() as conn:
             with conn.cursor() as cur:
@@ -33,7 +32,6 @@ def login(request: Request, payload: LoginRequest):
             try:
                 TwoFactorService.send_sms(row[1], code)
             except Exception as exc:
-                # Limpiar el OTP generado ya que no se pudo entregar
                 with db_connection() as conn:
                     with conn.cursor() as cur:
                         cur.execute("DELETE FROM otp_codes WHERE id = %s", (session_id,))
@@ -63,7 +61,6 @@ def login(request: Request, payload: LoginRequest):
 @router.post("/otp/verify", response_model=LoginResponse)
 @limiter.limit("10/minute")
 def verify_otp(request: Request, payload: OtpVerifyRequest):
-    """Valida el código OTP y devuelve el JWT completo si es correcto."""
     user_id = TwoFactorService.verify_otp(payload.session_id, payload.code)
 
     with db_connection() as conn:

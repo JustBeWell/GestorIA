@@ -1,10 +1,3 @@
-"""
-User Service - Main Application
-
-FastAPI application for user management and authentication.
-Handles OAuth authentication (Google) and user CRUD operations.
-"""
-
 import logging
 
 from fastapi import FastAPI, Request
@@ -53,7 +46,6 @@ app.add_middleware(
 )
 
 
-# Include routers
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(intranet_router)
@@ -94,7 +86,6 @@ async def require_token_middleware(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
     return {
         "service": "User Service",
         "status": "running",
@@ -104,7 +95,6 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for container orchestration"""
     return {
         "status": "healthy",
         "service": "user-service"
@@ -113,7 +103,6 @@ async def health_check():
 
 @app.get("/health/db")
 async def database_health_check():
-    """Health check endpoint for PostgreSQL connectivity"""
     is_connected, error = check_database_connection()
     return {
         "database": "gestoria",

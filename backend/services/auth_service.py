@@ -63,13 +63,10 @@ class TokenService:
 
     @staticmethod
     def revoke_all_user_tokens(user_id: str) -> int:
-        """Purga todos los tokens activos del usuario añadiéndolos a la blacklist con expiración futura."""
         expires_at = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expiration_hours)
-        # Generamos un hash único por usuario+timestamp para bloquear sesiones activas
         synthetic_hash = hashlib.sha256(f"{user_id}:all:{expires_at.timestamp()}".encode()).hexdigest()
         with db_connection() as connection:
             with connection.cursor() as cursor:
-                # Insertar una marca que invalida todos los tokens emitidos antes de ahora
                 cursor.execute(
                     """
                     INSERT INTO token_blacklist (token_hash, user_id, expires_at)
@@ -78,7 +75,6 @@ class TokenService:
                     """,
                     (synthetic_hash, user_id, expires_at),
                 )
-                # Actualizar revoked_at del usuario para invalidar tokens anteriores
                 cursor.execute(
                     "UPDATE usuarios SET updated_at = NOW() WHERE id = %s",
                     (user_id,),
@@ -99,7 +95,6 @@ class TokenService:
 
     @staticmethod
     def purge_expired_tokens() -> int:
-        """Limpia entradas caducadas de la blacklist."""
         with db_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM token_blacklist WHERE expires_at <= NOW()")
@@ -159,13 +154,11 @@ BLOQUEO_MINUTOS = 15
 
 
 class TwoFactorService:
-    """Servicio para autenticación de dos factores vía SMS (Twilio)."""
 
     OTP_EXPIRE_MINUTES = 10
 
     @staticmethod
     def is_configured() -> bool:
-        """True sólo si las tres variables de Twilio están definidas."""
         return bool(
             settings.twilio_account_sid
             and settings.twilio_auth_token
@@ -174,7 +167,6 @@ class TwoFactorService:
 
     @staticmethod
     def generate_and_store_otp(user_id: str) -> tuple[str, str]:
-        """Genera un OTP de 6 dígitos, lo almacena hasheado y devuelve (session_id, plain_code)."""
         import secrets
 
         code = "".join(secrets.choice("0123456789") for _ in range(6))
@@ -192,18 +184,15 @@ class TwoFactorService:
 
     @staticmethod
     def _normalize_phone(phone: str) -> str:
-        """Convierte número español sin prefijo a formato E.164 (+34XXXXXXXXX)."""
         cleaned = phone.strip().replace(" ", "").replace("-", "")
         if cleaned.startswith("+"):
             return cleaned
         if cleaned.startswith("0034"):
             return "+" + cleaned[2:]
-        # Número español sin prefijo (6xx, 7xx, 9xx)
         return "+34" + cleaned
 
     @staticmethod
     def send_sms(phone: str, code: str) -> None:
-        """Envía el OTP por SMS. Lanza excepción si falla para que el llamador la maneje."""
         try:
             from twilio.rest import Client  # type: ignore[import]
         except ImportError:
@@ -218,9 +207,7 @@ class TwoFactorService:
 
     @staticmethod
     def verify_otp(session_id: str, code: str) -> str:
-        """Valida el OTP y devuelve user_id. Lanza HTTP 401 si es inválido o expirado."""
         import sys
-        # Limpiar espacios que puedan venir del SMS o del formulario
         clean_code = code.strip().replace(" ", "").replace("\u00a0", "")
         code_hash = hashlib.sha256(clean_code.encode()).hexdigest()
         with db_connection() as conn:
@@ -281,7 +268,6 @@ def authenticate_user(dni: str, password: str) -> TokenData:
             if not active_user or not active_employee:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario inactivo")
 
-            # Comprobar bloqueo temporal
             now = datetime.now(timezone.utc)
             if bloqueado_hasta and bloqueado_hasta > now:
                 segundos_restantes = int((bloqueado_hasta - now).total_seconds())
@@ -290,7 +276,6 @@ def authenticate_user(dni: str, password: str) -> TokenData:
                     detail=f"Cuenta bloqueada temporalmente. Inténtalo en {segundos_restantes} segundos.",
                 )
 
-            # Verificar contraseña
             if not pwd_context.verify(password, password_hash):
                 nuevos_intentos = (intentos or 0) + 1
                 if nuevos_intentos >= MAX_INTENTOS:
@@ -311,7 +296,6 @@ def authenticate_user(dni: str, password: str) -> TokenData:
                 connection.commit()
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
-            # Login correcto: resetear contadores
             cursor.execute(
                 "UPDATE usuarios SET intentos_fallidos = 0, bloqueado_hasta = NULL, ultimo_acceso = NOW() WHERE id = %s",
                 (user_id,),
