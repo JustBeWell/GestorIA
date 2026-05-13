@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2 import Error as PsycopgError
 
-from models import UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
+from models import ChangePasswordRequest, UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
 from services.auth_service import get_current_user
 from services.auditoria_service import registrar_evento
 from services.user_service import UserService
@@ -47,6 +47,16 @@ def update_me(payload: UserUpdateRequest, current_user=Depends(get_current_user)
     if not updated:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return updated
+
+
+@router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(payload: ChangePasswordRequest, current_user=Depends(get_current_user)):
+    try:
+        changed = UserService.change_password(current_user.user_id, payload.current_password, payload.new_password)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if not changed:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 
 @router.delete("/me")

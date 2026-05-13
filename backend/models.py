@@ -68,6 +68,11 @@ class UserUpdateRequest(BaseModel):
 	telefono: str | None = Field(default=None, max_length=20)
 
 
+class ChangePasswordRequest(BaseModel):
+	current_password: str = Field(min_length=8, max_length=128)
+	new_password: str = Field(min_length=8, max_length=128)
+
+
 class UserAdminUpdateRequest(BaseModel):
 	rol: Literal["administrador", "empleado"] | None = None
 	activo: bool | None = None

@@ -177,8 +177,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] GIA: sustituye al antiguo modulo Documentos.
 - [x] GIA: conversaciones persistidas, mensajes, adjuntos, descargas y generacion de PDF/imagenes.
 - [x] GIA: frontend conectado al microservicio `backend-ai`.
-- [x] Ajustes: UI rediseñada segun prototipos de seguridad y apariencia.
-- [ ] Ajustes: sin persistencia.
+- [x] Ajustes: UI funcional con perfil editable (nombre, apellidos, telefono) via `PUT /users/me`.
+- [x] Ajustes: cambio de contrasena real via `POST /users/me/password` con verificacion bcrypt.
+- [x] Ajustes: boton de cierre de sesion activo.
+- [x] Ajustes: eliminados todos los ajustes sin backend (tema, acento, idioma, densidad, 2FA app, codigos de recuperacion, lista de sesiones, indicador de fortaleza de contrasena).
+- [ ] Ajustes: toggle de 2FA (`mfa_habilitado`) pendiente en frontend.
+- [ ] Ajustes: configuracion de empresa (nombre, logo, jornada, IVA) sin modelo ni endpoints.
 
 ---
 
@@ -278,6 +282,16 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Actualizado el boton ICS para usar el patron visual de exportacion del resto de modulos.
 - Verificacion: `pytest tests/test_intranet_tabs.py -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
 
+### 2026-05-13 · HU-M10-03 Ajustes funcionales
+
+- Remodelada la pantalla `ajustes` para eliminar todos los ajustes sin backend real: se eliminan la pestana Apariencia (tema, color de acento, idioma, densidad), la seccion de 2FA con Google Authenticator y SMS de respaldo, los codigos de recuperacion, la lista de sesiones activas con dispositivos hardcodeados y el indicador de fortaleza de contrasena.
+- Nueva estructura con dos secciones reales: "Mi perfil" y "Seguridad".
+- Mi perfil: carga datos reales desde `GET /users/me` y permite edicion inline de nombre, apellidos y telefono mediante formulario reactivo que llama `PUT /users/me`. Muestra feedback de exito/error con auto-cierre.
+- Seguridad: formulario de cambio de contrasena (contrasena actual + nueva + confirmacion) conectado al nuevo endpoint `POST /users/me/password`. Boton de cierre de sesion que delega en `AuthApiService.logout()`.
+- Backend: anadido `ChangePasswordRequest` en `models.py`, metodo `UserService.change_password()` en `user_service.py` (verifica hash bcrypt, actualiza si correcto, lanza `ValueError` si incorrecta) y endpoint `POST /users/me/password` en `routes/users.py` (204 No Content en exito, 400 si contrasena actual erronea).
+- CSS reducido de 529 a 279 lineas eliminando todos los estilos de componentes eliminados.
+- Verificacion: sin errores de compilacion Angular ni Python.
+
 ### 2026-05-11 · Calendario fiscal listado por empleado
 
 - Reordenada la pantalla para que el calendario ocupe todo el ancho y el listado de trabajos quede debajo como seccion plegable.
@@ -289,7 +303,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ## Proximos pasos recomendados
 
-1. Completar persistencia real de Ajustes.
+1. Toggle de 2FA en ajustes (mfa_habilitado en frontend).
 2. Ampliar tests de integracion de escritura.
 3. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
 4. Conectar `v_resumen_mensual` al Home o documentar por que no se usa.

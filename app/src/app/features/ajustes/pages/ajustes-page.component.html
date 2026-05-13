@@ -18,169 +18,124 @@
         <aside class="settings-menu" aria-label="Secciones de ajustes">
           <button
             type="button"
+            [class.settings-menu__item--active]="activeSection === 'perfil'"
+            class="settings-menu__item"
+            (click)="activeSection = 'perfil'">
+            <span aria-hidden="true">◎</span>
+            Mi perfil
+          </button>
+          <button
+            type="button"
             [class.settings-menu__item--active]="activeSection === 'seguridad'"
             class="settings-menu__item"
             (click)="activeSection = 'seguridad'">
             <span aria-hidden="true">△</span>
             Seguridad
           </button>
-          <button
-            type="button"
-            [class.settings-menu__item--active]="activeSection === 'apariencia'"
-            class="settings-menu__item"
-            (click)="activeSection = 'apariencia'">
-            <span aria-hidden="true">☼</span>
-            Apariencia
-          </button>
         </aside>
 
         <section class="settings-content">
+
+          @if (activeSection === 'perfil') {
+            <section class="settings-panel">
+              <div class="panel-header">
+                <h2>Mi perfil</h2>
+                @if (!editMode()) {
+                  <button type="button" class="secondary-button settings-button" (click)="startEdit()">Editar</button>
+                }
+              </div>
+
+              @if (profileSuccess()) {
+                <p class="feedback feedback--success">Datos guardados correctamente.</p>
+              }
+              @if (profileError()) {
+                <p class="feedback feedback--error">{{ profileError() }}</p>
+              }
+
+              @if (empleado(); as emp) {
+                @if (!editMode()) {
+                  <dl class="profile-grid">
+                    <dt>Nombre</dt>
+                    <dd>{{ emp.nombre }} {{ emp.apellidos }}</dd>
+                    <dt>NIF / NIE</dt>
+                    <dd>{{ emp.nif }}</dd>
+                    <dt>Teléfono</dt>
+                    <dd>{{ emp.telefono ?? '—' }}</dd>
+                    <dt>Rol</dt>
+                    <dd><span class="role-badge">{{ emp.rol }}</span></dd>
+                  </dl>
+                } @else {
+                  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
+                    <div class="form-row">
+                      <label for="nombre">Nombre</label>
+                      <input id="nombre" type="text" formControlName="nombre" autocomplete="given-name" />
+                    </div>
+                    <div class="form-row">
+                      <label for="apellidos">Apellidos</label>
+                      <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
+                    </div>
+                    <div class="form-row">
+                      <label for="telefono">Teléfono</label>
+                      <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="Opcional" />
+                    </div>
+                    <div class="form-actions">
+                      <button type="button" class="secondary-button settings-button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
+                      <button type="submit" class="primary-button settings-button" [disabled]="profileForm.invalid || saving()">
+                        {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+                      </button>
+                    </div>
+                  </form>
+                }
+              } @else {
+                <p class="loading-text">Cargando datos…</p>
+              }
+            </section>
+          }
+
           @if (activeSection === 'seguridad') {
-            <section class="settings-panel password-panel">
-              <h2>Contraseña</h2>
-              <div class="password-row">
-                <div>
-                  <h3>Contraseña de acceso</h3>
-                  <p>Última actualización: 12 mar 2026 · Hace 47 días</p>
+            <section class="settings-panel">
+              <h2>Cambiar contraseña</h2>
+              <p class="panel-description">Introduce tu contraseña actual para establecer una nueva.</p>
+
+              @if (passwordSuccess()) {
+                <p class="feedback feedback--success">Contraseña actualizada correctamente.</p>
+              }
+              @if (passwordError()) {
+                <p class="feedback feedback--error">{{ passwordError() }}</p>
+              }
+
+              <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
+                <div class="form-row">
+                  <label for="current_password">Contraseña actual</label>
+                  <input id="current_password" type="password" formControlName="current_password" autocomplete="current-password" />
                 </div>
-                <button type="button" class="primary-button settings-button">Cambiar contraseña</button>
-              </div>
-
-              <div class="settings-divider"></div>
-
-              <div class="password-row password-row--compact">
-                <div>
-                  <h3>Caducidad automática</h3>
-                  <p>Tu contraseña caducará cada 90 días</p>
+                <div class="form-row">
+                  <label for="new_password">Nueva contraseña</label>
+                  <input id="new_password" type="password" formControlName="new_password" autocomplete="new-password" />
                 </div>
-                <span class="state-pill state-pill--success"><i></i> Activa</span>
-              </div>
-
-              <div class="settings-divider"></div>
-
-              <div class="strength-row">
-                <span>Fortaleza actual</span>
-                <div class="strength-track" aria-hidden="true"><i></i></div>
-                <strong>Fuerte</strong>
-              </div>
-            </section>
-
-            <section class="settings-panel twofa-panel">
-              <header>
-                <h2>Verificación en dos pasos (2FA)</h2>
-                <span class="state-pill state-pill--success"><i></i> Activado</span>
-              </header>
-
-              <div class="security-list">
-                <article>
-                  <div>
-                    <h3>App de autenticación</h3>
-                    <p>Configurado · Google Authenticator</p>
-                  </div>
-                  <button type="button" class="secondary-button settings-button">Reconfigurar</button>
-                </article>
-                <article>
-                  <div>
-                    <h3>SMS de respaldo</h3>
-                    <p>••• ••• 456</p>
-                  </div>
-                  <span class="state-pill state-pill--neutral"><i></i> No configurado</span>
-                </article>
-                <article>
-                  <div>
-                    <h3>Códigos de recuperación</h3>
-                    <p>8 de 10 códigos disponibles</p>
-                  </div>
-                  <button type="button" class="secondary-button settings-button">Ver códigos</button>
-                </article>
-              </div>
-            </section>
-
-            <section class="settings-panel sessions-panel">
-              <h2>Sesiones activas</h2>
-              <div class="sessions-list">
-                @for (session of sessions; track session.device) {
-                  <article class="session-row">
-                    <div>
-                      <h3>
-                        {{ session.device }}
-                        @if (session.status) {
-                          <span class="state-pill state-pill--success"><i></i> {{ session.status }}</span>
-                        }
-                      </h3>
-                      <p>{{ session.meta }}</p>
-                    </div>
-                    <div class="session-meta">
-                      <span>{{ session.time }}</span>
-                      @if (session.action) {
-                        <button type="button">{{ session.action }}</button>
-                      }
-                    </div>
-                  </article>
-                }
-              </div>
-            </section>
-          } @else {
-            <section class="settings-panel theme-panel">
-              <h2>Tema</h2>
-              <div class="theme-grid">
-                <button type="button" class="theme-card theme-card--active">
-                  <span class="theme-preview theme-preview--light"></span>
-                  <strong>Claro</strong>
-                  <i aria-hidden="true"></i>
-                </button>
-                <button type="button" class="theme-card">
-                  <span class="theme-preview theme-preview--dark"></span>
-                  <strong>Oscuro</strong>
-                </button>
-                <button type="button" class="theme-card">
-                  <span class="theme-preview theme-preview--system"></span>
-                  <strong>Sistema</strong>
-                </button>
-              </div>
-            </section>
-
-            <section class="settings-panel accent-panel">
-              <h2>Color de acento</h2>
-              <div class="accent-list">
-                @for (accent of accents; track accent.label) {
-                  <button type="button" [class.accent-chip--active]="accent.active" class="accent-chip">
-                    <i [class]="'accent-dot accent-dot--' + accent.tone"></i>
-                    {{ accent.label }}
+                <div class="form-row">
+                  <label for="confirm_password">Confirmar nueva contraseña</label>
+                  <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
+                </div>
+                <div class="form-actions form-actions--right">
+                  <button type="submit" class="primary-button settings-button" [disabled]="passwordForm.invalid || passwordSaving()">
+                    {{ passwordSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
                   </button>
-                }
-              </div>
+                </div>
+              </form>
             </section>
 
-            <section class="settings-panel language-panel">
-              <h2>Idioma</h2>
-              <div class="language-list">
-                @for (language of languages; track language.code) {
-                  <article class="language-row">
-                    <span>{{ language.code }}</span>
-                    <strong>{{ language.name }}</strong>
-                    @if (language.selected) {
-                      <em><i></i> Seleccionado</em>
-                    }
-                  </article>
-                }
-              </div>
-            </section>
-
-            <section class="settings-panel density-panel">
-              <h2>Densidad de la interfaz</h2>
-              <div class="density-grid">
-                <button type="button" class="density-card density-card--active">
-                  <strong>Cómoda</strong>
-                  <span>Más espacio, lectura relajada</span>
-                </button>
-                <button type="button" class="density-card">
-                  <strong>Compacta</strong>
-                  <span>Más datos por pantalla</span>
-                </button>
+            <section class="settings-panel danger-panel">
+              <div class="panel-header panel-header--center">
+                <div>
+                  <h2>Cerrar sesión</h2>
+                  <p class="panel-description">Salir de la aplicación y volver al acceso.</p>
+                </div>
+                <button type="button" class="danger-button settings-button" (click)="logout()">Cerrar sesión</button>
               </div>
             </section>
           }
+
         </section>
       </section>
     </section>

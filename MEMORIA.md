@@ -51,7 +51,7 @@ El estado actual del proyecto, segun la documentacion y el historial de commits,
 | M7 Resumen operativo | Completo | Home con KPIs, calendario, series trimestrales, graficas y panel admin historico. |
 | M8 Exportaciones | Parcial/avanzado | CSV/PDF para fichaje, trabajos, facturas y cierre mensual. |
 | M9 Auditoria | Completo | Tabla de auditoria, escritura de eventos y UI de consulta para administradores. |
-| M10 Herramientas | Placeholder | Calendario fiscal, documentos y ajustes existen como pantallas, pero sin backend real ni persistencia completa. |
+| M10 Herramientas | Parcial | Calendario fiscal conectado a microservicio; GIA reemplaza Documentos; Ajustes con perfil editable y cambio de contrasena real. Pendiente: toggle 2FA y configuracion de empresa. |
 
 ### 3.2 Actores del sistema
 
@@ -467,13 +467,11 @@ Los eventos cubren acciones sobre:
 
 ### 9.10 M10 - Herramientas
 
-Existen pantallas para:
+El modulo M10 agrupa tres herramientas auxiliares que han avanzado durante el Sprint 5:
 
-- calendario fiscal,
-- documentos,
-- ajustes.
-
-Actualmente se consideran placeholders o herramientas incompletas. El calendario fiscal contiene datos estaticos, documentos no tiene almacenamiento/backend real y ajustes no persiste configuracion.
+- **Calendario fiscal:** pantalla conectada al microservicio `backend-calendario`. Datos reales AEAT/TGSS, navegacion mensual, alta manual de vencimientos y marcado de presentados. Pendiente CRUD administrativo.
+- **GIA:** portal de IA conversacional que reemplaza el antiguo modulo Documentos. Conversaciones, mensajes, adjuntos, generacion de PDF e imagenes via OpenAI.
+- **Ajustes:** pantalla funcional con dos secciones reales. "Mi perfil" permite editar nombre, apellidos y telefono via `PUT /users/me`. "Seguridad" permite cambiar contrasena via `POST /users/me/password` con verificacion bcrypt. Boton de cierre de sesion activo. Todos los ajustes sin backend (tema, acento, idioma, densidad, 2FA app, sesiones activas) han sido eliminados.
 
 ---
 
@@ -730,7 +728,7 @@ Clientes precede a trabajos y facturacion porque es entidad base. Facturacion pr
 
 1. **Artefactos generados en landing:** existen cambios y ficheros `.next` en el arbol; conviene decidir si deben ignorarse o versionarse.
 2. **Tests insuficientes para todo el dominio actual:** hay tests, pero la cobertura no parece equivalente al tamano funcional del proyecto.
-3. **M10 incompleto:** calendario fiscal, documentos y ajustes son placeholders y no deben presentarse como modulos productivos.
+3. **M10 parcialmente completado:** calendario fiscal y ajustes son operativos; GIA sustituye documentos. Pendiente toggle 2FA en ajustes y configuracion de empresa.
 4. **Duplicidad potencial entre CORS de app y gateway:** nginx centraliza CORS, pero los servicios tambien tienen middleware CORS. Ya se ocultaron cabeceras upstream en nginx, pero conviene mantenerlo vigilado.
 5. **Microservicios con base compartida:** la separacion por entry-points mejora modularidad, pero todos los servicios comparten repositorio y base de datos; no es una arquitectura de microservicios completamente desacoplada.
 6. **Migraciones con numeracion duplicada:** existen dos migraciones `V003`; no bloquea el estado actual, pero debe corregirse si se adopta una herramienta estricta de migraciones.
@@ -988,3 +986,34 @@ Si la variable `OPENAI_IMAGE_MODEL` está fijada en el `.env` con valor antiguo 
 - `docs/modelo_datos.md`: modelo entidad-relacion, tablas, ENUMs, triggers, vistas y convenciones.
 - `docs/DESARROLLO.md`: estado actual por modulo, deuda tecnica y proximos pasos.
 - `docs/PLAN_SPRINTS.md`: planificacion por sprints, historias de usuario y criterios de aceptacion.
+
+### 20.4 HU-M10-03 Ajustes funcionales (2026-05-13)
+
+**Contexto**
+
+La pantalla de ajustes era un mockup estatico completo: dos pestanas (Seguridad / Apariencia) con datos hardcodeados, sin ninguna llamada al backend. Esta HU remodelo la pantalla para dejar solo los ajustes que tienen soporte real en la API.
+
+**Backend**
+
+- `backend/models.py` · anadido `ChangePasswordRequest` con `current_password` y `new_password` (ambos `min_length=8, max_length=128`).
+- `backend/services/user_service.py` · anadido `UserService.change_password(user_id, current_password, new_password)`. Verifica la contrasena actual contra el hash bcrypt almacenado; si es incorrecta lanza `ValueError("Contrasena actual incorrecta")`; si es correcta hashea la nueva y actualiza `usuarios.password_hash`.
+- `backend/routes/users.py` · anadido `POST /users/me/password` (204 No Content en exito, 400 si la contrasena actual es incorrecta, 404 si el usuario no existe). Solo accesible con JWT valido.
+
+**Frontend**
+
+- `ajustes-page.component.ts` · reescrito completamente. Inyecta `EmpleadoService`, `AuthApiService`, `FormBuilder` y `HttpClient`. Signals para estado de carga, modo edicion y feedback. Formulario reactivo de perfil (nombre, apellidos, telefono) y formulario de contrasena (actual, nueva, confirmacion).
+- `ajustes-page.component.html` · reescrito completamente. Sidebar con "Mi perfil" y "Seguridad" (eliminada "Apariencia"). Mi perfil: vista de datos con modo edicion inline. Seguridad: formulario de cambio de contrasena y boton de cierre de sesion.
+- `ajustes-page.component.css` · reducido de 529 a 279 lineas. Eliminados todos los estilos de theme-card, accent-chip, density-card, language-row, strength-track y sessions-list.
+
+**Ajustes eliminados del mockup**
+
+- Pestana Apariencia completa (tema claro/oscuro/sistema, color de acento, idioma, densidad).
+- Panel de 2FA con Google Authenticator y SMS de respaldo (no implementados).
+- Codigos de recuperacion (no implementados).
+- Lista de sesiones activas con dispositivos hardcodeados.
+- Indicador de fortaleza de contrasena y caducidad automatica de 90 dias.
+
+**Pendiente**
+
+- Toggle de `mfa_habilitado` en frontend (el campo existe en base de datos y el admin ya puede modificarlo via `PUT /users/{id}/admin`).
+- Configuracion de empresa (nombre, logo, jornada estandar, IVA) requiere modelo y endpoints nuevos.

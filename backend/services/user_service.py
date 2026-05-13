@@ -142,6 +142,36 @@ class UserService:
         return created
 
     @staticmethod
+    def change_password(user_id: str, current_password: str, new_password: str) -> bool:
+        if not UserService.is_valid_user_id(user_id):
+            return False
+
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT password_hash FROM usuarios WHERE id = %s",
+                    (user_id,),
+                )
+                row = cursor.fetchone()
+
+            if not row:
+                return False
+
+            if not pwd_context.verify(current_password, row[0]):
+                raise ValueError("Contraseña actual incorrecta")
+
+            new_hash = pwd_context.hash(new_password)
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE usuarios SET password_hash = %s WHERE id = %s",
+                    (new_hash, user_id),
+                )
+            connection.commit()
+
+        return True
+
+    @staticmethod
     def update_self(user_id: str, payload: UserUpdateRequest) -> dict | None:
         if not UserService.is_valid_user_id(user_id):
             return None
