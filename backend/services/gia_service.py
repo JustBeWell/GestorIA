@@ -378,7 +378,7 @@ class GiaService:
         mime_type = upload.content_type or mimetypes.guess_type(upload.filename or "")[0] or "application/octet-stream"
         size = path.stat().st_size
         extracted = GiaService._extract_text(path, mime_type)
-        return GiaService._insert_file(
+        file_item = GiaService._insert_file(
             cursor,
             conversation_id,
             message_id,
@@ -391,6 +391,12 @@ class GiaService:
             "upload",
             extracted,
         )
+        # Añadimos campos internos necesarios para que _run_openai pueda
+        # inyectar el texto extraído y enviar imágenes al modelo de visión.
+        # No se exponen en la respuesta de la API.
+        file_item["ruta_archivo"] = str(path)
+        file_item["extracted_text"] = extracted
+        return file_item
 
     @staticmethod
     def _store_generated_image(cursor, conversation_id: str, message_id: str, user_id: str, image_bytes: bytes) -> dict:
@@ -523,15 +529,72 @@ class GiaService:
 
     @staticmethod
     def _extract_text(path: Path, mime_type: str) -> str | None:
+        # ── Texto plano / CSV / JSON / XML ─────────────────────────────────
         if mime_type.startswith(TEXT_MIME_PREFIXES) or mime_type in TEXT_MIME_TYPES:
-            return path.read_text(encoding="utf-8", errors="replace")[:20000]
+            try:
+                return path.read_text(encoding="utf-8", errors="replace")[:20000]
+            except Exception as exc:
+                logger.warning("No se pudo leer archivo de texto %s: %s", path, exc)
+                return None
+
+        # ── PDF ─────────────────────────────────────────────────────────────
         if mime_type == "application/pdf" or path.suffix.lower() == ".pdf":
             try:
                 from pypdf import PdfReader
                 reader = PdfReader(str(path))
-                return "\n".join((page.extract_text() or "") for page in reader.pages)[:30000]
-            except Exception:
+                text = "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+                if not text:
+                    return "PDF recibido, pero no contiene texto extraíble (puede ser un PDF escaneado o de solo imagen)."
+                return text[:30000]
+            except ImportError:
+                logger.error("pypdf no está instalado; no se puede leer el PDF")
+                return "PDF recibido, pero pypdf no está instalado para extraer su contenido."
+            except Exception as exc:
+                logger.warning("Error al leer PDF %s: %s", path, exc)
                 return "PDF recibido. No se pudo extraer texto automáticamente."
+
+        # ── Word (.docx / .odt) ─────────────────────────────────────────────
+        if mime_type in (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+            "application/vnd.oasis.opendocument.text",
+        ) or path.suffix.lower() in (".docx", ".doc", ".odt"):
+            try:
+                import docx  # python-docx
+                doc = docx.Document(str(path))
+                text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+                return text[:25000] if text else "Documento Word recibido, pero no contiene texto extraíble."
+            except ImportError:
+                logger.warning("python-docx no instalado; no se puede leer el documento Word")
+                return "Documento Word recibido, pero python-docx no está instalado para extraer su contenido."
+            except Exception as exc:
+                logger.warning("Error al leer Word %s: %s", path, exc)
+                return "Documento Word recibido. No se pudo extraer el texto automáticamente."
+
+        # ── Excel (.xlsx) ───────────────────────────────────────────────────
+        if mime_type in (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel",
+        ) or path.suffix.lower() in (".xlsx", ".xls"):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
+                rows: list[str] = []
+                for sheet in wb.worksheets:
+                    rows.append(f"[Hoja: {sheet.title}]")
+                    for row in sheet.iter_rows(values_only=True):
+                        line = "\t".join("" if v is None else str(v) for v in row)
+                        if line.strip():
+                            rows.append(line)
+                text = "\n".join(rows)
+                return text[:25000] if text else "Hoja Excel recibida, pero no contiene datos extraíbles."
+            except ImportError:
+                logger.warning("openpyxl no instalado; no se puede leer el Excel")
+                return "Hoja Excel recibida, pero openpyxl no está instalado para extraer su contenido."
+            except Exception as exc:
+                logger.warning("Error al leer Excel %s: %s", path, exc)
+                return "Hoja Excel recibida. No se pudo extraer el contenido automáticamente."
+
         return None
 
     @staticmethod
