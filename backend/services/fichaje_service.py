@@ -500,3 +500,100 @@ class FichajeService:
     @staticmethod
     def _format_time(value: datetime) -> str:
         return value.astimezone(MADRID_TZ).strftime("%H:%M")
+
+    # ── End-of-day auto-close ──────────────────────────────────────────────────
+
+    @staticmethod
+    def cerrar_fichajes_abiertos() -> dict:
+        """Close any open shifts (entrada without salida) for the current day
+        and any past days that were left open.
+
+        For each employee who clocked in on a given date but never clocked out:
+          1. If there is an open pause (pausa_inicio without a following pausa_fin),
+             insert a pausa_fin at entrada_hora + 8 h to keep the data consistent.
+          2. Insert a salida at entrada_hora + 8 h with origen='correccion'.
+
+        Returns a summary dict with the number of fichajes closed.
+        """
+        closed: list[dict] = []
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Find employees with an entrada on any date but no salida that day.
+                # DISTINCT ON keeps only the earliest entrada per (employee, date).
+                cursor.execute(
+                    """
+                    SELECT DISTINCT ON (f.empleado_id,
+                                        DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid'))
+                        f.empleado_id::text AS empleado_id,
+                        MIN(f.fecha_hora) OVER (
+                            PARTITION BY f.empleado_id,
+                                         DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid')
+                        ) AS entrada_hora
+                    FROM fichajes f
+                    WHERE f.tipo_evento::text = 'entrada'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM fichajes f2
+                          WHERE f2.empleado_id = f.empleado_id
+                            AND f2.tipo_evento::text = 'salida'
+                            AND DATE(f2.fecha_hora AT TIME ZONE 'Europe/Madrid')
+                                = DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid')
+                      )
+                    ORDER BY f.empleado_id,
+                             DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid'),
+                             f.fecha_hora ASC
+                    """,
+                )
+                open_shifts = cursor.fetchall()
+
+                for row in open_shifts:
+                    empleado_id: str = row["empleado_id"]
+                    entrada_hora: datetime = row["entrada_hora"]
+                    salida_hora: datetime = entrada_hora + timedelta(hours=8)
+
+                    # Close any open pause for this employee on that day.
+                    cursor.execute(
+                        """
+                        SELECT tipo_evento::text AS tipo_evento
+                        FROM fichajes
+                        WHERE empleado_id = %s
+                          AND DATE(fecha_hora AT TIME ZONE 'Europe/Madrid')
+                              = DATE(%s AT TIME ZONE 'Europe/Madrid')
+                        ORDER BY fecha_hora DESC
+                        LIMIT 1
+                        """,
+                        (empleado_id, entrada_hora),
+                    )
+                    last = cursor.fetchone()
+                    if last and last["tipo_evento"] == "pausa_inicio":
+                        cursor.execute(
+                            """
+                            INSERT INTO fichajes (empleado_id, tipo_evento, fecha_hora, origen, observaciones)
+                            VALUES (%s, 'pausa_fin'::tipo_evento_fichaje, %s,
+                                    'correccion'::origen_fichaje,
+                                    'Cierre automático de pausa al final del día')
+                            """,
+                            (empleado_id, salida_hora),
+                        )
+
+                    # Insert the automatic salida.
+                    cursor.execute(
+                        """
+                        INSERT INTO fichajes (empleado_id, tipo_evento, fecha_hora, origen, observaciones)
+                        VALUES (%s, 'salida'::tipo_evento_fichaje, %s,
+                                'correccion'::origen_fichaje,
+                                'Salida registrada automáticamente (turno abierto al cierre del día)')
+                        RETURNING id::text AS id, fecha_hora
+                        """,
+                        (empleado_id, salida_hora),
+                    )
+                    inserted = cursor.fetchone()
+                    closed.append({
+                        "empleado_id": empleado_id,
+                        "entrada_hora": entrada_hora.isoformat(),
+                        "salida_hora": salida_hora.isoformat(),
+                        "fichaje_id": inserted["id"] if inserted else None,
+                    })
+
+            connection.commit()
+
+        return {"cerrados": len(closed), "detalle": closed}

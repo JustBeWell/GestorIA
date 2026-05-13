@@ -34,6 +34,7 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly showWorkList = signal(true);
   protected readonly saving = signal(false);
   protected readonly updatingId = signal<string | null>(null);
+  protected readonly hoveredDay = signal<string | null>(null);
 
   protected readonly periodo = computed(() => this.data()?.periodo ?? {
     year: this.selectedYear(),
@@ -62,6 +63,17 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly trabajosEmpleadosPendientes = computed(() =>
     this.trabajosPorEmpleado().reduce((total, group) => total + group.pendientes, 0),
   );
+  protected readonly trabajosPorFecha = computed(() => {
+    const map = new Map<string, CalendarioFiscalTrabajoEmpleado[]>();
+    for (const group of this.trabajosPorEmpleado()) {
+      for (const trabajo of group.trabajos) {
+        const list = map.get(trabajo.fecha_objetivo) ?? [];
+        list.push(trabajo);
+        map.set(trabajo.fecha_objetivo, list);
+      }
+    }
+    return map;
+  });
   protected readonly pendientes = computed(() =>
     this.vencimientos().filter((item) => item.estado !== 'presentado' && item.estado !== 'no_aplica'),
   );
@@ -280,8 +292,26 @@ export class CalendarioFiscalPageComponent implements OnInit {
     return day.vencimientos.slice(0, 2);
   }
 
+  protected visibleTrabajos(day: CalendarioFiscalDia): CalendarioFiscalTrabajoEmpleado[] {
+    const trabajos = this.trabajosPorFecha().get(day.fecha) ?? [];
+    const shownVenc = Math.min(day.vencimientos.length, 2);
+    const slots = Math.max(2 - shownVenc, 0);
+    return trabajos.slice(0, slots);
+  }
+
+  protected allTrabajos(day: CalendarioFiscalDia): CalendarioFiscalTrabajoEmpleado[] {
+    return this.trabajosPorFecha().get(day.fecha) ?? [];
+  }
+
   protected hiddenEventsCount(day: CalendarioFiscalDia): number {
-    return Math.max(day.vencimientos.length - 2, 0);
+    const trabajos = this.trabajosPorFecha().get(day.fecha) ?? [];
+    const shownVenc = Math.min(day.vencimientos.length, 2);
+    const shownTrab = Math.min(trabajos.length, Math.max(2 - shownVenc, 0));
+    return (day.vencimientos.length - shownVenc) + (trabajos.length - shownTrab);
+  }
+
+  protected dayHasEvents(day: CalendarioFiscalDia): boolean {
+    return day.vencimientos.length > 0 || (this.trabajosPorFecha().get(day.fecha)?.length ?? 0) > 0;
   }
 
   protected trackDay(_: number, day: CalendarioFiscalDia): string {

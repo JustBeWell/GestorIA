@@ -145,15 +145,37 @@
                   [class.day--muted]="day.fuera_mes"
                   [class.day--weekend]="day.es_fin_semana"
                   [class.day--today]="day.es_hoy"
-                  [class.day--busy]="day.vencimientos.length">
+                  [class.day--busy]="dayHasEvents(day)"
+                  (mouseenter)="hoveredDay.set(day.fecha)"
+                  (mouseleave)="hoveredDay.set(null)">
                   <span>{{ day.dia }}</span>
                   @for (event of visibleEvents(day); track trackVencimiento($index, event)) {
                     <em class="event" [class]="'event event--' + event.prioridad">
                       Modelo {{ event.modelo }}
                     </em>
                   }
+                  @for (trabajo of visibleTrabajos(day); track trabajo.trabajo_id) {
+                    <em class="event event--trabajo">
+                      {{ trabajo.cliente_nombre }}
+                    </em>
+                  }
                   @if (hiddenEventsCount(day) > 0) {
-                    <small>+{{ hiddenEventsCount(day) }}</small>
+                    <small>+{{ hiddenEventsCount(day) }} más</small>
+                  }
+                  @if (hoveredDay() === day.fecha && hiddenEventsCount(day) > 0) {
+                    <div class="day-popover" role="tooltip">
+                      <span class="day-popover__title">{{ day.dia }} — todos los eventos</span>
+                      @for (event of day.vencimientos; track event.id) {
+                        <em class="event" [class]="'event event--' + event.prioridad">
+                          Modelo {{ event.modelo }}
+                        </em>
+                      }
+                      @for (trabajo of allTrabajos(day); track trabajo.trabajo_id) {
+                        <em class="event event--trabajo">
+                          {{ trabajo.cliente_nombre }}
+                        </em>
+                      }
+                    </div>
                   }
                 </div>
               }
@@ -163,6 +185,7 @@
               <span><i class="legend-dot legend-dot--high"></i> Alta prioridad</span>
               <span><i class="legend-dot legend-dot--medium"></i> Media</span>
               <span><i class="legend-dot legend-dot--low"></i> Baja</span>
+              <span><i class="legend-dot legend-dot--trabajo"></i> Trabajos de clientes</span>
               <span><i class="legend-dot legend-dot--today"></i> Hoy</span>
             </footer>
           </article>

@@ -41,6 +41,9 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
   /** Atajo: ¿está la UI bloqueada por una operación en curso? */
   protected readonly busy = computed(() => this.sending() || this.deletingId() !== null);
 
+  /** Sólo archivos subidos por el usuario — los generados por la IA se muestran en el chat */
+  protected readonly userFiles = computed(() => this.files().filter(f => f.tipo === 'upload'));
+
   protected prompt = '';
   protected mode: GiaMode = 'respuesta';
   protected selectedFiles: File[] = [];
@@ -256,6 +259,31 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
 
   protected isImage(file: GiaFileItem): boolean {
     return file.mime_type.startsWith('image/');
+  }
+
+  protected fileIconType(mimeType: string): 'pdf' | 'image' | 'excel' | 'word' | 'text' | 'zip' | 'file' {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType === 'application/pdf') return 'pdf';
+    if (
+      mimeType.includes('spreadsheetml') ||
+      mimeType.includes('ms-excel') ||
+      mimeType === 'text/csv' ||
+      mimeType.includes('opendocument.spreadsheet')
+    ) return 'excel';
+    if (
+      mimeType.includes('wordprocessingml') ||
+      mimeType.includes('msword') ||
+      mimeType.includes('opendocument.text')
+    ) return 'word';
+    if (mimeType.startsWith('text/')) return 'text';
+    if (
+      mimeType.includes('zip') ||
+      mimeType.includes('x-tar') ||
+      mimeType.includes('x-7z') ||
+      mimeType.includes('x-rar') ||
+      mimeType.includes('compressed')
+    ) return 'zip';
+    return 'file';
   }
 
   protected formatTime(value: string): string {

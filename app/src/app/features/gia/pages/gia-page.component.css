@@ -836,12 +836,14 @@
   object-fit: cover;
 }
 
-.gia-asset__thumb span {
-  font-size: 10px;
-  font-weight: 800;
-  color: #8a5a00;
-  letter-spacing: 0.06em;
-}
+/* Colores por tipo de archivo */
+.gia-asset__thumb--pdf   { background: rgba(220, 38, 38, 0.1);  color: #dc2626; }
+.gia-asset__thumb--excel { background: rgba(22, 163, 74, 0.1);  color: #16a34a; }
+.gia-asset__thumb--word  { background: rgba(37, 99, 235, 0.1);  color: #2563eb; }
+.gia-asset__thumb--text  { background: rgba(100, 116, 139, 0.1); color: #64748b; }
+.gia-asset__thumb--zip   { background: rgba(234, 88, 12, 0.1);  color: #ea580c; }
+.gia-asset__thumb--image { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.gia-asset__thumb--file  { background: rgba(26, 53, 40, 0.08);  color: var(--gia-primary); }
 
 .gia-asset__body {
   min-width: 0;

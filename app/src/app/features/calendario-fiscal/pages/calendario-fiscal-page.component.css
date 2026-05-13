@@ -226,6 +226,10 @@
 
 .calendar-panel,
 .due-panel {
+  overflow: visible;
+}
+
+.due-panel {
   overflow: hidden;
 }
 
@@ -330,23 +334,27 @@
 .day--busy {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  gap: 4px;
+}
+
+.day--busy > span {
+  align-self: flex-start;
 }
 
 .event {
   display: block;
-  width: 100%;
-  max-width: 100%;
+  width: 80%;
+  box-sizing: border-box;
   border-radius: 4px;
-  padding: 3px 7px;
+  padding: 3px 6px;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10px;
   font-style: normal;
-  line-height: 1.1;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
 }
 
 .event--high,
@@ -364,10 +372,52 @@
   background: #3d77ae;
 }
 
+.event--trabajo {
+  background: #4f9a68;
+}
+
 .day small {
   color: #87909a;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+}
+
+/* ── Day hover popover ─────────────────────────────────────────────────────── */
+
+.day-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  min-width: 180px;
+  max-width: 240px;
+  background: #ffffff;
+  border: 1px solid #dce3e8;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.day-popover__title {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
+  margin-bottom: 2px;
+}
+
+.day-popover .event {
+  width: 100%;
+  font-size: 11px;
 }
 
 .calendar-legend {
@@ -404,6 +454,10 @@
 
 .legend-dot--low {
   background: #3d77ae;
+}
+
+.legend-dot--trabajo {
+  background: #4f9a68;
 }
 
 .status-chip {
@@ -538,9 +592,9 @@
 
 .due-item {
   display: grid;
-  grid-template-columns: 64px minmax(260px, 1fr) minmax(150px, auto);
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   min-height: 92px;
   padding: 16px 22px;
   border-top: 1px solid #dce3e8;
