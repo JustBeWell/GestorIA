@@ -132,7 +132,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   protected readonly hoveredIdx = signal<number | null>(null);
   protected readonly hiddenSeries = signal<Set<string>>(new Set<string>());
 
-  /** Descriptores de las 6 series para la gráfica combinada */
   protected readonly combinedSeries: { key: string; name: string; color: string; values: () => number[] }[] = [
     { key: 'facturado',   name: 'Facturado',    color: '#e8a838', values: () => this.facturacionValues('facturado_total') },
     { key: 'cobrado',     name: 'Cobrado',      color: '#22c55e', values: () => this.facturacionValues('cobrado_total') },
@@ -276,7 +275,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
 
     this.intranetService.getAdminCharts().pipe(takeUntil(this.destroy$)).subscribe({
       next: (res) => { this.charts.set(res); },
-      error: () => { /* charts are optional, fail silently */ },
+      error: () => {},
     });
   }
 
@@ -759,7 +758,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     return this.hiddenSeries().has(key);
   }
 
-  /** Polyline normalizada 0..max → 0..h para la gráfica combinada */
   protected buildNormPolyline(values: number[], w = 800, h = 180, padX = 24, padY = 14): string {
     if (!values.length) return '';
     const max = Math.max(...values) || 1;
@@ -774,7 +772,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
       .join(' ');
   }
 
-  /** Puntos para área rellena (polyline cerrada por abajo) */
   protected buildNormArea(values: number[], w = 800, h = 180, padX = 24, padY = 14): string {
     if (!values.length) return '';
     const pts = this.buildNormPolyline(values, w, h, padX, padY);
@@ -784,7 +781,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     return `${pts} ${lastX},${bottom} ${firstX},${bottom}`;
   }
 
-  /** Coordenada X de la línea vertical del hover */
   protected hoverLineX(w = 800, padX = 24): number {
     const idx = this.hoveredIdx();
     const labels = this.chartLabels('facturacion');
@@ -792,7 +788,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     return padX + (idx / Math.max(labels.length - 1, 1)) * (w - padX * 2);
   }
 
-  /** Punto XY de una serie en el índice hovereado */
   protected hoverDot(values: number[], w = 800, h = 180, padX = 24, padY = 14): { x: number; y: number } | null {
     const idx = this.hoveredIdx();
     if (idx === null || !values[idx] && values[idx] !== 0) return null;
@@ -832,7 +827,6 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     };
   }
 
-  /** Posición horizontal del tooltip (0..100%) para anclar cerca del mes */
   protected tooltipLeft(): number {
     const idx = this.hoveredIdx();
     const labels = this.chartLabels('facturacion');

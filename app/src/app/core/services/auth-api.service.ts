@@ -28,7 +28,6 @@ export class AuthApiService {
   logout(): void {
     const token = this.session.getToken();
     if (token) {
-      // Fire-and-forget: revoke server-side, then clear local storage regardless
       this.http
         .post(`${environment.apiUrl}/auth/logout`, {}, {
           headers: { Authorization: `Bearer ${token}` },

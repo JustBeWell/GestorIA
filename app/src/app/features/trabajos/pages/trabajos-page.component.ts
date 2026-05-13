@@ -87,30 +87,25 @@ export class TrabajosPageComponent implements OnInit, OnDestroy {
   protected selectedTrabajo: TrabajoDetailItem | null = null;
   protected selectedItem: TrabajoTabItem | null = null;
 
-  // Panel de detalle
   protected detailOpen = false;
   protected comentarios: TrabajoComentario[] = [];
   protected loadingComentarios = false;
   protected nuevoComentario = '';
   protected savingComentario = false;
 
-  // Filtros
   protected filterPrioridad: string = '';
   protected filterClienteId: string = '';
   protected showCancelados = false;
 
-  // Listas para selectores
   protected empleadosList: EmpleadoOption[] = [];
   protected clientesList: ClienteOption[] = [];
   protected addEmpleadoId = '';
   protected savingAsignacion = false;
 
-  // Formulario
   protected form: TrabajoForm = this.emptyForm();
   protected formErrors: Record<string, string> = {};
   protected formServerError = '';
 
-  // Constantes para templates
   readonly estados = ESTADOS;
   readonly prioridades = PRIORIDADES;
 

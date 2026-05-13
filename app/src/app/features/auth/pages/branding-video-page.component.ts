@@ -62,12 +62,10 @@ export class BrandingVideoPageComponent implements OnInit {
   ngOnInit(): void {
     const video = this.vid.nativeElement;
     video.volume = 0.25;
-    // Fallback de seguridad: 20 s máximo
     this.fallbackTimer = setTimeout(() => this.triggerFade(), 20_000);
   }
 
   protected onCanPlay(): void {
-    // Asegurar volumen bajo una vez el navegador esté listo
     this.vid.nativeElement.volume = 0.25;
   }
 

@@ -267,7 +267,6 @@ export class ClientesPageComponent implements OnInit, OnDestroy {
       tipo_cliente: (item.tipo_cliente as TipoCliente) ?? 'Sociedad',
     };
     this.modalMode.set('edit');
-    // Enrich form with full detail (address fields)
     this.intranetService.getClienteDetail(item.cliente_id).subscribe({
       next: (d) => {
         if (this.modalMode() !== 'edit') return;
@@ -364,13 +363,11 @@ export class ClientesPageComponent implements OnInit, OnDestroy {
     return parts.length ? parts.join(' · ') : '—';
   }
 
-  /** Formats a billing number as € XX.XXX (thousands separator, no decimals) */
   protected formatBilling(value: number): string {
     if (!value) return '€ 0';
     return '€ ' + new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(value);
   }
 
-  /** Returns relative time label: Hoy / Ayer / N días / N meses */
   protected getRelativeTime(iso: string | null | undefined): string {
     if (!iso) return '—';
     const diff = Date.now() - new Date(iso).getTime();
@@ -382,7 +379,6 @@ export class ClientesPageComponent implements OnInit, OnDestroy {
     return months === 1 ? '1 mes' : `${months} meses`;
   }
 
-  /** Returns 1–2 capital initials from a name */
   protected getInitials(name: string): string {
     return name
       .split(/\s+/)
@@ -391,7 +387,6 @@ export class ClientesPageComponent implements OnInit, OnDestroy {
       .join('');
   }
 
-  /** Deterministic color from name string */
   protected getAvatarColor(name: string): string {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {

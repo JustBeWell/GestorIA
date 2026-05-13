@@ -172,7 +172,7 @@ export class PagosPageComponent implements OnInit, OnDestroy {
           data.clientes.map((c) => ({ cliente_id: c.cliente_id, nombre: c.nombre_fiscal }))
         );
       },
-      error: () => { /* clientes son opcionales para los filtros */ },
+      error: () => {},
     });
   }
 

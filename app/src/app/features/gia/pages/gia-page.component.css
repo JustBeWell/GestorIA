@@ -113,6 +113,7 @@
 .gia-new-btn span {
   text-transform: none;
   letter-spacing: 0;
+  color: white;
 }
 
 .gia-new-btn:hover:not(:disabled) {

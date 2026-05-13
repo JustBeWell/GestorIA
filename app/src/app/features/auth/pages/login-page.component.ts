@@ -28,9 +28,7 @@ export class LoginPageComponent {
   protected readonly submitAttempted = signal(false);
   protected readonly currentHeroVideoIndex = signal(0);
 
-  /** Paso del flujo de login: credenciales o código OTP */
   protected readonly step = signal<'credentials' | 'otp'>('credentials');
-  /** session_id devuelto por el backend cuando requires_2fa=true */
   protected readonly sessionId = signal('');
   protected readonly otpSubmitAttempted = signal(false);
 
@@ -63,7 +61,6 @@ export class LoginPageComponent {
     this.authApiService.login(this.loginForm.getRawValue()).subscribe({
       next: (response) => {
         if (response.requires_2fa) {
-          // Paso 2FA: mostrar formulario OTP
           this.sessionId.set(response.session_id!);
           this.step.set('otp');
           this.loading.set(false);
@@ -82,7 +79,6 @@ export class LoginPageComponent {
   protected submitOtp(): void {
     this.otpSubmitAttempted.set(true);
 
-    // Limpiar espacios que puedan venir al copiar del SMS
     const rawCode = this.otpForm.controls.code.value.trim().replace(/\s/g, '');
     this.otpForm.controls.code.setValue(rawCode, { emitEvent: false });
 
@@ -119,7 +115,6 @@ export class LoginPageComponent {
   }
 
   private completeLogin(token: string, user: { id: string; nombre_usuario: string; role: string }): void {
-    // Limpiar datos del empleado anterior antes de establecer la nueva sesión
     this.empleadoService.clearCachedEmpleado();
     this.authState.login(token, user);
     this.successMessage.set(`Accediendo al sistema como ${user.role}...`);

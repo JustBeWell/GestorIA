@@ -284,7 +284,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return this.getDayDeltaPercent();
   }
 
-  /** Delta clientes: diferencia entre último y penúltimo punto de la serie */
   protected get clientesDelta(): number {
     const pts = this.clientesSeries;
     if (pts.length < 2) return 0;
@@ -297,12 +296,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return (d > 0 ? '+' : '') + d;
   }
 
-  /** Trabajos bloqueados (dato real del backend) */
   protected get trabajosBloqueados(): number {
     return this.homeData?.trabajos?.bloqueados ?? 0;
   }
 
-  /** Delta pagos: diferencia porcentual entre último y penúltimo punto de la serie */
   protected get pagosDeltaLabel(): string {
     const pts = this.pagosSeries;
     if (pts.length < 2) return '';

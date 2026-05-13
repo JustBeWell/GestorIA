@@ -38,17 +38,13 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
   protected readonly deletingId = signal<string | null>(null);
   protected readonly mobileSidebarOpen = signal(false);
 
-  /** Atajo: ¿está la UI bloqueada por una operación en curso? */
   protected readonly busy = computed(() => this.sending() || this.deletingId() !== null);
-
-  /** Sólo archivos subidos por el usuario — los generados por la IA se muestran en el chat */
   protected readonly userFiles = computed(() => this.files().filter(f => f.tipo === 'upload'));
 
   protected prompt = '';
   protected mode: GiaMode = 'respuesta';
   protected selectedFiles: File[] = [];
 
-  /** Marca para hacer scroll automático al final cuando llegan mensajes nuevos */
   private shouldScroll = false;
 
   ngOnInit(): void {
@@ -179,12 +175,9 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
       return;
     }
 
-    // Snapshot de archivos a enviar antes de limpiar el composer
     const filesToSend = this.selectedFiles;
     const tempId = `tmp-${Date.now()}`;
 
-    // Mensaje optimista del usuario: se inserta inmediatamente para que el chat
-    // no parezca congelado mientras esperamos la respuesta del agente.
     const optimisticFiles: GiaFileItem[] = filesToSend.map((file, idx) => ({
       id: `${tempId}-f${idx}`,
       nombre_original: file.name,
@@ -203,7 +196,6 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
     };
     this.messages.update((items) => [...items, optimisticMessage]);
 
-    // Limpiamos el composer ya — la UI ya muestra el mensaje pendiente
     this.prompt = '';
     this.clearFiles();
 
@@ -213,8 +205,6 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
 
     this.giaService.sendMessage(conversationId, text, this.mode, filesToSend).subscribe({
       next: (response) => {
-        // Reemplazamos el mensaje optimista por el real (con IDs definitivos)
-        // y añadimos a continuación la respuesta del asistente.
         this.messages.update((items) => [
           ...items.filter((m) => m.id !== tempId),
           response.user_message,
@@ -233,8 +223,6 @@ export class GiaPageComponent implements OnInit, AfterViewChecked {
         this.shouldScroll = true;
       },
       error: (err) => {
-        // Revertimos el optimistic update y devolvemos el texto al composer
-        // para que el usuario pueda reintentar sin reescribirlo.
         this.messages.update((items) => items.filter((m) => m.id !== tempId));
         this.prompt = text;
         this.error.set(err?.error?.detail ?? 'No se pudo enviar el mensaje a GIA.');
