@@ -278,11 +278,9 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
   animation: heroFloat 9s ease-in-out infinite;
 }
 
-/* Card flotante que orbita sobre el banner */
+/* Cards flotantes que orbitan sobre el banner */
 .hero__floating-card {
   position: absolute;
-  bottom: -28px;
-  right: -36px;
   width: 240px;
   aspect-ratio: 16 / 10;
   border-radius: 14px;
@@ -290,6 +288,15 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
   box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08);
   animation: floatOrbit 7s ease-in-out infinite;
   z-index: 10;
+}
+.hero__floating-card--top-left {
+  top: -28px;
+  left: -36px;
+}
+.hero__floating-card--bottom-right {
+  bottom: -28px;
+  right: -36px;
+  animation-delay: 0.5s;
 }
 @keyframes floatOrbit {
   0%   { transform: translate(0px,  0px)  rotate(-1deg); }
@@ -299,7 +306,15 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
   100% { transform: translate(0px,  0px)  rotate(-1deg); }
 }
 @media (max-width: 640px) {
-  .hero__floating-card { width: 140px; bottom: -18px; right: -12px; }
+  .hero__floating-card { width: 140px; }
+  .hero__floating-card--top-left {
+    top: -18px;
+    left: -12px;
+  }
+  .hero__floating-card--bottom-right {
+    bottom: -18px;
+    right: -12px;
+  }
 }
 
 /* Banner + vídeo en fila (legacy, mantenido por si se usa) */
@@ -569,6 +584,228 @@ h3 { font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
   font-size: 13px; color: rgba(243, 236, 218, 0.58);
   font-weight: 500; margin-top: 8px;
   max-width: 18ch; line-height: 1.35;
+}
+
+/* ============================================================
+   Marketing roadmap
+   ============================================================ */
+.roadmap-marketing {
+  padding: 26px 0 92px;
+  position: relative;
+}
+.roadmap-marketing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 12% 24%, rgba(63, 154, 130, 0.12), transparent 38%),
+    radial-gradient(circle at 86% 72%, rgba(31, 94, 98, 0.11), transparent 42%);
+  pointer-events: none;
+}
+.roadmap-marketing__head {
+  margin-bottom: 42px;
+  position: relative;
+}
+
+.roadmap-marketing__graph-wrap {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+.roadmap-marketing__graph {
+  position: relative;
+  min-height: 640px;
+  width: min(980px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(46, 106, 88, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(63, 154, 130, 0.12), transparent 45%),
+    linear-gradient(160deg, rgba(255,255,255,0.9), rgba(244,250,247,0.9));
+  box-shadow: 0 24px 56px rgba(16, 38, 33, 0.13);
+  overflow: visible;
+  z-index: 1;
+}
+
+.roadmap-marketing__graph {
+  --node-size: 154px;
+  --bubble-gap: 8px;
+}
+.roadmap-marketing__link {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(46, 140, 138, 0.44), rgba(46, 140, 138, 0.08));
+  pointer-events: none;
+  z-index: 1;
+}
+.roadmap-marketing__link--cliente { width: 250px; transform: rotate(210deg); }
+.roadmap-marketing__link--trabajo { width: 250px; transform: rotate(330deg); }
+.roadmap-marketing__link--pagos { width: 250px; transform: rotate(150deg); }
+.roadmap-marketing__link--fichaje { width: 250px; transform: rotate(30deg); }
+.roadmap-marketing__link--control { width: 250px; transform: rotate(90deg); }
+.roadmap-marketing__link--portal { width: 250px; transform: rotate(270deg); }
+
+.roadmap-marketing__node {
+  position: absolute;
+  width: var(--node-size);
+  height: var(--node-size);
+  border-radius: 50%;
+  border: 1px solid rgba(46, 106, 88, 0.26);
+  background: #ffffff;
+  color: var(--ink-900);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 30px rgba(16, 38, 33, 0.12);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s, background 0.18s;
+  text-align: center;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  line-height: 1.05;
+  padding: 0 12px;
+  text-wrap: balance;
+}
+.roadmap-marketing__node:hover {
+  transform: translateY(-2px);
+}
+.roadmap-marketing__node--module { font-size: 22px; }
+.roadmap-marketing__node.is-active {
+  border-color: var(--green-600);
+  background: linear-gradient(155deg, #f1fbf6 0%, #e7f5ee 100%);
+  box-shadow: 0 14px 34px rgba(46, 106, 88, 0.22);
+}
+
+.roadmap-marketing__node--ia {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--node-size);
+  height: var(--node-size);
+  background: linear-gradient(155deg, #e9f8f0 0%, #dff3ea 100%);
+  border-color: var(--green-600);
+  box-shadow: 0 14px 36px rgba(46, 106, 88, 0.2);
+}
+.roadmap-marketing__node--ia:hover {
+  transform: translate(-50%, calc(-50% - 2px));
+}
+.roadmap-marketing__node--cliente { top: 12%; left: 9%; }
+.roadmap-marketing__node--trabajo { top: 12%; right: 9%; }
+.roadmap-marketing__node--pagos { bottom: 12%; left: 9%; }
+.roadmap-marketing__node--fichaje { bottom: 12%; right: 9%; }
+.roadmap-marketing__node--control {
+  bottom: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.roadmap-marketing__node--control:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+.roadmap-marketing__node--portal {
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.roadmap-marketing__node--portal:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.roadmap-marketing__popover {
+  position: absolute;
+  width: 280px;
+  max-width: calc(100% - 24px);
+  border-radius: 8px;
+  border: 1px solid rgba(46, 106, 88, 0.24);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 36px rgba(16, 38, 33, 0.18);
+  padding: 14px 16px;
+  z-index: 30;
+}
+.roadmap-marketing__popover::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid rgba(46, 106, 88, 0.24);
+  border-bottom: 1px solid rgba(46, 106, 88, 0.24);
+  transform: rotate(45deg);
+  bottom: -7px;
+}
+
+/* Esquinas: bocadillo arriba en lado izquierdo o derecho */
+.roadmap-marketing__popover--cliente {
+  left: 9%;
+  top: calc(12% - var(--bubble-gap));
+  transform: translateY(-100%);
+}
+.roadmap-marketing__popover--cliente::after {
+  left: 18px;
+}
+.roadmap-marketing__popover--pagos {
+  left: 9%;
+  bottom: calc(12% + var(--node-size) + var(--bubble-gap));
+}
+.roadmap-marketing__popover--pagos::after {
+  left: 18px;
+}
+.roadmap-marketing__popover--trabajo {
+  right: 9%;
+  top: calc(12% - var(--bubble-gap));
+  transform: translateY(-100%);
+}
+.roadmap-marketing__popover--trabajo::after {
+  right: 18px;
+}
+.roadmap-marketing__popover--fichaje {
+  right: 9%;
+  bottom: calc(12% + var(--node-size) + var(--bubble-gap));
+}
+.roadmap-marketing__popover--fichaje::after {
+  right: 18px;
+}
+
+/* Centrales: bocadillo arriba siempre */
+.roadmap-marketing__popover--ia,
+.roadmap-marketing__popover--control {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.roadmap-marketing__popover--ia {
+  bottom: calc(50% + (var(--node-size) / 2) + var(--bubble-gap));
+}
+.roadmap-marketing__popover--control {
+  bottom: calc(2% + var(--node-size) + var(--bubble-gap));
+}
+.roadmap-marketing__popover--ia::after,
+.roadmap-marketing__popover--control::after {
+  left: calc(50% - 6px);
+}
+
+/* Nodo superior central: bocadillo pegado al borde inferior del nodo */
+.roadmap-marketing__popover--portal {
+  left: 50%;
+  top: calc(2% + var(--node-size) + var(--bubble-gap));
+  transform: translateX(-50%);
+}
+.roadmap-marketing__popover--portal::after {
+  top: -7px;
+  bottom: auto;
+  left: calc(50% - 6px);
+  transform: rotate(225deg);
+}
+.roadmap-marketing__popover h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+}
+.roadmap-marketing__popover p {
+  margin: 8px 0 0;
+  color: var(--ink-700);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* ============================================================
@@ -960,6 +1197,16 @@ details.faq__item p {
    ============================================================ */
 @media (max-width: 960px) {
   .nav__links { display: none; }
+  .roadmap-marketing__graph { --node-size: 132px; }
+  .roadmap-marketing__graph { min-height: 560px; }
+  .roadmap-marketing__node { font-size: 21px; }
+  .roadmap-marketing__node--module { font-size: 20px; }
+  .roadmap-marketing__link--cliente,
+  .roadmap-marketing__link--trabajo,
+  .roadmap-marketing__link--pagos,
+  .roadmap-marketing__link--fichaje,
+  .roadmap-marketing__link--portal { width: 220px; }
+  .roadmap-marketing__link--control { width: 186px; }
   .features__grid { grid-template-columns: 1fr 1fr; }
   .feature--big { grid-column: span 2; }
   .modules__inner { grid-template-columns: 1fr; gap: 48px; }
@@ -974,6 +1221,49 @@ details.faq__item p {
   .hero__chip--2 { right: 2%; }
 }
 @media (max-width: 640px) {
+  .roadmap-marketing__graph { --node-size: 102px; }
+  .roadmap-marketing__head h2 { font-size: clamp(28px, 8vw, 40px); }
+  .roadmap-marketing__graph {
+    min-height: 520px;
+    padding: 10px;
+  }
+  .roadmap-marketing__node { font-size: 14px; padding: 0 7px; }
+  .roadmap-marketing__node--module { font-size: 16px; }
+  .roadmap-marketing__node--ia { top: 50%; left: 50%; }
+  .roadmap-marketing__node--portal { top: 1%; left: 50%; }
+  .roadmap-marketing__node--cliente { top: 24%; left: 4%; }
+  .roadmap-marketing__node--trabajo { top: 24%; right: 4%; }
+  .roadmap-marketing__node--pagos { bottom: 8%; left: 4%; }
+  .roadmap-marketing__node--fichaje { bottom: 8%; right: 4%; }
+  .roadmap-marketing__node--control { bottom: 4%; left: 50%; }
+  .roadmap-marketing__link--cliente,
+  .roadmap-marketing__link--trabajo,
+  .roadmap-marketing__link--pagos,
+  .roadmap-marketing__link--fichaje,
+  .roadmap-marketing__link--portal { width: 185px; }
+  .roadmap-marketing__link--control { width: 118px; }
+  .roadmap-marketing__popover,
+  .roadmap-marketing__popover--cliente,
+  .roadmap-marketing__popover--trabajo,
+  .roadmap-marketing__popover--pagos,
+  .roadmap-marketing__popover--fichaje,
+  .roadmap-marketing__popover--ia,
+  .roadmap-marketing__popover--control,
+  .roadmap-marketing__popover--portal {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+    width: auto;
+    transform: none;
+    padding: 12px 12px;
+  }
+  .roadmap-marketing__popover::after {
+    left: calc(50% - 6px);
+    right: auto;
+  }
+  .roadmap-marketing__popover h3 { font-size: 18px; }
+  .roadmap-marketing__popover p { font-size: 13px; }
   .features__grid { grid-template-columns: 1fr; }
   .feature--big { grid-column: span 1; }
   .modules__list { grid-template-columns: 1fr 1fr; }

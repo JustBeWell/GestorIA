@@ -14,7 +14,7 @@ export default function Hero() {
           </div>
         </RevealWrapper>
 
-        {/* Banner a tamaño completo + card flotante */}
+        {/* Banner a tamaño completo + cards flotantes */}
         <RevealWrapper>
           <div className="hero__banner-wrap">
             <div className="hero__banner-img-wrap">
@@ -27,7 +27,20 @@ export default function Hero() {
                 style={{ width: '100%', height: 'auto', display: 'block' }}
               />
             </div>
-            <div className="hero__floating-card">
+
+            <div className="hero__floating-card hero__floating-card--top-left">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="hero__floating-video"
+                src="/branding.mp4"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '12px' }}
+              />
+            </div>
+
+            <div className="hero__floating-card hero__floating-card--bottom-right">
               <video
                 autoPlay
                 loop
