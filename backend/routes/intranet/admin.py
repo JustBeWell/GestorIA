@@ -9,6 +9,7 @@ from models import (
     AdminCorreccionRequest,
     AdminCorreccionResponse,
     AdminFichajesResponse,
+    AdminIaUsageResponse,
     AdminResumenResponse,
     AuditoriaResponse,
 )
@@ -34,6 +35,16 @@ def intranet_admin_charts(
     if current_user.role != "administrador":
         raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
     return AdminService.get_admin_charts(months=months)
+
+
+@router.get("/admin/ia/usage", response_model=AdminIaUsageResponse)
+def intranet_admin_ia_usage(
+    days: int = Query(default=30, ge=1, le=365),
+    current_user=Depends(get_current_user),
+):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Acceso restringido a administradores")
+    return AdminService.get_admin_ia_usage(days=days)
 
 
 @router.get("/admin/fichajes", response_model=AdminFichajesResponse)

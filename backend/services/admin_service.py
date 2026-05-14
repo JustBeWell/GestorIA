@@ -8,8 +8,251 @@ from services.fichaje_service import FichajeService
 
 MONTH_ABBR_ES = MONTH_ABBR
 
+IA_INPUT_TOKEN_COST_EUR_PER_1K = 0.00014
+IA_OUTPUT_TOKEN_COST_EUR_PER_1K = 0.00056
+IA_IMAGE_GENERATION_COST_EUR = 0.04
+
 
 class AdminService:
+
+    @staticmethod
+    def get_admin_ia_usage(days: int = 30) -> dict:
+        period_days = max(1, min(days, 365))
+
+        empty = {
+            "period_days": period_days,
+            "currency": "EUR",
+            "pricing": {
+                "input_token_per_1k_eur": IA_INPUT_TOKEN_COST_EUR_PER_1K,
+                "output_token_per_1k_eur": IA_OUTPUT_TOKEN_COST_EUR_PER_1K,
+                "image_generation_eur": IA_IMAGE_GENERATION_COST_EUR,
+            },
+            "totals": {
+                "requests": 0,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+                "image_generations": 0,
+                "estimated_cost_eur": 0.0,
+                "avg_tokens_per_request": 0.0,
+            },
+            "by_mode": [],
+            "daily": [],
+            "top_users": [],
+        }
+
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT to_regclass('gia_mensajes') AS r1, to_regclass('gia_conversaciones') AS r2")
+                registry = cursor.fetchone() or {}
+                if not registry.get("r1") or not registry.get("r2"):
+                    return empty
+
+                params = {
+                    "days": period_days,
+                    "in_cost": IA_INPUT_TOKEN_COST_EUR_PER_1K,
+                    "out_cost": IA_OUTPUT_TOKEN_COST_EUR_PER_1K,
+                    "img_cost": IA_IMAGE_GENERATION_COST_EUR,
+                }
+
+                cursor.execute(
+                    """
+                    WITH base AS (
+                        SELECT
+                            DATE(m.created_at AT TIME ZONE 'Europe/Madrid') AS day,
+                            COALESCE(c.user_id::text, '') AS user_id,
+                            COALESCE(u.nombre_usuario::text, 'desconocido') AS nombre_usuario,
+                            COALESCE(NULLIF(m.metadata->>'mode', ''), 'respuesta') AS mode,
+                            COALESCE((m.metadata->'usage'->>'prompt_tokens')::int, 0) AS prompt_tokens,
+                            COALESCE((m.metadata->'usage'->>'completion_tokens')::int, 0) AS completion_tokens,
+                            COALESCE((m.metadata->'usage'->>'total_tokens')::int, 0) AS total_tokens,
+                            COALESCE((m.metadata->'usage'->>'image_generations')::int, 0) AS image_generations,
+                            COALESCE((m.metadata->'usage'->>'estimated_cost_eur')::numeric, 0) AS estimated_cost_eur
+                        FROM gia_mensajes m
+                        JOIN gia_conversaciones c ON c.id = m.conversacion_id
+                        LEFT JOIN usuarios u ON u.id = c.user_id
+                        WHERE m.role = 'assistant'
+                          AND m.created_at >= NOW() - (%(days)s || ' days')::interval
+                    )
+                    SELECT
+                        COUNT(*)::int AS requests,
+                        COALESCE(SUM(prompt_tokens), 0)::int AS prompt_tokens,
+                        COALESCE(SUM(completion_tokens), 0)::int AS completion_tokens,
+                        COALESCE(SUM(total_tokens), 0)::int AS total_tokens,
+                        COALESCE(SUM(image_generations), 0)::int AS image_generations,
+                        ROUND(
+                            COALESCE(SUM(
+                                CASE
+                                    WHEN estimated_cost_eur > 0 THEN estimated_cost_eur
+                                    ELSE (
+                                        prompt_tokens / 1000.0 * %(in_cost)s
+                                        + completion_tokens / 1000.0 * %(out_cost)s
+                                        + image_generations * %(img_cost)s
+                                    )
+                                END
+                            ), 0),
+                            4
+                        )::float AS estimated_cost_eur
+                    FROM base
+                    """,
+                    params,
+                )
+                totals = dict(cursor.fetchone() or {})
+
+                cursor.execute(
+                    """
+                    WITH base AS (
+                        SELECT
+                            COALESCE(NULLIF(m.metadata->>'mode', ''), 'respuesta') AS mode,
+                            COALESCE((m.metadata->'usage'->>'prompt_tokens')::int, 0) AS prompt_tokens,
+                            COALESCE((m.metadata->'usage'->>'completion_tokens')::int, 0) AS completion_tokens,
+                            COALESCE((m.metadata->'usage'->>'total_tokens')::int, 0) AS total_tokens,
+                            COALESCE((m.metadata->'usage'->>'image_generations')::int, 0) AS image_generations,
+                            COALESCE((m.metadata->'usage'->>'estimated_cost_eur')::numeric, 0) AS estimated_cost_eur
+                        FROM gia_mensajes m
+                        JOIN gia_conversaciones c ON c.id = m.conversacion_id
+                        WHERE m.role = 'assistant'
+                          AND m.created_at >= NOW() - (%(days)s || ' days')::interval
+                    )
+                    SELECT
+                        mode,
+                        COUNT(*)::int AS requests,
+                        COALESCE(SUM(prompt_tokens), 0)::int AS prompt_tokens,
+                        COALESCE(SUM(completion_tokens), 0)::int AS completion_tokens,
+                        COALESCE(SUM(total_tokens), 0)::int AS total_tokens,
+                        COALESCE(SUM(image_generations), 0)::int AS image_generations,
+                        ROUND(
+                            COALESCE(SUM(
+                                CASE
+                                    WHEN estimated_cost_eur > 0 THEN estimated_cost_eur
+                                    ELSE (
+                                        prompt_tokens / 1000.0 * %(in_cost)s
+                                        + completion_tokens / 1000.0 * %(out_cost)s
+                                        + image_generations * %(img_cost)s
+                                    )
+                                END
+                            ), 0),
+                            4
+                        )::float AS estimated_cost_eur
+                    FROM base
+                    GROUP BY mode
+                    ORDER BY requests DESC
+                    """,
+                    params,
+                )
+                by_mode = [dict(r) for r in cursor.fetchall()]
+
+                cursor.execute(
+                    """
+                    WITH base AS (
+                        SELECT
+                            DATE(m.created_at AT TIME ZONE 'Europe/Madrid') AS day,
+                            COALESCE((m.metadata->'usage'->>'prompt_tokens')::int, 0) AS prompt_tokens,
+                            COALESCE((m.metadata->'usage'->>'completion_tokens')::int, 0) AS completion_tokens,
+                            COALESCE((m.metadata->'usage'->>'total_tokens')::int, 0) AS total_tokens,
+                            COALESCE((m.metadata->'usage'->>'image_generations')::int, 0) AS image_generations,
+                            COALESCE((m.metadata->'usage'->>'estimated_cost_eur')::numeric, 0) AS estimated_cost_eur
+                        FROM gia_mensajes m
+                        JOIN gia_conversaciones c ON c.id = m.conversacion_id
+                        WHERE m.role = 'assistant'
+                          AND m.created_at >= NOW() - (%(days)s || ' days')::interval
+                    )
+                    SELECT
+                        day,
+                        COUNT(*)::int AS requests,
+                        COALESCE(SUM(total_tokens), 0)::int AS total_tokens,
+                        COALESCE(SUM(image_generations), 0)::int AS image_generations,
+                        ROUND(
+                            COALESCE(SUM(
+                                CASE
+                                    WHEN estimated_cost_eur > 0 THEN estimated_cost_eur
+                                    ELSE (
+                                        prompt_tokens / 1000.0 * %(in_cost)s
+                                        + completion_tokens / 1000.0 * %(out_cost)s
+                                        + image_generations * %(img_cost)s
+                                    )
+                                END
+                            ), 0),
+                            4
+                        )::float AS estimated_cost_eur
+                    FROM base
+                    GROUP BY day
+                    ORDER BY day ASC
+                    """,
+                    params,
+                )
+                daily = [dict(r) for r in cursor.fetchall()]
+
+                cursor.execute(
+                    """
+                    WITH base AS (
+                        SELECT
+                            COALESCE(c.user_id::text, '') AS user_id,
+                            COALESCE(u.nombre_usuario::text, 'desconocido') AS nombre_usuario,
+                            COALESCE((m.metadata->'usage'->>'prompt_tokens')::int, 0) AS prompt_tokens,
+                            COALESCE((m.metadata->'usage'->>'completion_tokens')::int, 0) AS completion_tokens,
+                            COALESCE((m.metadata->'usage'->>'total_tokens')::int, 0) AS total_tokens,
+                            COALESCE((m.metadata->'usage'->>'image_generations')::int, 0) AS image_generations,
+                            COALESCE((m.metadata->'usage'->>'estimated_cost_eur')::numeric, 0) AS estimated_cost_eur
+                        FROM gia_mensajes m
+                        JOIN gia_conversaciones c ON c.id = m.conversacion_id
+                        LEFT JOIN usuarios u ON u.id = c.user_id
+                        WHERE m.role = 'assistant'
+                          AND m.created_at >= NOW() - (%(days)s || ' days')::interval
+                    )
+                    SELECT
+                        user_id,
+                        nombre_usuario,
+                        COUNT(*)::int AS requests,
+                        COALESCE(SUM(total_tokens), 0)::int AS total_tokens,
+                        COALESCE(SUM(image_generations), 0)::int AS image_generations,
+                        ROUND(
+                            COALESCE(SUM(
+                                CASE
+                                    WHEN estimated_cost_eur > 0 THEN estimated_cost_eur
+                                    ELSE (
+                                        prompt_tokens / 1000.0 * %(in_cost)s
+                                        + completion_tokens / 1000.0 * %(out_cost)s
+                                        + image_generations * %(img_cost)s
+                                    )
+                                END
+                            ), 0),
+                            4
+                        )::float AS estimated_cost_eur
+                    FROM base
+                    GROUP BY user_id, nombre_usuario
+                    ORDER BY estimated_cost_eur DESC, requests DESC
+                    LIMIT 8
+                    """,
+                    params,
+                )
+                top_users = [dict(r) for r in cursor.fetchall()]
+
+        requests = int(totals.get("requests") or 0)
+        total_tokens = int(totals.get("total_tokens") or 0)
+        totals["avg_tokens_per_request"] = round((total_tokens / requests), 2) if requests > 0 else 0.0
+
+        return {
+            "period_days": period_days,
+            "currency": "EUR",
+            "pricing": {
+                "input_token_per_1k_eur": IA_INPUT_TOKEN_COST_EUR_PER_1K,
+                "output_token_per_1k_eur": IA_OUTPUT_TOKEN_COST_EUR_PER_1K,
+                "image_generation_eur": IA_IMAGE_GENERATION_COST_EUR,
+            },
+            "totals": {
+                "requests": requests,
+                "prompt_tokens": int(totals.get("prompt_tokens") or 0),
+                "completion_tokens": int(totals.get("completion_tokens") or 0),
+                "total_tokens": total_tokens,
+                "image_generations": int(totals.get("image_generations") or 0),
+                "estimated_cost_eur": float(totals.get("estimated_cost_eur") or 0),
+                "avg_tokens_per_request": float(totals.get("avg_tokens_per_request") or 0),
+            },
+            "by_mode": by_mode,
+            "daily": daily,
+            "top_users": top_users,
+        }
 
     @staticmethod
     def get_admin_resumen() -> dict:

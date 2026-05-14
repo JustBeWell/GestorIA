@@ -31,6 +31,8 @@
                   (click)="switchTab('trabajos')">Trabajos</button>
           <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'pagos'"
                   (click)="switchTab('pagos')">Pagos</button>
+            <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'ia'"
+              (click)="switchTab('ia')">Uso IA</button>
           <button class="admin-tab" [class.admin-tab--active]="activeTab() === 'auditoria'"
                   (click)="switchTab('auditoria')">Auditoría</button>
         </nav>
@@ -880,6 +882,149 @@
 
         </div>
         } <!-- /tab pagos -->
+
+        <!-- ─── TAB: USO IA ─────────────────────────────────────── -->
+        @if (activeTab() === 'ia') {
+        <div class="admin-tab-panel ia-panel">
+
+          <div class="tab-panel-header">
+            <p class="tab-panel-title">Uso de IA y coste estimado</p>
+            <div class="tab-panel-actions">
+              <select class="tab-select" [ngModel]="iaPeriodDays()" (ngModelChange)="loadIaUsage($event)">
+                <option [ngValue]="7">Últimos 7 días</option>
+                <option [ngValue]="30">Últimos 30 días</option>
+                <option [ngValue]="90">Últimos 90 días</option>
+                <option [ngValue]="180">Últimos 180 días</option>
+              </select>
+              <button class="tab-refresh-btn" type="button" (click)="loadIaUsage()">↻ Refrescar</button>
+            </div>
+          </div>
+
+          @if (iaUsageLoading()) {
+            <div class="tab-loading">Cargando consumo de IA…</div>
+          } @else if (iaUsageError()) {
+            <div class="tab-empty">{{ iaUsageError() }}</div>
+          } @else if (iaUsage(); as usage) {
+
+            <div class="ia-kpi-grid">
+              <div class="ia-kpi-card">
+                <span class="ia-kpi-label">Coste estimado</span>
+                <strong class="ia-kpi-value">{{ usage.totals.estimated_cost_eur | currency:'EUR':'symbol':'1.2-4':'es' }}</strong>
+              </div>
+              <div class="ia-kpi-card">
+                <span class="ia-kpi-label">Requests IA</span>
+                <strong class="ia-kpi-value">{{ usage.totals.requests }}</strong>
+              </div>
+              <div class="ia-kpi-card">
+                <span class="ia-kpi-label">Tokens totales</span>
+                <strong class="ia-kpi-value">{{ usage.totals.total_tokens | number:'1.0-0' }}</strong>
+              </div>
+              <div class="ia-kpi-card">
+                <span class="ia-kpi-label">Imágenes generadas</span>
+                <strong class="ia-kpi-value">{{ usage.totals.image_generations }}</strong>
+              </div>
+            </div>
+
+            <div class="admin-mid-row">
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <h3 class="admin-card-title">Consumo por modo</h3>
+                </div>
+                <div class="table-wrap">
+                  <table class="fichajes-table">
+                    <thead>
+                      <tr>
+                        <th>Modo</th>
+                        <th>Requests</th>
+                        <th>Tokens</th>
+                        <th>Imágenes</th>
+                        <th>Coste</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of usage.by_mode; track row.mode) {
+                        <tr>
+                          <td>{{ iaModeLabel(row.mode) }}</td>
+                          <td>{{ row.requests }}</td>
+                          <td>{{ row.total_tokens | number:'1.0-0' }}</td>
+                          <td>{{ row.image_generations }}</td>
+                          <td>{{ row.estimated_cost_eur | currency:'EUR':'symbol':'1.2-4':'es' }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="empty-row">Sin datos en el periodo seleccionado.</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <h3 class="admin-card-title">Top usuarios por consumo</h3>
+                </div>
+                <div class="table-wrap">
+                  <table class="fichajes-table">
+                    <thead>
+                      <tr>
+                        <th>Usuario</th>
+                        <th>Requests</th>
+                        <th>Tokens</th>
+                        <th>Coste</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of usage.top_users; track row.user_id) {
+                        <tr>
+                          <td>{{ row.nombre_usuario }}</td>
+                          <td>{{ row.requests }}</td>
+                          <td>{{ row.total_tokens | number:'1.0-0' }}</td>
+                          <td>{{ row.estimated_cost_eur | currency:'EUR':'symbol':'1.2-4':'es' }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="4" class="empty-row">Sin usuarios con consumo en el periodo.</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <h3 class="admin-card-title">Evolución diaria</h3>
+                <span class="admin-card-badge">{{ usage.period_days }} días</span>
+              </div>
+              <div class="table-wrap">
+                <table class="fichajes-table">
+                  <thead>
+                    <tr>
+                      <th>Día</th>
+                      <th>Requests</th>
+                      <th>Tokens</th>
+                      <th>Imágenes</th>
+                      <th>Coste</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of usage.daily; track row.day) {
+                      <tr>
+                        <td>{{ row.day | date:'dd/MM/yyyy' }}</td>
+                        <td>{{ row.requests }}</td>
+                        <td>{{ row.total_tokens | number:'1.0-0' }}</td>
+                        <td>{{ row.image_generations }}</td>
+                        <td>{{ row.estimated_cost_eur | currency:'EUR':'symbol':'1.2-4':'es' }}</td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="5" class="empty-row">Sin actividad de IA en el periodo seleccionado.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          }
+        </div>
+        } <!-- /tab uso ia -->
 
         <!-- ─── TAB: AUDITORÍA ────────────────────────────────────── -->
         @if (activeTab() === 'auditoria') {

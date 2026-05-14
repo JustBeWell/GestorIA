@@ -52,4 +52,22 @@ export class GiaService {
   downloadUrl(path: string): string {
     return `${this.apiUrl}${path}`;
   }
+
+  downloadFile(file_id: string, filename: string): void {
+    this.http.get(`${this.apiUrl}/ai/gia/files/${file_id}/download`, {
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error descargando archivo:', err);
+      }
+    });
+  }
 }

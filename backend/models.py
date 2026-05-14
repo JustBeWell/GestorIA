@@ -469,6 +469,59 @@ class AdminClientesGlobal(BaseModel):
 	activos: int
 
 
+class AdminIaUsageTotals(BaseModel):
+	requests: int
+	prompt_tokens: int
+	completion_tokens: int
+	total_tokens: int
+	image_generations: int
+	estimated_cost_eur: float
+	avg_tokens_per_request: float
+
+
+class AdminIaUsageModePoint(BaseModel):
+	mode: str
+	requests: int
+	prompt_tokens: int
+	completion_tokens: int
+	total_tokens: int
+	image_generations: int
+	estimated_cost_eur: float
+
+
+class AdminIaUsageDailyPoint(BaseModel):
+	day: date
+	requests: int
+	total_tokens: int
+	image_generations: int
+	estimated_cost_eur: float
+
+
+class AdminIaUsageUserPoint(BaseModel):
+	user_id: str
+	nombre_usuario: str
+	requests: int
+	total_tokens: int
+	image_generations: int
+	estimated_cost_eur: float
+
+
+class AdminIaPricing(BaseModel):
+	input_token_per_1k_eur: float
+	output_token_per_1k_eur: float
+	image_generation_eur: float
+
+
+class AdminIaUsageResponse(BaseModel):
+	period_days: int
+	currency: str
+	pricing: AdminIaPricing
+	totals: AdminIaUsageTotals
+	by_mode: list[AdminIaUsageModePoint]
+	daily: list[AdminIaUsageDailyPoint]
+	top_users: list[AdminIaUsageUserPoint]
+
+
 class AdminResumenResponse(BaseModel):
 	empleados: list[AdminEmpleadoResumen]
 	trabajos: AdminTrabajosGlobal

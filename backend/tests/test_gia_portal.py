@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from models import TokenData
+from services.gia_service import GiaService
 
 
 client = TestClient(app)
@@ -78,3 +79,32 @@ class TestGiaPortal:
 
         assert response.status_code == 200
         assert response.json()["assistant_message"]["content"] == "Documento listo"
+
+    def test_pdf_mode_generates_from_previous_report_reference(self):
+        assert GiaService._effective_generation_mode(
+            "Generame un PDF a partir de ese informe",
+            "pdf",
+            [],
+        ) == "pdf"
+
+    def test_pdf_mode_does_not_generate_for_follow_up_question(self):
+        assert GiaService._effective_generation_mode(
+            "Sobre que te he preguntado antes",
+            "pdf",
+            [],
+        ) == "respuesta"
+
+    def test_pdf_source_context_uses_previous_assistant_report(self):
+        context = GiaService._pdf_source_context(
+            [
+                {"role": "user", "content": "Dame un analisis semanal"},
+                {
+                    "role": "assistant",
+                    "content": "Informe semanal: Angel trabajo 2 dias y Miguel 6 dias.",
+                },
+                {"role": "user", "content": "Generame un PDF a partir de ese informe"},
+            ]
+        )
+
+        assert "Fuente conversacional prioritaria" in context
+        assert "Angel trabajo 2 dias" in context

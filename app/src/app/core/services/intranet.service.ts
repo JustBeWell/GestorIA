@@ -8,6 +8,7 @@ import {
   AdminCorreccionRequest,
   AdminCorreccionResponse,
   AdminFichajesResponse,
+  AdminIaUsageResponse,
   AdminResumenResponse,
   CalendarioFiscalResponse,
   CalendarioFiscalVencimiento,
@@ -424,5 +425,9 @@ export class IntranetService {
       `${this.apiUrl}/intranet/admin/cierre/pdf?year=${year}&month=${month}`,
       { responseType: 'blob' },
     );
+  }
+
+  getAdminIaUsage(days = 30): Observable<AdminIaUsageResponse> {
+    return this.http.get<AdminIaUsageResponse>(`${this.apiUrl}/intranet/admin/ia/usage?days=${days}`);
   }
 }

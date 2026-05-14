@@ -9,6 +9,7 @@ import {
   AdminChartsResponse,
   AdminEmpleadoResumen,
   AdminFichajesResponse,
+  AdminIaUsageResponse,
   AdminResumenResponse,
   AuditoriaEventoItem,
   AuditoriaResponse,
@@ -52,7 +53,13 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   protected readonly charts = signal<AdminChartsResponse | null>(null);
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────
-  protected readonly activeTab = signal<'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'auditoria'>('resumen');
+  protected readonly activeTab = signal<'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'ia' | 'auditoria'>('resumen');
+
+  // ── Tab IA ───────────────────────────────────────────────────────────────
+  protected readonly iaUsageLoading = signal(false);
+  protected readonly iaUsageError = signal('');
+  protected readonly iaUsage = signal<AdminIaUsageResponse | null>(null);
+  protected readonly iaPeriodDays = signal(30);
 
   // ── Auditoría signals ────────────────────────────────────────
   protected readonly auditoriaEventos = signal<AuditoriaEventoItem[]>([]);
@@ -351,7 +358,7 @@ export class AdminPageComponent implements OnInit, OnDestroy {
   }
 
   // ─── Tab navigation ──────────────────────────────────────────────
-  protected switchTab(tab: 'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'auditoria'): void {
+  protected switchTab(tab: 'resumen' | 'fichajes' | 'clientes' | 'trabajos' | 'pagos' | 'ia' | 'auditoria'): void {
     this.activeTab.set(tab);
     if (tab === 'fichajes' && !this.fichajes) {
       this.loadFichajes();
@@ -365,9 +372,37 @@ export class AdminPageComponent implements OnInit, OnDestroy {
     if (tab === 'pagos' && !this.adminPagosFacturas.length) {
       this.loadAdminPagos();
     }
+    if (tab === 'ia' && !this.iaUsage()) {
+      this.loadIaUsage();
+    }
     if (tab === 'auditoria' && !this.auditoriaEventos().length) {
       this.loadAuditoria();
     }
+  }
+
+  protected loadIaUsage(days = this.iaPeriodDays()): void {
+    this.iaUsageLoading.set(true);
+    this.iaUsageError.set('');
+    this.iaPeriodDays.set(days);
+    this.intranetService.getAdminIaUsage(days).pipe(
+      finalize(() => this.iaUsageLoading.set(false)),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (res) => this.iaUsage.set(res),
+      error: (err: HttpErrorResponse) => {
+        const detail = err?.error?.detail;
+        this.iaUsageError.set(typeof detail === 'string' ? detail : 'No se pudo cargar el uso de IA.');
+      },
+    });
+  }
+
+  protected iaModeLabel(mode: string): string {
+    const labels: Record<string, string> = {
+      respuesta: 'Respuesta',
+      pdf: 'Generación PDF',
+      imagen: 'Generación imagen',
+    };
+    return labels[mode] ?? mode;
   }
 
   // ─── Auditoría tab ────────────────────────────────────────────

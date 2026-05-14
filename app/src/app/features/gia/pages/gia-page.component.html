@@ -127,7 +127,7 @@
                   @if (message.files.length) {
                     <div class="gia-message__files">
                       @for (file of message.files; track file.id) {
-                        <a [href]="downloadUrl(file)" target="_blank" rel="noopener" class="gia-file-chip">
+                        <button type="button" (click)="downloadFile(file)" class="gia-file-chip" title="Descargar {{file.nombre_original}}">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             @switch (fileIconType(file.mime_type)) {
                               @case ('pdf') {
@@ -172,7 +172,7 @@
                             }
                           </svg>
                           {{ file.nombre_original }}
-                        </a>
+                        </button>
                       }
                     </div>
                   }
@@ -341,7 +341,7 @@
           </header>
           <div class="gia-assets__list">
             @for (file of userFiles(); track file.id) {
-              <a class="gia-asset" [href]="downloadUrl(file)" target="_blank" rel="noopener">
+              <button type="button" (click)="downloadFile(file)" class="gia-asset" title="Descargar {{file.nombre_original}}">
                 <div class="gia-asset__thumb" [ngClass]="'gia-asset__thumb--' + fileIconType(file.mime_type)">
                   @if (isImage(file)) {
                     <img [src]="downloadUrl(file)" [alt]="file.nombre_original" />
@@ -390,7 +390,7 @@
                   <strong>{{ file.nombre_original }}</strong>
                   <small>{{ fileSize(file.tamano_bytes) }}</small>
                 </div>
-              </a>
+              </button>
             } @empty {
               <p class="gia-muted">Los archivos que adjuntes aparecerán aquí.</p>
             }

@@ -250,6 +250,59 @@ export interface AdminChartsResponse {
   horas: HorasMensualesPoint[];
 }
 
+export interface AdminIaPricing {
+  input_token_per_1k_eur: number;
+  output_token_per_1k_eur: number;
+  image_generation_eur: number;
+}
+
+export interface AdminIaUsageTotals {
+  requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  image_generations: number;
+  estimated_cost_eur: number;
+  avg_tokens_per_request: number;
+}
+
+export interface AdminIaUsageModePoint {
+  mode: string;
+  requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  image_generations: number;
+  estimated_cost_eur: number;
+}
+
+export interface AdminIaUsageDailyPoint {
+  day: string;
+  requests: number;
+  total_tokens: number;
+  image_generations: number;
+  estimated_cost_eur: number;
+}
+
+export interface AdminIaUsageUserPoint {
+  user_id: string;
+  nombre_usuario: string;
+  requests: number;
+  total_tokens: number;
+  image_generations: number;
+  estimated_cost_eur: number;
+}
+
+export interface AdminIaUsageResponse {
+  period_days: number;
+  currency: 'EUR';
+  pricing: AdminIaPricing;
+  totals: AdminIaUsageTotals;
+  by_mode: AdminIaUsageModePoint[];
+  daily: AdminIaUsageDailyPoint[];
+  top_users: AdminIaUsageUserPoint[];
+}
+
 export interface AdminFichajeItem {
   fichaje_id: string;
   empleado_id: string;

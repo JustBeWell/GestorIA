@@ -29,6 +29,14 @@ TEXT_MIME_TYPES = {
     "application/vnd.ms-excel",
 }
 IMAGE_MIME_PREFIXES = ("image/",)
+MEMORY_REFRESH_EVERY_MESSAGES = 6
+MAX_MEMORY_CHARS = 4500
+MEMORY_LLM_COMPRESSION_TRIGGER = 2600
+MEMORY_LLM_TARGET_CHARS = 1600
+
+GIA_INPUT_TOKEN_COST_EUR_PER_1K = 0.00014
+GIA_OUTPUT_TOKEN_COST_EUR_PER_1K = 0.00056
+GIA_IMAGE_GENERATION_COST_EUR = 0.04
 
 
 class GiaService:
@@ -41,7 +49,7 @@ class GiaService:
                     """
                     INSERT INTO gia_conversaciones (user_id, titulo)
                     VALUES (%s, COALESCE(NULLIF(%s, ''), 'Nueva conversación'))
-                    RETURNING id::text, titulo, created_at, updated_at
+                    RETURNING id::text, titulo, memoria_resumen, created_at, updated_at
                     """,
                     (user_id, title),
                 )
@@ -122,10 +130,20 @@ class GiaService:
                 ]
 
                 GiaService._touch_conversation(cursor, conversation_id, message)
-                history = GiaService._get_messages(cursor, conversation_id, limit=16)
+                history = GiaService._get_messages(cursor, conversation_id, limit=40)
+                conversation_files = GiaService._get_files_for_context(cursor, conversation_id)
                 connection.commit()
 
-        assistant_text, generated_image = GiaService._run_openai(message, history, attachments, mode)
+            effective_mode = GiaService._effective_generation_mode(message, mode, attachments)
+
+            assistant_text, generated_image, usage = GiaService._run_openai(
+                message,
+                history,
+                attachments,
+                effective_mode,
+                conversation_files,
+                conversation.get("memoria_resumen") or "",
+            )
 
         generated_files: list[dict] = []
         with db_connection() as connection:
@@ -135,12 +153,18 @@ class GiaService:
                     conversation_id,
                     "assistant",
                     assistant_text,
-                    {"mode": mode},
+                    {
+                        "mode": effective_mode,
+                        "requested_mode": mode,
+                        "usage": usage,
+                    },
                 )
-                if mode == "pdf":
+                # Solo generar PDF si no hay marca de "No hay datos suficientes"
+                if effective_mode == "pdf" and not GiaService._is_pdf_failure_answer(assistant_text):
                     generated_files.append(
                         GiaService._create_pdf(cursor, conversation_id, assistant_message["id"], user_id, assistant_text)
                     )
+                # Solo generar imagen si realmente se generó (no es None) y no hay marca de fallo
                 if generated_image:
                     generated_files.append(
                         GiaService._store_generated_image(
@@ -153,6 +177,8 @@ class GiaService:
                     )
                 GiaService._touch_conversation(cursor, conversation_id, message)
                 summary = GiaService._get_conversation_summary(cursor, conversation_id)
+                if GiaService._should_refresh_memory(summary.get("message_count"), conversation.get("memoria_resumen")):
+                    GiaService._refresh_conversation_memory(cursor, conversation_id)
                 user_message["files"] = GiaService._files_for_message(cursor, user_message["id"])
                 assistant_message["files"] = GiaService._files_for_message(cursor, assistant_message["id"])
                 connection.commit()
@@ -163,6 +189,126 @@ class GiaService:
             "assistant_message": assistant_message,
             "generated_files": generated_files,
         }
+
+    @staticmethod
+    def _effective_generation_mode(message: str, requested_mode: str, attachments: list[dict]) -> str:
+        if requested_mode != "pdf":
+            return requested_mode
+        if GiaService._is_pdf_generation_request(message, bool(attachments)):
+            return "pdf"
+        return "respuesta"
+
+    @staticmethod
+    def _is_pdf_generation_request(message: str, has_attachments: bool = False) -> bool:
+        text = " ".join((message or "").lower().split())
+        if not text:
+            return False
+
+        explicit_pdf_terms = (
+            "pdf",
+            "documento",
+            "informe",
+            "reporte",
+            "entregable",
+            "memoria",
+            "dossier",
+        )
+        generation_verbs = (
+            "genera",
+            "generame",
+            "genérame",
+            "generar",
+            "crea",
+            "crear",
+            "redacta",
+            "redactar",
+            "exporta",
+            "exportar",
+            "convierte",
+            "convertir",
+            "prepara",
+            "preparar",
+            "elabora",
+            "elaborar",
+            "haz",
+            "hacer",
+            "dame",
+            "necesito",
+        )
+        reference_terms = (
+            "ese informe",
+            "este informe",
+            "el informe",
+            "lo anterior",
+            "esa información",
+            "esta información",
+            "esa informacion",
+            "esta informacion",
+            "a partir de eso",
+            "a partir de ese",
+            "a partir de esta",
+        )
+        meta_questions = (
+            "sobre que",
+            "sobre qué",
+            "qué te he preguntado",
+            "que te he preguntado",
+            "por que",
+            "por qué",
+            "porque me has dicho",
+            "por qué me has dicho",
+            "si lo has generado",
+        )
+
+        if any(term in text for term in meta_questions) and not any(term in text for term in explicit_pdf_terms):
+            return False
+        if any(term in text for term in reference_terms) and any(term in text for term in generation_verbs + ("pdf",)):
+            return True
+        if any(term in text for term in explicit_pdf_terms) and any(term in text for term in generation_verbs):
+            return True
+        if has_attachments and any(term in text for term in explicit_pdf_terms + generation_verbs):
+            return True
+        return len(text) >= 80 and any(term in text for term in ("analisis", "análisis", "resumen", "detalle", "detallado"))
+
+    @staticmethod
+    def _is_pdf_failure_answer(answer: str) -> bool:
+        normalized = " ".join((answer or "").lower().split())
+        return (
+            "no dispongo de datos suficientes" in normalized
+            or "no hay datos suficientes" in normalized
+            or "no_puede_generar" in normalized
+            or "no_hay_datos_suficientes" in normalized
+        )
+
+    @staticmethod
+    def _history_without_current_user_message(history: list[dict], current_message: str) -> list[dict]:
+        if not history:
+            return []
+        last = history[-1]
+        if last.get("role") == "user" and (last.get("content") or "") == current_message:
+            return history[:-1]
+        return history
+
+    @staticmethod
+    def _pdf_source_context(history: list[dict]) -> str:
+        source_blocks: list[str] = []
+        for item in reversed(history):
+            if item.get("role") != "assistant":
+                continue
+            content = (item.get("content") or "").strip()
+            if not content or GiaService._is_pdf_failure_answer(content):
+                continue
+            source_blocks.append(content[:2500])
+            if len(source_blocks) >= 3:
+                break
+        if not source_blocks:
+            return ""
+        source_text = "\n\n---\n\n".join(reversed(source_blocks))
+        return (
+            "Fuente conversacional prioritaria para generar el PDF. "
+            "Usa estos datos antes de pedir más información y no los contradigas:\n\n"
+            f"{source_text}"
+        )[:8000]
 
     @staticmethod
     def delete_conversation(user_id: str, conversation_id: str) -> bool:
@@ -211,7 +357,14 @@ class GiaService:
         return dict(row) if row else None
 
     @staticmethod
-    def _run_openai(message: str, history: list[dict], attachments: list[dict], mode: str) -> tuple[str, bytes | None]:
+    def _run_openai(
+        message: str,
+        history: list[dict],
+        attachments: list[dict],
+        mode: str,
+        conversation_files: list[dict] | None = None,
+        conversation_memory: str = "",
+    ) -> tuple[str, bytes | None, dict]:
         if not settings.openai_api_key:
             raise HTTPException(status_code=503, detail="OPENAI_API_KEY no está configurada")
 
@@ -221,13 +374,42 @@ class GiaService:
             raise HTTPException(status_code=503, detail="Dependencia OpenAI no instalada") from exc
 
         client = OpenAI(api_key=settings.openai_api_key)
-        context = GiaService._attachment_context(attachments)
+        context = GiaService._attachment_context(attachments, conversation_files or [])
+        prompt_history = GiaService._history_without_current_user_message(history, message)
+        pdf_source_context = GiaService._pdf_source_context(prompt_history) if mode == "pdf" else ""
         today = date.today().isoformat()
-        mode_hint = {
-            "respuesta": "Responde normalmente en el chat.",
-            "pdf": "Redacta el contenido final como documento profesional listo para convertir a PDF.",
-            "imagen": "Redacta una breve descripción de la imagen generada y confirma el archivo adjunto.",
-        }[mode]
+        usage = {
+            "model": settings.openai_gia_model,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "chat_calls": 0,
+            "image_generations": 0,
+            "estimated_cost_eur": 0.0,
+        }
+        
+        # Sistema de prompts específicos por modo
+        if mode == "pdf":
+            mode_instruction = (
+                "Redacta un documento profesional completo y estructurado listo para convertir a PDF. "
+                "El documento debe tener: introducción, secciones claramente tituladas, datos y análisis detallado, "
+                "y conclusiones. Usa párrafos separados para cada concepto. "
+                "Los mensajes previos de esta conversación, incluidas respuestas anteriores del asistente y "
+                "resultados de herramientas, son datos fuente válidos. Si el usuario pide un PDF de 'ese informe', "
+                "'lo anterior' o una referencia similar, usa el último informe o análisis relevante ya presente "
+                "en la conversación. "
+                "IMPORTANTE: Si no encuentras datos suficientes o concretos para generar un documento real, "
+                "responde ÚNICAMENTE: 'NO_HAY_DATOS_SUFICIENTES'. No intentes generar nada si faltan datos."
+            )
+        elif mode == "imagen":
+            mode_instruction = (
+                "Primero analiza si hay suficientes datos contextuales para generar una imagen significativa. "
+                "Si SÍ hay datos (clientes, trabajos, métricas, etc.), proporciona una descripción detallada de la imagen. "
+                "IMPORTANTE: Si NO hay datos suficientes o la solicitud es vaga, responde ÚNICAMENTE: 'NO_PUEDE_GENERAR'. "
+                "Nunca inventes datos. Las imágenes deben basarse únicamente en información real del contexto."
+            )
+        else:
+            mode_instruction = "Responde normalmente en el chat, ayudando al usuario."
 
         messages: list[dict] = [
             {
@@ -236,16 +418,51 @@ class GiaService:
                     "Eres GIA, el portal de IA de GestorIA. Ayudas a una gestoría española con "
                     "consultas internas, análisis de archivos, redacción documental fiscal/laboral "
                     "y generación de entregables. Responde siempre en español, no inventes datos "
-                    f"y usa la fecha actual {today}. {mode_hint}"
+                    f"y usa la fecha actual {today}. {mode_instruction}"
                 ),
             }
         ]
-        for item in history[-12:]:
+        if conversation_memory.strip():
+            messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "Memoria persistente de la conversación (hechos, decisiones y contexto acumulado):\n"
+                        + conversation_memory[:MAX_MEMORY_CHARS]
+                    ),
+                }
+            )
+        if pdf_source_context:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": pdf_source_context,
+                }
+            )
+        if len(prompt_history) > 20:
+            older_history = prompt_history[:-20][-10:]
+            memory_lines = [
+                f"- {it['role']}: {(it.get('content') or '').strip().replace(chr(10), ' ')[:180]}"
+                for it in older_history
+                if (it.get("content") or "").strip()
+            ]
+            if memory_lines:
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": (
+                            "Memoria resumida de esta conversación (turnos anteriores):\n"
+                            + "\n".join(memory_lines)
+                        ),
+                    }
+                )
+
+        for item in prompt_history[-20:]:
             if item["role"] in {"user", "assistant"}:
                 messages.append({"role": item["role"], "content": item["content"]})
 
         user_content: str | list[dict] = message + context
-        image_parts = GiaService._image_parts(attachments)
+        image_parts = GiaService._image_parts(conversation_files or attachments)
         if image_parts:
             user_content = [{"type": "text", "text": message + context}, *image_parts]
         messages.append({"role": "user", "content": user_content})
@@ -260,6 +477,7 @@ class GiaService:
                     max_tokens=1800,
                     temperature=0.25,
                 )
+                GiaService._accumulate_chat_usage(usage, response)
                 choice = response.choices[0]
                 if choice.finish_reason != "tool_calls":
                     answer = choice.message.content or ""
@@ -277,14 +495,37 @@ class GiaService:
                     max_tokens=1800,
                     temperature=0.25,
                 )
+                GiaService._accumulate_chat_usage(usage, response)
                 answer = response.choices[0].message.content or ""
 
+            # Validación: si modo es pdf o imagen y la IA indica "NO_HAY_DATOS_SUFICIENTES" o "NO_PUEDE_GENERAR"
+            # retornar respuesta con indicación de no generar archivos
+            is_no_data_for_pdf = mode == "pdf" and "NO_HAY_DATOS_SUFICIENTES" in answer.upper()
+            is_no_data_for_image = mode == "imagen" and "NO_PUEDE_GENERAR" in answer.upper()
+            
             generated_image = None
-            if mode == "imagen":
-                generated_image = GiaService._generate_image(client, message + context)
-                if not answer.strip():
-                    answer = "He generado la imagen solicitada y la he adjuntado a esta conversación."
-            return answer, generated_image
+            if mode == "imagen" and not is_no_data_for_image:
+                # Para modo imagen: generar un prompt mejorado basado en datos contextuales
+                image_prompt = GiaService._generate_image_prompt(client, message, context, answer)
+                if image_prompt and image_prompt != "NO_PUEDE_GENERAR":
+                    generated_image = GiaService._generate_image(client, image_prompt)
+                    if generated_image:
+                        usage["image_generations"] = int(usage.get("image_generations") or 0) + 1
+                    if not answer.strip():
+                        answer = "He generado la imagen solicitada basada en los datos disponibles y la he adjuntado a esta conversación."
+                else:
+                    is_no_data_for_image = True
+            
+            if is_no_data_for_image:
+                # Respuesta amigable si no puede generar
+                answer = "No tengo suficientes datos contextuales para generar una imagen significativa. Por favor, proporciona más información específica sobre qué deseas visualizar."
+            
+            # Para PDF: si no hay datos, usar la respuesta como indicador
+            if is_no_data_for_pdf:
+                answer = "No dispongo de datos suficientes para generar un documento profesional. Por favor, proporciona más información o consulta datos específicos primero."
+            
+            usage["estimated_cost_eur"] = GiaService._estimate_usage_cost_eur(usage)
+            return answer, generated_image, usage
         except HTTPException:
             raise
         except Exception as exc:
@@ -295,7 +536,32 @@ class GiaService:
             ) from exc
 
     @staticmethod
-    def _generate_image(client, prompt: str) -> bytes:
+    def _accumulate_chat_usage(usage: dict, response) -> None:
+        payload = getattr(response, "usage", None)
+        if not payload:
+            return
+        prompt_tokens = int(getattr(payload, "prompt_tokens", 0) or 0)
+        completion_tokens = int(getattr(payload, "completion_tokens", 0) or 0)
+        total_tokens = int(getattr(payload, "total_tokens", 0) or 0)
+        usage["prompt_tokens"] = int(usage.get("prompt_tokens") or 0) + prompt_tokens
+        usage["completion_tokens"] = int(usage.get("completion_tokens") or 0) + completion_tokens
+        usage["total_tokens"] = int(usage.get("total_tokens") or 0) + total_tokens
+        usage["chat_calls"] = int(usage.get("chat_calls") or 0) + 1
+
+    @staticmethod
+    def _estimate_usage_cost_eur(usage: dict) -> float:
+        prompt_tokens = float(usage.get("prompt_tokens") or 0)
+        completion_tokens = float(usage.get("completion_tokens") or 0)
+        image_generations = float(usage.get("image_generations") or 0)
+        cost = (
+            (prompt_tokens / 1000.0) * GIA_INPUT_TOKEN_COST_EUR_PER_1K
+            + (completion_tokens / 1000.0) * GIA_OUTPUT_TOKEN_COST_EUR_PER_1K
+            + image_generations * GIA_IMAGE_GENERATION_COST_EUR
+        )
+        return round(cost, 6)
+
+    @staticmethod
+    def _generate_image(client, prompt: str) -> bytes | None:
         model = settings.openai_image_model
         if model.startswith("gpt-4") or model.startswith("o1") or model.startswith("o3"):
             raise HTTPException(
@@ -306,6 +572,11 @@ class GiaService:
                 ),
             )
 
+        # Validar que el prompt indique que hay datos suficientes
+        # Si contiene marcas de "no puede generar", retornar None
+        if "NO_PUEDE_GENERAR" in prompt.upper() or "no tengo suficientes datos" in prompt.lower():
+            return None
+
         try:
             response = client.images.generate(
                 model=model,
@@ -315,14 +586,14 @@ class GiaService:
             )
         except Exception as exc:
             logger.exception("Fallo en client.images.generate (modelo=%s)", model)
-            raise HTTPException(
-                status_code=502,
-                detail=f"OpenAI rechazó la generación de imagen: {exc}",
-            ) from exc
+            # Retornar None en lugar de lanzar excepción para no interrumpir el flujo
+            logger.warning("No se pudo generar imagen, continuando sin ella")
+            return None
 
         data = getattr(response, "data", None) or []
         if not data:
-            raise HTTPException(status_code=502, detail="OpenAI no devolvió ninguna imagen")
+            logger.warning("OpenAI no devolvió ninguna imagen")
+            return None
 
         item = data[0]
         b64 = getattr(item, "b64_json", None)
@@ -331,9 +602,7 @@ class GiaService:
                 return base64.b64decode(b64)
             except Exception as exc:
                 logger.exception("b64_json inválido en respuesta de OpenAI")
-                raise HTTPException(
-                    status_code=502, detail="Respuesta de imagen corrupta"
-                ) from exc
+                return None
 
         url = getattr(item, "url", None)
         if url:
@@ -342,12 +611,59 @@ class GiaService:
                     return resp.read()
             except Exception as exc:
                 logger.exception("No se pudo descargar la imagen desde %s", url)
-                raise HTTPException(
-                    status_code=502,
-                    detail="No se pudo descargar la imagen generada",
-                ) from exc
+                return None
 
-        raise HTTPException(status_code=502, detail="OpenAI no devolvió una imagen utilizable")
+        logger.warning("OpenAI no devolvió una imagen utilizable")
+        return None
+
+    @staticmethod
+    def _generate_image_prompt(client, user_message: str, context: str, initial_response: str) -> str | None:
+        """
+        Genera un prompt mejorado para DALL-E basado en la respuesta inicial y contexto.
+        Solo genera si hay datos suficientes indicados en la respuesta.
+        """
+        # Si la respuesta inicial ya indica que no hay datos, retornar eso
+        if "NO_PUEDE_GENERAR" in initial_response.upper():
+            return "NO_PUEDE_GENERAR"
+        
+        # Generar un prompt visual mejorado basado en los datos del contexto
+        try:
+            refine_messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "Eres un especialista en prompts para generación de imágenes. "
+                        "Tu tarea es analizar la respuesta anterior y generar un prompt detallado, "
+                        "visual y profesional para DALL-E 3 que transmita la información clave de manera gráfica. "
+                        "El prompt debe basarse ÚNICAMENTE en datos mencionados en la respuesta y el contexto, "
+                        "sin inventar nada. Si no hay datos suficientes, responde: NO_PUEDE_GENERAR"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Solicitud del usuario: {user_message}\n\n"
+                        f"Contexto disponible: {context[:2000]}\n\n"
+                        f"Respuesta generada:\n{initial_response}\n\n"
+                        "Genera un prompt detallado para crear una imagen que ilustre esta información. "
+                        "El prompt debe ser visual, profesional y específico (máximo 400 caracteres). "
+                        "Si no hay datos suficientes para hacer una imagen meaningful, responde: NO_PUEDE_GENERAR"
+                    )
+                }
+            ]
+            
+            response = client.chat.completions.create(
+                model=settings.openai_gia_model,
+                messages=refine_messages,
+                max_tokens=500,
+                temperature=0.7,
+            )
+            
+            image_prompt = response.choices[0].message.content or ""
+            return image_prompt.strip() if image_prompt.strip() else None
+        except Exception as exc:
+            logger.exception("Error generando prompt para imagen: %s", exc)
+            return None
 
     @staticmethod
     def _store_upload(cursor, conversation_id: str, message_id: str, user_id: str, upload: UploadFile) -> dict:
@@ -400,7 +716,7 @@ class GiaService:
     @staticmethod
     def _create_pdf(cursor, conversation_id: str, message_id: str, user_id: str, content: str) -> dict:
         try:
-            from reportlab.lib.enums import TA_LEFT
+            from reportlab.lib.enums import TA_LEFT, TA_CENTER
             from reportlab.lib.pagesizes import A4
             from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
             from reportlab.lib.units import cm
@@ -422,53 +738,91 @@ class GiaService:
         path = storage_dir / stored_name
 
         styles = getSampleStyleSheet()
+        
+        # Estilos profesionales para PDF
         title_style = ParagraphStyle(
             "GiaTitle",
             parent=styles["Heading1"],
             fontName="Helvetica-Bold",
-            fontSize=18,
-            leading=22,
-            spaceAfter=4,
+            fontSize=16,
+            leading=20,
+            spaceAfter=6,
             textColor="#1a3528",
+            alignment=TA_CENTER,
+        )
+        subtitle_style = ParagraphStyle(
+            "GiaSubtitle",
+            parent=styles["Heading2"],
+            fontName="Helvetica-Bold",
+            fontSize=12,
+            leading=16,
+            spaceAfter=10,
+            textColor="#2d5a42",
+            spaceBefore=12,
         )
         meta_style = ParagraphStyle(
             "GiaMeta",
             parent=styles["Normal"],
-            fontName="Helvetica",
-            fontSize=9,
-            leading=12,
-            textColor="#6b7280",
-            spaceAfter=12,
+            fontName="Helvetica-Oblique",
+            fontSize=8,
+            leading=11,
+            textColor="#7b8896",
+            spaceAfter=16,
+            alignment=TA_CENTER,
         )
         body_style = ParagraphStyle(
             "GiaBody",
             parent=styles["BodyText"],
             fontName="Helvetica",
-            fontSize=11,
-            leading=16,
+            fontSize=10,
+            leading=14,
             alignment=TA_LEFT,
-            spaceAfter=8,
+            spaceAfter=10,
         )
 
-        story = [
-            Paragraph("Documento generado por GIA", title_style),
-            Paragraph(f"Generado el {date.today().strftime('%d/%m/%Y')} · GestorIA", meta_style),
-            HRFlowable(width="100%", thickness=0.6, color="#dce8e0", spaceAfter=10),
-        ]
+        # Estructura profesional del PDF
+        story = []
+        
+        # Encabezado corporativo
+        story.append(Paragraph("GESTORIA", title_style))
+        story.append(Paragraph(f"Documento profesional generado por GIA · {date.today().strftime('%d/%m/%Y')}", meta_style))
+        story.append(HRFlowable(width="100%", thickness=1.2, color="#1a3528", spaceAfter=12))
 
+        # Contenido: procesar párrafos y aplicar estructura
         text = (content or "").strip() or "(Sin contenido)"
-        for raw in re.split(r"\n\s*\n", text):
-            paragraph = GiaService._html_escape(raw).replace("\n", "<br/>")
-            story.append(Paragraph(paragraph, body_style))
-            story.append(Spacer(1, 4))
+        
+        # Detectar títulos (líneas que podrían ser encabezados)
+        paragraphs = re.split(r"\n\s*\n", text)
+        for para_text in paragraphs:
+            para_text = para_text.strip()
+            if not para_text:
+                continue
+                
+            # Si es una línea corta (posible título/encabezado), usarla como título
+            if len(para_text) < 80 and not para_text.endswith(('.', ',')):
+                escaped = GiaService._html_escape(para_text)
+                story.append(Paragraph(escaped, subtitle_style))
+            else:
+                # Párrafos normales, mantener saltos de línea internos
+                escaped = GiaService._html_escape(para_text).replace("\n", "<br/>")
+                story.append(Paragraph(escaped, body_style))
+                story.append(Spacer(1, 4))
+
+        # Pie de página con información de confidencialidad
+        story.append(Spacer(1, 12))
+        story.append(HRFlowable(width="100%", thickness=0.6, color="#dce8e0", spaceAfter=6))
+        story.append(Paragraph(
+            "Documento confidencial generado por GestorIA · GIA. Uso exclusivo interno.",
+            meta_style
+        ))
 
         doc = SimpleDocTemplate(
             str(path),
             pagesize=A4,
             leftMargin=2 * cm,
             rightMargin=2 * cm,
-            topMargin=2 * cm,
-            bottomMargin=2 * cm,
+            topMargin=1.5 * cm,
+            bottomMargin=1.5 * cm,
             title="Documento GIA",
             author="GestorIA · GIA",
         )
@@ -567,26 +921,65 @@ class GiaService:
         return None
 
     @staticmethod
-    def _attachment_context(attachments: list[dict]) -> str:
-        chunks = []
-        for item in attachments:
-            if item.get("extracted_text"):
+    def _attachment_context(attachments: list[dict], conversation_files: list[dict]) -> str:
+        # Unificamos archivos nuevos + archivos ya existentes en la conversación.
+        merged: dict[str, dict] = {}
+        for item in (attachments or []):
+            if item.get("id"):
+                merged[item["id"]] = item
+        for item in (conversation_files or []):
+            if item.get("id"):
+                merged[item["id"]] = item
+
+        if not merged:
+            return ""
+
+        files = sorted(
+            merged.values(),
+            key=lambda x: x.get("created_at") or "",
+            reverse=True,
+        )
+
+        chunks: list[str] = []
+        catalog = []
+        for item in files[:25]:
+            kind = item.get("tipo", "upload")
+            catalog.append(f"- {item.get('nombre_original', 'archivo')} ({kind}, {item.get('mime_type', 'application/octet-stream')})")
+        if catalog:
+            chunks.append("\n\n[Memoria de archivos de la conversación]\n" + "\n".join(catalog))
+
+        total_chars = 0
+        for item in files:
+            text = (item.get("extracted_text") or "").strip()
+            if text:
+                excerpt = text[:5000]
+                total_chars += len(excerpt)
                 chunks.append(
-                    f"\n\n[Archivo: {item['nombre_original']}]\n{item['extracted_text'][:12000]}"
+                    f"\n\n[Archivo (memoria): {item.get('nombre_original', 'archivo')}]\n{excerpt}"
                 )
-            elif item["mime_type"].startswith("image/"):
-                chunks.append(f"\n\n[Imagen adjunta: {item['nombre_original']}]")
+            elif str(item.get("mime_type", "")).startswith("image/"):
+                chunks.append(f"\n\n[Imagen en memoria: {item.get('nombre_original', 'imagen')}]")
             else:
-                chunks.append(f"\n\n[Archivo adjunto sin texto extraíble: {item['nombre_original']}]")
+                chunks.append(
+                    f"\n\n[Archivo en memoria sin texto extraíble: {item.get('nombre_original', 'archivo')}]"
+                )
+            if total_chars >= 18000:
+                chunks.append("\n\n[Nota] Se ha truncado el contexto de archivos por límite de tamaño.")
+                break
+
         return "".join(chunks)
 
     @staticmethod
     def _image_parts(attachments: list[dict]) -> list[dict]:
         parts = []
-        for item in attachments:
-            if not item["mime_type"].startswith(IMAGE_MIME_PREFIXES):
+        for item in attachments[:6]:
+            if not str(item.get("mime_type", "")).startswith(IMAGE_MIME_PREFIXES):
+                continue
+            if not item.get("ruta_archivo"):
                 continue
             path = Path(item["ruta_archivo"])
+            if not path.exists():
+                continue
             if path.stat().st_size > 8 * 1024 * 1024:
                 continue
             encoded = base64.b64encode(path.read_bytes()).decode("ascii")
@@ -597,6 +990,28 @@ class GiaService:
         return parts
 
     @staticmethod
+    def _get_files_for_context(cursor, conversation_id: str) -> list[dict]:
+        cursor.execute(
+            """
+            SELECT
+                id::text,
+                nombre_original,
+                mime_type,
+                tamano_bytes,
+                tipo,
+                ruta_archivo,
+                extracted_text,
+                created_at
+            FROM gia_archivos
+            WHERE conversacion_id = %s
+            ORDER BY created_at DESC
+            LIMIT 25
+            """,
+            (conversation_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
     def _ensure_schema(cursor) -> None:
         cursor.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
         cursor.execute(
@@ -605,10 +1020,17 @@ class GiaService:
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 user_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
                 titulo VARCHAR(180) NOT NULL DEFAULT 'Nueva conversación',
+                memoria_resumen TEXT NOT NULL DEFAULT '',
                 archivada BOOLEAN NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
+            """
+        )
+        cursor.execute(
+            """
+            ALTER TABLE gia_conversaciones
+            ADD COLUMN IF NOT EXISTS memoria_resumen TEXT NOT NULL DEFAULT ''
             """
         )
         cursor.execute(
@@ -686,7 +1108,7 @@ class GiaService:
     def _get_owned_conversation(cursor, user_id: str, conversation_id: str) -> dict | None:
         cursor.execute(
             """
-            SELECT id::text, titulo, created_at, updated_at
+            SELECT id::text, titulo, memoria_resumen, created_at, updated_at
             FROM gia_conversaciones
             WHERE id = %s AND user_id = %s AND archivada = FALSE
             """,
@@ -798,6 +1220,121 @@ class GiaService:
         if data.get("last_message") and len(data["last_message"]) > 120:
             data["last_message"] = data["last_message"][:117] + "..."
         return data
+
+    @staticmethod
+    def _should_refresh_memory(message_count: int | None, existing_memory: str | None) -> bool:
+        total = int(message_count or 0)
+        if total <= 0:
+            return False
+        if not (existing_memory or "").strip():
+            return True
+        return total % MEMORY_REFRESH_EVERY_MESSAGES == 0
+
+    @staticmethod
+    def _refresh_conversation_memory(cursor, conversation_id: str) -> None:
+        cursor.execute(
+            """
+            SELECT memoria_resumen
+            FROM gia_conversaciones
+            WHERE id = %s
+            """,
+            (conversation_id,),
+        )
+        previous_row = cursor.fetchone()
+        previous_memory = (dict(previous_row).get("memoria_resumen") if previous_row else "") or ""
+
+        messages = GiaService._get_messages(cursor, conversation_id, limit=30)
+        files = GiaService._get_files_for_context(cursor, conversation_id)
+        memory = GiaService._build_conversation_memory(messages, files, previous_memory)
+        if len(memory) > MEMORY_LLM_COMPRESSION_TRIGGER:
+            memory = GiaService._compress_memory_with_llm(memory)
+        cursor.execute(
+            """
+            UPDATE gia_conversaciones
+            SET memoria_resumen = %s
+            WHERE id = %s
+            """,
+            (memory[:MAX_MEMORY_CHARS], conversation_id),
+        )
+
+    @staticmethod
+    def _build_conversation_memory(messages: list[dict], files: list[dict], previous_memory: str = "") -> str:
+        def compact(value: str, limit: int = 220) -> str:
+            text = " ".join((value or "").split())
+            return text[:limit].rstrip() + ("..." if len(text) > limit else "")
+
+        user_msgs = [compact(m.get("content", "")) for m in messages if m.get("role") == "user" and (m.get("content") or "").strip()]
+        assistant_msgs = [compact(m.get("content", "")) for m in messages if m.get("role") == "assistant" and (m.get("content") or "").strip()]
+
+        lines: list[str] = ["Objetivo y estado de la conversación:"]
+        if previous_memory.strip():
+            lines.append("Memoria previa consolidada:")
+            lines.append(f"- {compact(previous_memory, 600)}")
+
+        if user_msgs:
+            lines.append(f"- Última petición del usuario: {user_msgs[-1]}")
+            if len(user_msgs) > 1:
+                lines.append(f"- Petición previa relevante: {user_msgs[-2]}")
+        if assistant_msgs:
+            lines.append(f"- Última respuesta del asistente: {assistant_msgs[-1]}")
+
+        if files:
+            lines.append("Archivos conocidos en esta conversación:")
+            for f in files[:10]:
+                name = f.get("nombre_original", "archivo")
+                mime = f.get("mime_type", "application/octet-stream")
+                kind = f.get("tipo", "upload")
+                lines.append(f"- {name} ({kind}, {mime})")
+                extracted = (f.get("extracted_text") or "").strip()
+                if extracted:
+                    lines.append(f"  Extracto: {compact(extracted, 180)}")
+
+        if len(user_msgs) > 2:
+            lines.append("Contexto adicional reciente:")
+            for msg in user_msgs[-5:-1]:
+                lines.append(f"- {msg}")
+
+        return "\n".join(lines)[:MAX_MEMORY_CHARS]
+
+    @staticmethod
+    def _compress_memory_with_llm(memory: str) -> str:
+        if not settings.openai_api_key:
+            return memory[:MAX_MEMORY_CHARS]
+
+        try:
+            from openai import OpenAI
+        except ImportError:
+            return memory[:MAX_MEMORY_CHARS]
+
+        try:
+            client = OpenAI(api_key=settings.openai_api_key)
+            response = client.chat.completions.create(
+                model=settings.openai_gia_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Resume memoria conversacional para uso interno de un asistente. "
+                            "Devuelve solo texto en español, claro y factual, sin inventar. "
+                            "Estructura recomendada: objetivo, hechos clave, decisiones tomadas, "
+                            "archivos relevantes, pendientes. Máximo 1200 caracteres."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": memory[:MAX_MEMORY_CHARS],
+                    },
+                ],
+                max_tokens=500,
+                temperature=0.1,
+            )
+            compressed = (response.choices[0].message.content or "").strip()
+            if not compressed:
+                return memory[:MAX_MEMORY_CHARS]
+            return compressed[:MEMORY_LLM_TARGET_CHARS]
+        except Exception as exc:
+            logger.warning("No se pudo comprimir memoria con LLM: %s", exc)
+            return memory[:MAX_MEMORY_CHARS]
 
     @staticmethod
     def _file_item(row) -> dict:
