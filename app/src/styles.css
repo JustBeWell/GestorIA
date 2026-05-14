@@ -1,10 +1,55 @@
 /* You can add global styles to this file, and also import other style files */
 @import './app/shared/styles/intranet-pro-shell.css';
 
+/* ── Theme variables: light (default) ─────────────────────── */
+:root {
+  --clr-bg-page:           #f3f6f4;
+  --clr-bg-body:           #0c1a16;
+  --clr-bg-panel:          #ffffff;
+  --clr-bg-input:          #f9fafb;
+  --clr-bg-input-focus:    #ffffff;
+  --clr-border:            #dce8e0;
+  --clr-border-input:      #dbe3ea;
+  --clr-border-input-focus:#0d1f31;
+  --clr-text-primary:      #0f172a;
+  --clr-text-secondary:    #64748b;
+  --clr-text-muted:        #94a3b8;
+  --clr-text-label:        #5b6470;
+  --clr-text-panel-title:  #111827;
+  --clr-badge-bg:          #f3f2ef;
+  --clr-badge-text:        #5b6470;
+  --clr-breadcrumb:        #64748b;
+  --clr-breadcrumb-strong: #0f172a;
+  --clr-panel-row-border:  #f0efeb;
+}
+
+/* ── Theme variables: dark ────────────────────────────────── */
+html[data-theme="dark"] {
+  --clr-bg-page:           #0f1a15;
+  --clr-bg-body:           #060e0a;
+  --clr-bg-panel:          #162119;
+  --clr-bg-input:          #0f1a15;
+  --clr-bg-input-focus:    #1c2b22;
+  --clr-border:            #253d2e;
+  --clr-border-input:      #2a3d2e;
+  --clr-border-input-focus:#4a7c5e;
+  --clr-text-primary:      #e8f0e9;
+  --clr-text-secondary:    #8ea99a;
+  --clr-text-muted:        #5b7a6d;
+  --clr-text-label:        #8ea99a;
+  --clr-text-panel-title:  #dceade;
+  --clr-badge-bg:          #1e3328;
+  --clr-badge-text:        #94c9a8;
+  --clr-breadcrumb:        #8ea99a;
+  --clr-breadcrumb-strong: #e8f0e9;
+  --clr-panel-row-border:  #1f3027;
+}
+
 html,
 body {
 	margin: 0;
 	width: 100%;
 	height: 100%;
-	background: #0c1a16;
+	background: var(--clr-bg-body);
+	transition: background 0.25s ease;
 }

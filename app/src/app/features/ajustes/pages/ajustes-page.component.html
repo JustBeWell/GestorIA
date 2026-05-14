@@ -112,6 +112,49 @@
           </div>
         </section>
 
+        <section class="settings-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Apariencia</h2>
+              <p class="panel-description">Elige el tema visual de la aplicación.</p>
+            </div>
+          </div>
+
+          <div class="theme-options">
+            <button
+              type="button"
+              class="theme-card theme-card--light"
+              [class.active]="themeService.theme() === 'light'"
+              (click)="setTheme('light')"
+            >
+              <div class="theme-preview">
+                <div class="theme-preview__sidebar"></div>
+                <div class="theme-preview__content"></div>
+              </div>
+              <span>Modo claro</span>
+              @if (themeService.theme() === 'light') {
+                <span class="theme-check">✓</span>
+              }
+            </button>
+
+            <button
+              type="button"
+              class="theme-card theme-card--dark"
+              [class.active]="themeService.theme() === 'dark'"
+              (click)="setTheme('dark')"
+            >
+              <div class="theme-preview">
+                <div class="theme-preview__sidebar"></div>
+                <div class="theme-preview__content"></div>
+              </div>
+              <span>Modo oscuro</span>
+              @if (themeService.theme() === 'dark') {
+                <span class="theme-check">✓</span>
+              }
+            </button>
+          </div>
+        </section>
+
       </section>
     </section>
   </section>

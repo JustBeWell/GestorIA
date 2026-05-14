@@ -1,9 +1,10 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f3f6f4;
-  color: #0f172a;
+  background: var(--clr-bg-page);
+  color: var(--clr-text-primary);
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 :host,
@@ -16,7 +17,8 @@
   grid-template-columns: 240px 1fr;
   width: 100%;
   min-height: 100vh;
-  background: #f3f6f4;
+  background: var(--clr-bg-page);
+  transition: background 0.25s ease;
 }
 
 .sidebar {
@@ -224,11 +226,11 @@
 
 .breadcrumbs {
   font-size: 14px;
-  color: #64748b;
+  color: var(--clr-breadcrumb);
 }
 
 .breadcrumbs strong {
-  color: #0f172a;
+  color: var(--clr-breadcrumb-strong);
 }
 
 .icon-button {
@@ -280,9 +282,9 @@
 }
 
 .secondary-button {
-  background: #ffffff;
-  color: #0f172a;
-  border-color: #dce8e0;
+  background: var(--clr-bg-panel);
+  color: var(--clr-text-primary);
+  border-color: var(--clr-border);
 }
 
 .primary-button:disabled,
@@ -311,23 +313,24 @@
 
 .page-subtitle {
   margin: 0;
-  color: #64748b;
+  color: var(--clr-text-secondary);
   font-size: 14px;
 }
 
 .panel {
-  background: #ffffff;
+  background: var(--clr-bg-panel);
   border-radius: 16px;
-  border: 1px solid #dce8e0;
+  border: 1px solid var(--clr-border);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
   padding: 18px;
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
 .panel-title {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #94a3b8;
+  color: var(--clr-text-muted);
   margin: 0 0 10px;
 }
 
@@ -336,8 +339,9 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: #dce8e0;
-  color: #475569;
+  background: var(--clr-badge-bg);
+  color: var(--clr-badge-text);
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .badge.success {

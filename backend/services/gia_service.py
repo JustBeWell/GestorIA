@@ -136,7 +136,7 @@ class GiaService:
 
             effective_mode = GiaService._effective_generation_mode(message, mode, attachments)
 
-            assistant_text, generated_image, usage = GiaService._run_openai(
+            assistant_text, generated_image, usage, suggested_filename = GiaService._run_openai(
                 message,
                 history,
                 attachments,
@@ -146,34 +146,66 @@ class GiaService:
             )
 
         generated_files: list[dict] = []
+        assistant_text_to_store = assistant_text
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                
+                if effective_mode == "pdf" and not GiaService._is_pdf_failure_answer(assistant_text):
+                    generated_files.append(
+                        GiaService._create_pdf(cursor, conversation_id, None, user_id, assistant_text, suggested_filename)
+                    )
+                    assistant_text_to_store = "Documento PDF generado correctamente." if generated_files else "No se pudo generar el PDF." 
+                
+                elif effective_mode == "imagen" and generated_image:
+                    generated_files.append(
+                        GiaService._store_generated_image(
+                            cursor,
+                            conversation_id,
+                            None,
+                            user_id,
+                            generated_image,
+                            suggested_filename,
+                        )
+                    )
+                    assistant_text_to_store = "Imagen generada correctamente." if generated_files else "No se pudo generar la imagen."
+                
+                elif effective_mode == "pdf" and GiaService._is_pdf_failure_answer(assistant_text):
+                    assistant_text_to_store = assistant_text
+                
+                elif effective_mode == "imagen" and not generated_image:
+                    assistant_text_to_store = assistant_text
+                
+                else:
+                    assistant_text_to_store = assistant_text
+
+                
                 assistant_message = GiaService._insert_message(
                     cursor,
                     conversation_id,
                     "assistant",
-                    assistant_text,
+                    assistant_text_to_store,
                     {
                         "mode": effective_mode,
                         "requested_mode": mode,
                         "usage": usage,
                     },
                 )
-                # Solo generar PDF si no hay marca de "No hay datos suficientes"
-                if effective_mode == "pdf" and not GiaService._is_pdf_failure_answer(assistant_text):
-                    generated_files.append(
-                        GiaService._create_pdf(cursor, conversation_id, assistant_message["id"], user_id, assistant_text)
-                    )
-                # Solo generar imagen si realmente se generó (no es None) y no hay marca de fallo
-                if generated_image:
-                    generated_files.append(
-                        GiaService._store_generated_image(
-                            cursor,
-                            conversation_id,
-                            assistant_message["id"],
-                            user_id,
-                            generated_image,
-                        )
+                GiaService._record_usage(
+                    cursor,
+                    user_id=user_id,
+                    conversation_id=conversation_id,
+                    message_id=assistant_message["id"],
+                    mode=effective_mode,
+                    requested_mode=mode,
+                    usage=usage,
+                )
+                
+                for f in generated_files:
+                    cursor.execute(
+                        """
+                        UPDATE gia_archivos SET mensaje_id = %s WHERE id = %s
+                        """,
+                        (assistant_message["id"], f["id"])
                     )
                 GiaService._touch_conversation(cursor, conversation_id, message)
                 summary = GiaService._get_conversation_summary(cursor, conversation_id)
@@ -364,7 +396,7 @@ class GiaService:
         mode: str,
         conversation_files: list[dict] | None = None,
         conversation_memory: str = "",
-    ) -> tuple[str, bytes | None, dict]:
+    ) -> tuple[str, bytes | None, dict, str | None]:
         if not settings.openai_api_key:
             raise HTTPException(status_code=503, detail="OPENAI_API_KEY no está configurada")
 
@@ -388,7 +420,7 @@ class GiaService:
             "estimated_cost_eur": 0.0,
         }
         
-        # Sistema de prompts específicos por modo
+        
         if mode == "pdf":
             mode_instruction = (
                 "Redacta un documento profesional completo y estructurado listo para convertir a PDF. "
@@ -399,14 +431,16 @@ class GiaService:
                 "'lo anterior' o una referencia similar, usa el último informe o análisis relevante ya presente "
                 "en la conversación. "
                 "IMPORTANTE: Si no encuentras datos suficientes o concretos para generar un documento real, "
-                "responde ÚNICAMENTE: 'NO_HAY_DATOS_SUFICIENTES'. No intentes generar nada si faltan datos."
+                "responde ÚNICAMENTE: 'NO_HAY_DATOS_SUFICIENTES'. No intentes generar nada si faltan datos. "
+                "Al final del documento, sugiere un nombre de archivo profesional y descriptivo para el PDF usando la convención [[FILENAME: nombre.pdf]]."
             )
         elif mode == "imagen":
             mode_instruction = (
                 "Primero analiza si hay suficientes datos contextuales para generar una imagen significativa. "
                 "Si SÍ hay datos (clientes, trabajos, métricas, etc.), proporciona una descripción detallada de la imagen. "
                 "IMPORTANTE: Si NO hay datos suficientes o la solicitud es vaga, responde ÚNICAMENTE: 'NO_PUEDE_GENERAR'. "
-                "Nunca inventes datos. Las imágenes deben basarse únicamente en información real del contexto."
+                "Nunca inventes datos. Las imágenes deben basarse únicamente en información real del contexto. "
+                "Si generas una imagen, sugiere un nombre de archivo profesional y descriptivo para la imagen usando la convención [[FILENAME: nombre.png]]."
             )
         else:
             mode_instruction = "Responde normalmente en el chat, ayudando al usuario."
@@ -498,14 +532,13 @@ class GiaService:
                 GiaService._accumulate_chat_usage(usage, response)
                 answer = response.choices[0].message.content or ""
 
-            # Validación: si modo es pdf o imagen y la IA indica "NO_HAY_DATOS_SUFICIENTES" o "NO_PUEDE_GENERAR"
-            # retornar respuesta con indicación de no generar archivos
+            
             is_no_data_for_pdf = mode == "pdf" and "NO_HAY_DATOS_SUFICIENTES" in answer.upper()
             is_no_data_for_image = mode == "imagen" and "NO_PUEDE_GENERAR" in answer.upper()
             
             generated_image = None
             if mode == "imagen" and not is_no_data_for_image:
-                # Para modo imagen: generar un prompt mejorado basado en datos contextuales
+                
                 image_prompt = GiaService._generate_image_prompt(client, message, context, answer)
                 if image_prompt and image_prompt != "NO_PUEDE_GENERAR":
                     generated_image = GiaService._generate_image(client, image_prompt)
@@ -517,15 +550,21 @@ class GiaService:
                     is_no_data_for_image = True
             
             if is_no_data_for_image:
-                # Respuesta amigable si no puede generar
+                
                 answer = "No tengo suficientes datos contextuales para generar una imagen significativa. Por favor, proporciona más información específica sobre qué deseas visualizar."
             
-            # Para PDF: si no hay datos, usar la respuesta como indicador
+            
             if is_no_data_for_pdf:
                 answer = "No dispongo de datos suficientes para generar un documento profesional. Por favor, proporciona más información o consulta datos específicos primero."
             
             usage["estimated_cost_eur"] = GiaService._estimate_usage_cost_eur(usage)
-            return answer, generated_image, usage
+            
+            suggested_filename = None
+            match = re.search(r"\[\[FILENAME: ([^\]]+)\]\]", answer)
+            if match:
+                suggested_filename = match.group(1).strip()
+                answer = re.sub(r"\[\[FILENAME: [^\]]+\]\]", "", answer).strip()
+            return answer, generated_image, usage, suggested_filename
         except HTTPException:
             raise
         except Exception as exc:
@@ -572,21 +611,20 @@ class GiaService:
                 ),
             )
 
-        # Validar que el prompt indique que hay datos suficientes
-        # Si contiene marcas de "no puede generar", retornar None
+        
         if "NO_PUEDE_GENERAR" in prompt.upper() or "no tengo suficientes datos" in prompt.lower():
             return None
 
         try:
             response = client.images.generate(
                 model=model,
-                prompt=prompt[:4000],  # límite del prompt en la API
+                prompt=prompt[:4000],
                 size="1024x1024",
                 n=1,
             )
         except Exception as exc:
             logger.exception("Fallo en client.images.generate (modelo=%s)", model)
-            # Retornar None en lugar de lanzar excepción para no interrumpir el flujo
+            
             logger.warning("No se pudo generar imagen, continuando sin ella")
             return None
 
@@ -622,11 +660,11 @@ class GiaService:
         Genera un prompt mejorado para DALL-E basado en la respuesta inicial y contexto.
         Solo genera si hay datos suficientes indicados en la respuesta.
         """
-        # Si la respuesta inicial ya indica que no hay datos, retornar eso
+        
         if "NO_PUEDE_GENERAR" in initial_response.upper():
             return "NO_PUEDE_GENERAR"
         
-        # Generar un prompt visual mejorado basado en los datos del contexto
+        
         try:
             refine_messages = [
                 {
@@ -694,9 +732,16 @@ class GiaService:
         return file_item
 
     @staticmethod
-    def _store_generated_image(cursor, conversation_id: str, message_id: str, user_id: str, image_bytes: bytes) -> dict:
+    def _store_generated_image(cursor, conversation_id: str, message_id: str, user_id: str, image_bytes: bytes, suggested_filename: str | None = None) -> dict:
         storage_dir = GiaService._conversation_dir(conversation_id)
-        stored_name = f"gia-imagen-{uuid4().hex}.png"
+        
+        if suggested_filename and re.match(r"^[\w\- .áéíóúÁÉÍÓÚñÑ]+\.(png|jpg|jpeg|webp)$", suggested_filename, re.IGNORECASE):
+            original_name = suggested_filename
+            suffix = Path(suggested_filename).suffix or ".png"
+        else:
+            original_name = "imagen-generada-gia.png"
+            suffix = ".png"
+        stored_name = f"gia-imagen-{uuid4().hex}{suffix}"
         path = storage_dir / stored_name
         path.write_bytes(image_bytes)
         return GiaService._insert_file(
@@ -704,7 +749,7 @@ class GiaService:
             conversation_id,
             message_id,
             user_id,
-            "imagen-generada-gia.png",
+            original_name,
             stored_name,
             "image/png",
             len(image_bytes),
@@ -714,7 +759,7 @@ class GiaService:
         )
 
     @staticmethod
-    def _create_pdf(cursor, conversation_id: str, message_id: str, user_id: str, content: str) -> dict:
+    def _create_pdf(cursor, conversation_id: str, message_id: str, user_id: str, content: str, suggested_filename: str | None = None) -> dict:
         try:
             from reportlab.lib.enums import TA_LEFT, TA_CENTER
             from reportlab.lib.pagesizes import A4
@@ -734,12 +779,17 @@ class GiaService:
             ) from exc
 
         storage_dir = GiaService._conversation_dir(conversation_id)
+        
+        if suggested_filename and re.match(r"^[\w\- .áéíóúÁÉÍÓÚñÑ]+\.pdf$", suggested_filename, re.IGNORECASE):
+            original_name = suggested_filename
+        else:
+            original_name = "documento-generado-gia.pdf"
         stored_name = f"gia-documento-{uuid4().hex}.pdf"
         path = storage_dir / stored_name
 
         styles = getSampleStyleSheet()
         
-        # Estilos profesionales para PDF
+        
         title_style = ParagraphStyle(
             "GiaTitle",
             parent=styles["Heading1"],
@@ -780,35 +830,35 @@ class GiaService:
             spaceAfter=10,
         )
 
-        # Estructura profesional del PDF
+        
         story = []
         
-        # Encabezado corporativo
+        
         story.append(Paragraph("GESTORIA", title_style))
         story.append(Paragraph(f"Documento profesional generado por GIA · {date.today().strftime('%d/%m/%Y')}", meta_style))
         story.append(HRFlowable(width="100%", thickness=1.2, color="#1a3528", spaceAfter=12))
 
-        # Contenido: procesar párrafos y aplicar estructura
+        
         text = (content or "").strip() or "(Sin contenido)"
         
-        # Detectar títulos (líneas que podrían ser encabezados)
+        
         paragraphs = re.split(r"\n\s*\n", text)
         for para_text in paragraphs:
             para_text = para_text.strip()
             if not para_text:
                 continue
                 
-            # Si es una línea corta (posible título/encabezado), usarla como título
+            
             if len(para_text) < 80 and not para_text.endswith(('.', ',')):
                 escaped = GiaService._html_escape(para_text)
                 story.append(Paragraph(escaped, subtitle_style))
             else:
-                # Párrafos normales, mantener saltos de línea internos
+                
                 escaped = GiaService._html_escape(para_text).replace("\n", "<br/>")
                 story.append(Paragraph(escaped, body_style))
                 story.append(Spacer(1, 4))
 
-        # Pie de página con información de confidencialidad
+        
         story.append(Spacer(1, 12))
         story.append(HRFlowable(width="100%", thickness=0.6, color="#dce8e0", spaceAfter=6))
         story.append(Paragraph(
@@ -833,7 +883,7 @@ class GiaService:
             conversation_id,
             message_id,
             user_id,
-            "documento-generado-gia.pdf",
+            original_name,
             stored_name,
             "application/pdf",
             path.stat().st_size,
@@ -852,7 +902,7 @@ class GiaService:
 
     @staticmethod
     def _extract_text(path: Path, mime_type: str) -> str | None:
-        # ── Texto plano / CSV / JSON / XML ─────────────────────────────────
+        
         if mime_type.startswith(TEXT_MIME_PREFIXES) or mime_type in TEXT_MIME_TYPES:
             try:
                 return path.read_text(encoding="utf-8", errors="replace")[:20000]
@@ -860,7 +910,7 @@ class GiaService:
                 logger.warning("No se pudo leer archivo de texto %s: %s", path, exc)
                 return None
 
-        # ── PDF ─────────────────────────────────────────────────────────────
+        
         if mime_type == "application/pdf" or path.suffix.lower() == ".pdf":
             try:
                 from pypdf import PdfReader
@@ -876,14 +926,14 @@ class GiaService:
                 logger.warning("Error al leer PDF %s: %s", path, exc)
                 return "PDF recibido. No se pudo extraer texto automáticamente."
 
-        # ── Word (.docx / .odt) ─────────────────────────────────────────────
+        
         if mime_type in (
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/msword",
             "application/vnd.oasis.opendocument.text",
         ) or path.suffix.lower() in (".docx", ".doc", ".odt"):
             try:
-                import docx  # python-docx
+                import docx
                 doc = docx.Document(str(path))
                 text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
                 return text[:25000] if text else "Documento Word recibido, pero no contiene texto extraíble."
@@ -894,7 +944,7 @@ class GiaService:
                 logger.warning("Error al leer Word %s: %s", path, exc)
                 return "Documento Word recibido. No se pudo extraer el texto automáticamente."
 
-        # ── Excel (.xlsx) ───────────────────────────────────────────────────
+        
         if mime_type in (
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "application/vnd.ms-excel",
@@ -922,7 +972,7 @@ class GiaService:
 
     @staticmethod
     def _attachment_context(attachments: list[dict], conversation_files: list[dict]) -> str:
-        # Unificamos archivos nuevos + archivos ya existentes en la conversación.
+        
         merged: dict[str, dict] = {}
         for item in (attachments or []):
             if item.get("id"):
@@ -1062,6 +1112,118 @@ class GiaService:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
             """
+        )
+        GiaService._ensure_usage_schema(cursor)
+
+    @staticmethod
+    def _ensure_usage_schema(cursor) -> None:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS gia_uso_ia (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+                nombre_usuario VARCHAR(255) NOT NULL DEFAULT 'desconocido',
+                conversacion_id UUID REFERENCES gia_conversaciones(id) ON DELETE SET NULL,
+                mensaje_id UUID REFERENCES gia_mensajes(id) ON DELETE SET NULL,
+                mode VARCHAR(20) NOT NULL DEFAULT 'respuesta',
+                requested_mode VARCHAR(20) NOT NULL DEFAULT 'respuesta',
+                model VARCHAR(120),
+                prompt_tokens INTEGER NOT NULL DEFAULT 0,
+                completion_tokens INTEGER NOT NULL DEFAULT 0,
+                total_tokens INTEGER NOT NULL DEFAULT 0,
+                image_generations INTEGER NOT NULL DEFAULT 0,
+                estimated_cost_eur NUMERIC(12, 6) NOT NULL DEFAULT 0,
+                metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_gia_uso_ia_mensaje
+            ON gia_uso_ia (mensaje_id)
+            WHERE mensaje_id IS NOT NULL
+            """
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_gia_uso_ia_created_at
+            ON gia_uso_ia (created_at DESC)
+            """
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_gia_uso_ia_user_created_at
+            ON gia_uso_ia (user_id, created_at DESC)
+            """
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_gia_uso_ia_mode_created_at
+            ON gia_uso_ia (mode, created_at DESC)
+            """
+        )
+
+    @staticmethod
+    def _record_usage(
+        cursor,
+        user_id: str,
+        conversation_id: str,
+        message_id: str,
+        mode: str,
+        requested_mode: str,
+        usage: dict,
+    ) -> None:
+        cursor.execute(
+            """
+            INSERT INTO gia_uso_ia (
+                user_id,
+                nombre_usuario,
+                conversacion_id,
+                mensaje_id,
+                mode,
+                requested_mode,
+                model,
+                prompt_tokens,
+                completion_tokens,
+                total_tokens,
+                image_generations,
+                estimated_cost_eur,
+                metadata,
+                created_at
+            )
+            VALUES (
+                %s,
+                COALESCE((SELECT usuario::text FROM usuarios WHERE id = %s), 'desconocido'),
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s::jsonb,
+                NOW()
+            )
+            """,
+            (
+                user_id,
+                user_id,
+                conversation_id,
+                message_id,
+                mode,
+                requested_mode,
+                usage.get("model"),
+                int(usage.get("prompt_tokens") or 0),
+                int(usage.get("completion_tokens") or 0),
+                int(usage.get("total_tokens") or 0),
+                int(usage.get("image_generations") or 0),
+                float(usage.get("estimated_cost_eur") or 0),
+                json.dumps({"source": "gia_send_message"}),
+            ),
         )
 
     @staticmethod

@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { IntranetSidebarComponent } from '../../../shared/components/intranet-sidebar/intranet-sidebar.component';
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { AuthApiService } from '../../../core/services/auth-api.service';
+import { ThemeService, AppTheme } from '../../../core/services/theme.service';
 import { EmpleadoModel } from '../../../core/models/empleado.model';
 import { environment } from '../../../../environments/environment';
 
@@ -21,6 +22,7 @@ export class AjustesPageComponent implements OnInit {
   private readonly authApiService = inject(AuthApiService);
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  protected readonly themeService = inject(ThemeService);
 
   protected readonly empleado = signal<EmpleadoModel | null>(null);
   protected readonly editMode = signal(false);
@@ -127,5 +129,9 @@ export class AjustesPageComponent implements OnInit {
 
   protected logout(): void {
     this.authApiService.logout();
+  }
+
+  protected setTheme(t: AppTheme): void {
+    this.themeService.setTheme(t);
   }
 }
