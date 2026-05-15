@@ -651,10 +651,20 @@ class NotificationsService:
             return "Trabajo cancelado", f'"{title}" ha sido cancelado.', "alta"
         if tipo == "TASK_STATE_CHANGED":
             estado = payload.get("estado") or trabajo.get("estado")
-            return "Estado actualizado", f'"{title}" pasa a {estado}.', "media"
+            _ESTADO_LABELS = {
+                "pendiente": "pendiente", "en_curso": "en curso",
+                "bloqueado": "bloqueado", "finalizado": "finalizado", "cancelado": "cancelado",
+            }
+            estado_label = _ESTADO_LABELS.get(estado, estado)
+            return "Estado actualizado", f'"{title}" pasa a {estado_label}.', "media"
         if tipo == "TASK_PRIORITY_CHANGED":
             prioridad = payload.get("prioridad") or trabajo.get("prioridad")
-            return "Prioridad actualizada", f'"{title}" pasa a prioridad {prioridad}.', "media"
+            _PRIORIDAD_LABELS = {
+                "urgente": "urgente", "alta": "alta", "media": "media",
+                "baja": "baja", "no_aplica": "sin prioridad asignada",
+            }
+            prioridad_label = _PRIORIDAD_LABELS.get(prioridad, prioridad)
+            return "Prioridad actualizada", f'"{title}" pasa a prioridad {prioridad_label}.', "media"
         if tipo == "TASK_COMMENT_NEW":
             preview = str(payload.get("texto") or "").strip()
             if len(preview) > 120:

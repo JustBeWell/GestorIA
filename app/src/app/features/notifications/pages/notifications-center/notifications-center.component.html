@@ -68,15 +68,11 @@
                     <strong>{{ item.titulo }}</strong>
                     <small>{{ formatDate(item.created_at) }}</small>
                   </header>
-                  <p>{{ item.mensaje }}</p>
+                  <p>{{ cleanMessage(item.mensaje) }}</p>
                   <dl>
                     <div>
                       <dt>Tipo</dt>
-                      <dd>{{ item.tipo }}</dd>
-                    </div>
-                    <div>
-                      <dt>Entidad</dt>
-                      <dd>{{ item.entidad }}</dd>
+                      <dd>{{ tipoLabel(item.tipo) }}</dd>
                     </div>
                   </dl>
                 </div>

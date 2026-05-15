@@ -89,4 +89,47 @@ export class NotificationsCenterComponent implements OnInit {
   protected formatDate(value: string): string {
     return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
   }
+
+  private readonly TIPO_LABELS: Record<string, string> = {
+    INV_DUE_SOON:          'Factura próxima a vencer',
+    INV_DUE_TODAY:         'Factura vence hoy',
+    INV_OVERDUE_WEEKLY:    'Resumen de impagos',
+    TASK_DEADLINE_SOON:    'Plazo próximo',
+    TASK_DEADLINE_TODAY:   'Vence hoy',
+    TASK_ASSIGNED:         'Trabajo asignado',
+    TASK_UNASSIGNED:       'Trabajo retirado',
+    TASK_STATE_CHANGED:    'Cambio de estado',
+    TASK_CANCELLED:        'Trabajo cancelado',
+    TASK_COMMENT_NEW:      'Nuevo comentario',
+    TASK_PRIORITY_CHANGED: 'Cambio de prioridad',
+  };
+
+  protected tipoLabel(tipo: string): string {
+    return this.TIPO_LABELS[tipo] ?? tipo;
+  }
+
+  private readonly ENTIDAD_LABELS: Record<string, string> = {
+    trabajo:  'Trabajo',
+    factura:  'Factura',
+    cliente:  'Cliente',
+    usuario:  'Usuario',
+    fichaje:  'Fichaje',
+  };
+
+  protected entidadLabel(entidad: string): string {
+    return this.ENTIDAD_LABELS[entidad] ?? entidad;
+  }
+
+  private readonly RAW_VALUE_FIXES: [RegExp, string][] = [
+    [/\ben_curso\b/g,   'en curso'],
+    [/\bno_aplica\b/g,  'sin prioridad'],
+    [/\bpendiente\b/g,  'pendiente'],
+    [/\bbloqueado\b/g,  'bloqueado'],
+    [/\bfinalizado\b/g, 'finalizado'],
+    [/\bcancelado\b/g,  'cancelado'],
+  ];
+
+  protected cleanMessage(msg: string): string {
+    return this.RAW_VALUE_FIXES.reduce((s, [re, label]) => s.replace(re, label), msg);
+  }
 }
