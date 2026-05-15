@@ -275,16 +275,17 @@
   padding: 8px 14px;
   font-weight: 700;
   border: 1px solid transparent;
-  background: #1a3528;
-  color: #f8fafc;
+  background: var(--clr-btn-primary-bg);
+  color: var(--clr-btn-primary-text);
   cursor: pointer;
   font-size: 13px;
+  transition: opacity 0.15s;
 }
 
 .secondary-button {
-  background: var(--clr-bg-panel);
-  color: var(--clr-text-primary);
-  border-color: var(--clr-border);
+  background: var(--clr-btn-secondary-bg);
+  color: var(--clr-btn-secondary-text);
+  border-color: var(--clr-btn-secondary-border);
 }
 
 .primary-button:disabled,
@@ -302,7 +303,7 @@
 
 .page-header-meta {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--clr-text-muted);
   padding-top: 8px;
 }
 
@@ -318,10 +319,10 @@
 }
 
 .panel {
-  background: var(--clr-bg-panel);
+  background: var(--clr-bg-surface);
   border-radius: 16px;
   border: 1px solid var(--clr-border);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  box-shadow: var(--clr-shadow-md);
   padding: 18px;
   transition: background 0.25s ease, border-color 0.25s ease;
 }
@@ -345,18 +346,18 @@
 }
 
 .badge.success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--clr-success-bg);
+  color: var(--clr-success-text);
 }
 
 .badge.warning {
-  background: #fde68a;
-  color: #b45309;
+  background: var(--clr-warning-bg);
+  color: var(--clr-warning-text);
 }
 
 .badge.danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--clr-danger-bg);
+  color: var(--clr-danger-text);
 }
 
 .tool-list {

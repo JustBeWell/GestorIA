@@ -1,55 +1,279 @@
-/* You can add global styles to this file, and also import other style files */
 @import './app/shared/styles/intranet-pro-shell.css';
 
-/* ── Theme variables: light (default) ─────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   THEME TOKENS  —  Light (default)
+   ═══════════════════════════════════════════════════════════════ */
 :root {
-  --clr-bg-page:           #f3f6f4;
-  --clr-bg-body:           #0c1a16;
-  --clr-bg-panel:          #ffffff;
-  --clr-bg-input:          #f9fafb;
-  --clr-bg-input-focus:    #ffffff;
-  --clr-border:            #dce8e0;
-  --clr-border-input:      #dbe3ea;
-  --clr-border-input-focus:#0d1f31;
-  --clr-text-primary:      #0f172a;
-  --clr-text-secondary:    #64748b;
-  --clr-text-muted:        #94a3b8;
-  --clr-text-label:        #5b6470;
-  --clr-text-panel-title:  #111827;
-  --clr-badge-bg:          #f3f2ef;
-  --clr-badge-text:        #5b6470;
+  /* Backgrounds */
+  --clr-bg-body:            #0c1a16;
+  --clr-bg-page:            #f3f6f4;
+  --clr-bg-surface:         #ffffff;
+  --clr-bg-surface-alt:     #f7faf8;
+  --clr-bg-surface-hover:   #f8fafc;
+  --clr-bg-table-header:    #f1f5f9;
+  --clr-bg-input:           #f9fafb;
+  --clr-bg-input-focus:     #ffffff;
+  --clr-bg-modal-backdrop:  rgba(15, 23, 42, 0.45);
+  /* kept for backwards compat with ajustes panel classes */
+  --clr-bg-panel:           #ffffff;
+
+  /* Borders */
+  --clr-border-subtle:      #f0efeb;
+  --clr-border:             #dce8e0;
+  --clr-border-input:       #dbe3ea;
+  --clr-border-input-focus: #0d1f31;
+  --clr-border-strong:      #c5d4cb;
+  --clr-border-card:        #e9eef5;
+
+  /* Text */
+  --clr-text-primary:    #0f172a;
+  --clr-text-heading:    #111827;
+  --clr-text-secondary:  #64748b;
+  --clr-text-muted:      #94a3b8;
+  --clr-text-label:      #5b6470;
+  --clr-text-placeholder:#9aa6b8;
+  --clr-text-strong:     #1e3428;
+  /* kept for backwards compat */
+  --clr-text-panel-title:#111827;
+
+  /* Status */
+  --clr-success-bg:           #dcfce7;
+  --clr-success-text:         #15803d;
+  --clr-success-border:       #bbf7d0;
+  --clr-warning-bg:           #fef9c3;
+  --clr-warning-text:         #b45309;
+  --clr-warning-border:       #fde68a;
+  --clr-danger-bg:            #fee2e2;
+  --clr-danger-text:          #b91c1c;
+  --clr-danger-border:        #fecaca;
+  --clr-info-bg:              #dbeafe;
+  --clr-info-text:            #1d4ed8;
+  --clr-info-border:          #bfdbfe;
+
+  /* Brand / Accents */
+  --clr-accent-primary:      #1a3528;
+  --clr-accent-text:         #f8fafc;
+  --clr-accent-gold:         #e8c163;
+  --clr-accent-gold-bg:      rgba(216, 157, 55, 0.12);
+  --clr-accent-gold-text:    #8a5a00;
+
+  /* Badges & Pills */
+  --clr-badge-bg:            #f3f2ef;
+  --clr-badge-text:          #5b6470;
+  --clr-badge-neutral-bg:    #f1f5f9;
+  --clr-badge-neutral-text:  #64748b;
+
+  /* Buttons */
+  --clr-btn-primary-bg:      #1a3528;
+  --clr-btn-primary-text:    #f8fafc;
+  --clr-btn-secondary-bg:    #ffffff;
+  --clr-btn-secondary-text:  #0f172a;
+  --clr-btn-secondary-border:#dce8e0;
+
+  /* Shadows */
+  --clr-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --clr-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --clr-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.10);
+
+  /* Form feedback */
+  --clr-feedback-success-bg:   #dcf7e7;
+  --clr-feedback-success-text: #2d7c4e;
+  --clr-feedback-error-bg:     #fde8e8;
+  --clr-feedback-error-text:   #c64d46;
+
+  /* Stat icon chips */
+  --clr-stat-blue-bg:    #e0f2fe;
+  --clr-stat-blue-text:  #0369a1;
+  --clr-stat-green-bg:   #dcfce7;
+  --clr-stat-green-text: #15803d;
+  --clr-stat-yellow-bg:  #fef9c3;
+  --clr-stat-yellow-text:#a16207;
+  --clr-stat-orange-bg:  #ffedd5;
+  --clr-stat-orange-text:#c2410c;
+
+  /* Priority badges */
+  --clr-priority-urgent-bg:   #fee2e2;
+  --clr-priority-urgent-text: #b91c1c;
+  --clr-priority-high-bg:     #ffedd5;
+  --clr-priority-high-text:   #c2410c;
+  --clr-priority-medium-bg:   #fef9c3;
+  --clr-priority-medium-text: #a16207;
+  --clr-priority-low-bg:      #f1f5f9;
+  --clr-priority-low-text:    #64748b;
+
+  /* GIA chat */
+  --clr-gia-active-bg:     rgba(26, 53, 40, 0.06);
+  --clr-gia-active-border: rgba(26, 53, 40, 0.18);
+  --clr-gia-avatar-bg:     rgba(26, 53, 40, 0.08);
+  --clr-gia-status-bg:     rgba(216, 157, 55, 0.12);
+  --clr-gia-status-text:   #8a5a00;
+  --clr-gia-error-bg:      #fef2f2;
+  --clr-gia-error-border:  #fecaca;
+  --clr-gia-error-text:    #991b1b;
+  --clr-gia-file-bg:       rgba(26, 53, 40, 0.06);
+  --clr-gia-file-border:   rgba(26, 53, 40, 0.15);
+  --clr-gia-scrollbar:     rgba(26, 53, 40, 0.18);
+
+  /* Kanban */
+  --clr-kanban-col-bg:     #f8fafc;
+  --clr-kanban-col-border: #e9eef5;
+  --clr-kanban-col-title:  #1e3428;
+  --clr-kanban-count-bg:   #dce8e0;
+  --clr-kanban-count-text: #64748b;
+
+  /* Calendar */
+  --clr-cal-cell-bg:     #f5f4f1;
+  --clr-cal-cell-hover:  #ffffff;
+  --clr-cal-cell-border: #e2e8f0;
+  --clr-cal-today-border:#cbd5f5;
+  --clr-cal-bar-track:   #e2e8f0;
+  --clr-cal-bar-fill:    #22c55e;
+
+  /* Misc */
   --clr-breadcrumb:        #64748b;
   --clr-breadcrumb-strong: #0f172a;
   --clr-panel-row-border:  #f0efeb;
 }
 
-/* ── Theme variables: dark ────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   THEME TOKENS  —  Dark
+   ═══════════════════════════════════════════════════════════════ */
 html[data-theme="dark"] {
-  --clr-bg-page:           #0f1a15;
-  --clr-bg-body:           #060e0a;
-  --clr-bg-panel:          #162119;
-  --clr-bg-input:          #0f1a15;
-  --clr-bg-input-focus:    #1c2b22;
-  --clr-border:            #253d2e;
-  --clr-border-input:      #2a3d2e;
-  --clr-border-input-focus:#4a7c5e;
-  --clr-text-primary:      #e8f0e9;
-  --clr-text-secondary:    #8ea99a;
-  --clr-text-muted:        #5b7a6d;
-  --clr-text-label:        #8ea99a;
-  --clr-text-panel-title:  #dceade;
-  --clr-badge-bg:          #1e3328;
-  --clr-badge-text:        #94c9a8;
-  --clr-breadcrumb:        #8ea99a;
-  --clr-breadcrumb-strong: #e8f0e9;
-  --clr-panel-row-border:  #1f3027;
+  /* Backgrounds */
+  --clr-bg-body:            #060d0a;
+  --clr-bg-page:            #0e1812;
+  --clr-bg-surface:         #142118;
+  --clr-bg-surface-alt:     #192c1e;
+  --clr-bg-surface-hover:   #1e3324;
+  --clr-bg-table-header:    #192c1e;
+  --clr-bg-input:           #111b16;
+  --clr-bg-input-focus:     #192c1e;
+  --clr-bg-modal-backdrop:  rgba(0, 0, 0, 0.65);
+  --clr-bg-panel:           #142118;
+
+  /* Borders */
+  --clr-border-subtle:      #1a2e22;
+  --clr-border:             #1f3828;
+  --clr-border-input:       #253d2e;
+  --clr-border-input-focus: #4a7c5e;
+  --clr-border-strong:      #2d5040;
+  --clr-border-card:        #1a2e22;
+
+  /* Text */
+  --clr-text-primary:    #d8e8da;
+  --clr-text-heading:    #e0ebe2;
+  --clr-text-secondary:  #7fa092;
+  --clr-text-muted:      #4f6b5e;
+  --clr-text-label:      #7fa092;
+  --clr-text-placeholder:#4f6b5e;
+  --clr-text-strong:     #c8deca;
+  --clr-text-panel-title:#e0ebe2;
+
+  /* Status */
+  --clr-success-bg:           #0b2416;
+  --clr-success-text:         #4ade80;
+  --clr-success-border:       #14532d;
+  --clr-warning-bg:           #221808;
+  --clr-warning-text:         #fbbf24;
+  --clr-warning-border:       #451a03;
+  --clr-danger-bg:            #1f0b0b;
+  --clr-danger-text:          #f87171;
+  --clr-danger-border:        #450a0a;
+  --clr-info-bg:              #0d1f38;
+  --clr-info-text:            #60a5fa;
+  --clr-info-border:          #1e3a5f;
+
+  /* Brand / Accents */
+  --clr-accent-primary:      #1a3528;
+  --clr-accent-text:         #e8f0e9;
+  --clr-accent-gold:         #e8c163;
+  --clr-accent-gold-bg:      rgba(232, 193, 99, 0.12);
+  --clr-accent-gold-text:    #e8c163;
+
+  /* Badges & Pills */
+  --clr-badge-bg:            #1e3328;
+  --clr-badge-text:          #94c9a8;
+  --clr-badge-neutral-bg:    #192c1e;
+  --clr-badge-neutral-text:  #7fa092;
+
+  /* Buttons */
+  --clr-btn-primary-bg:      #1a3528;
+  --clr-btn-primary-text:    #e8f0e9;
+  --clr-btn-secondary-bg:    #192c1e;
+  --clr-btn-secondary-text:  #d8e8da;
+  --clr-btn-secondary-border:#253d2e;
+
+  /* Shadows */
+  --clr-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --clr-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --clr-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.38);
+
+  /* Form feedback */
+  --clr-feedback-success-bg:   #0b2416;
+  --clr-feedback-success-text: #4ade80;
+  --clr-feedback-error-bg:     #1f0b0b;
+  --clr-feedback-error-text:   #f87171;
+
+  /* Stat icon chips */
+  --clr-stat-blue-bg:    #0d1f38;
+  --clr-stat-blue-text:  #60a5fa;
+  --clr-stat-green-bg:   #0b2416;
+  --clr-stat-green-text: #4ade80;
+  --clr-stat-yellow-bg:  #221808;
+  --clr-stat-yellow-text:#fbbf24;
+  --clr-stat-orange-bg:  #2b1506;
+  --clr-stat-orange-text:#fb923c;
+
+  /* Priority badges */
+  --clr-priority-urgent-bg:   #2b0d0d;
+  --clr-priority-urgent-text: #fca5a5;
+  --clr-priority-high-bg:     #2b1506;
+  --clr-priority-high-text:   #fb923c;
+  --clr-priority-medium-bg:   #221808;
+  --clr-priority-medium-text: #fbbf24;
+  --clr-priority-low-bg:      #192c1e;
+  --clr-priority-low-text:    #7fa092;
+
+  /* GIA chat */
+  --clr-gia-active-bg:     rgba(74, 124, 94, 0.15);
+  --clr-gia-active-border: rgba(74, 124, 94, 0.30);
+  --clr-gia-avatar-bg:     rgba(74, 124, 94, 0.12);
+  --clr-gia-status-bg:     rgba(232, 193, 99, 0.12);
+  --clr-gia-status-text:   #e8c163;
+  --clr-gia-error-bg:      #1f0b0b;
+  --clr-gia-error-border:  #450a0a;
+  --clr-gia-error-text:    #f87171;
+  --clr-gia-file-bg:       rgba(74, 124, 94, 0.10);
+  --clr-gia-file-border:   rgba(74, 124, 94, 0.20);
+  --clr-gia-scrollbar:     rgba(74, 124, 94, 0.22);
+
+  /* Kanban */
+  --clr-kanban-col-bg:     #111b16;
+  --clr-kanban-col-border: #1a2e22;
+  --clr-kanban-col-title:  #c8deca;
+  --clr-kanban-count-bg:   #1a2e22;
+  --clr-kanban-count-text: #7fa092;
+
+  /* Calendar */
+  --clr-cal-cell-bg:     #192c1e;
+  --clr-cal-cell-hover:  #1e3324;
+  --clr-cal-cell-border: #1f3828;
+  --clr-cal-today-border:#4a7c5e;
+  --clr-cal-bar-track:   #1f3828;
+  --clr-cal-bar-fill:    #4ade80;
+
+  /* Misc */
+  --clr-breadcrumb:        #7fa092;
+  --clr-breadcrumb-strong: #d8e8da;
+  --clr-panel-row-border:  #1a2e22;
 }
 
 html,
 body {
-	margin: 0;
-	width: 100%;
-	height: 100%;
-	background: var(--clr-bg-body);
-	transition: background 0.25s ease;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--clr-bg-body);
+  transition: background 0.25s ease;
 }
+

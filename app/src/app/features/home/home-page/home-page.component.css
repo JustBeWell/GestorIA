@@ -408,3 +408,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+:host-context(html[data-theme="dark"]) {
+  .profile-meta p { color: var(--clr-text-secondary); }
+  .profile-details { color: var(--clr-text-secondary); }
+  .profile-details span { color: var(--clr-text-primary); }
+  .summary-row { color: var(--clr-text-secondary); }
+  .summary-row strong { color: var(--clr-text-primary); }
+  .shift-grid { color: var(--clr-text-secondary); }
+  .shift-grid span { color: var(--clr-text-primary); }
+  .stat-meta { color: var(--clr-text-secondary); }
+  .stat-meta strong { color: var(--clr-text-primary); }
+  .stat-trend { color: var(--clr-success-text); }
+  .stat-trend.negative { color: var(--clr-danger-text); }
+  .calendar-cell {
+    background: var(--clr-cal-cell-bg);
+    color: var(--clr-text-secondary);
+  }
+  .calendar-cell.active {
+    background: var(--clr-bg-surface);
+    border-color: var(--clr-border);
+  }
+  .calendar-cell.is-today { border-color: var(--clr-info-border); }
+  .calendar-cell .day-number { color: var(--clr-text-primary); }
+  .calendar-cell .hours { color: var(--clr-text-primary); }
+  .calendar-cell .day-summary { color: var(--clr-text-muted); }
+  .calendar-cell .bar-track { background: var(--clr-cal-bar-track); }
+  .day-detail { border-color: var(--clr-border); background: var(--clr-bg-surface); }
+  .day-detail-status { color: var(--clr-text-secondary); }
+  .day-detail-row { color: var(--clr-text-secondary); }
+  .day-detail-bar { background: var(--clr-cal-bar-track); }
+  .day-detail-summary { color: var(--clr-text-muted); }
+  .activity-item { border-color: var(--clr-border); background: var(--clr-bg-surface); }
+  .activity-tag { background: var(--clr-bg-table-header); color: var(--clr-text-primary); }
+  .activity-time { color: var(--clr-text-muted); }
+}

@@ -8,22 +8,22 @@
 }
 
 :host {
-  --gia-primary: #1a3528;
+  --gia-primary:      #1a3528;
   --gia-primary-soft: #244a39;
-  --gia-accent: #d89d37;
-  --gia-accent-soft: #f4d28b;
-  --gia-bg: #f3f6f4;
-  --gia-surface: #ffffff;
-  --gia-surface-alt: #f7faf8;
-  --gia-border: #dce8e0;
-  --gia-border-strong: #c5d4cb;
-  --gia-text: #0f172a;
-  --gia-muted: #64748b;
-  --gia-danger: #dc2626;
-  --gia-danger-soft: #fef2f2;
-  --gia-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --gia-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
-  --gia-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.10);
+  --gia-accent:       var(--clr-accent-gold);
+  --gia-accent-soft:  #f4d28b;
+  --gia-bg:           var(--clr-bg-page);
+  --gia-surface:      var(--clr-bg-surface);
+  --gia-surface-alt:  var(--clr-bg-surface-alt);
+  --gia-border:       var(--clr-border);
+  --gia-border-strong:var(--clr-border-strong);
+  --gia-text:         var(--clr-text-primary);
+  --gia-muted:        var(--clr-text-secondary);
+  --gia-danger:       var(--clr-danger-text);
+  --gia-danger-soft:  var(--clr-gia-error-bg);
+  --gia-shadow-sm:    var(--clr-shadow-sm);
+  --gia-shadow-md:    var(--clr-shadow-md);
+  --gia-shadow-lg:    var(--clr-shadow-lg);
   --gia-radius: 14px;
   --gia-radius-sm: 10px;
 }
@@ -164,8 +164,8 @@
 }
 
 .gia-conv-item--active {
-  background: rgba(26, 53, 40, 0.06);
-  border-color: rgba(26, 53, 40, 0.18);
+  background: var(--clr-gia-active-bg);
+  border-color: var(--clr-gia-active-border);
 }
 
 .gia-conv-item--active::before {
@@ -188,7 +188,7 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: rgba(26, 53, 40, 0.08);
+  background: var(--clr-gia-avatar-bg);
   color: var(--gia-primary);
   display: grid;
   place-items: center;
@@ -325,8 +325,8 @@
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(216, 157, 55, 0.12);
-  color: #8a5a00;
+  background: var(--clr-gia-status-bg);
+  color: var(--clr-gia-status-text);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -350,10 +350,10 @@
 .gia-error {
   margin: 12px 16px 0;
   padding: 10px 14px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--clr-gia-error-border);
   border-radius: var(--gia-radius-sm);
-  background: var(--gia-danger-soft);
-  color: #991b1b;
+  background: var(--clr-gia-error-bg);
+  color: var(--clr-gia-error-text);
   font-size: 13px;
   font-weight: 500;
 }
@@ -374,7 +374,7 @@
 }
 
 .gia-message-list::-webkit-scrollbar-thumb {
-  background: rgba(26, 53, 40, 0.18);
+  background: var(--clr-gia-scrollbar);
   border-radius: 4px;
 }
 
@@ -463,12 +463,12 @@
   gap: 6px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(26, 53, 40, 0.06);
+  background: var(--clr-gia-file-bg);
   color: var(--gia-primary);
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
-  border: 1px solid rgba(26, 53, 40, 0.15);
+  border: 1px solid var(--clr-gia-file-border);
   transition: background 120ms ease;
 }
 
@@ -614,8 +614,8 @@
   gap: 6px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(216, 157, 55, 0.14);
-  color: #6b4500;
+  background: var(--clr-accent-gold-bg);
+  color: var(--clr-accent-gold-text);
   font-size: 12px;
   font-weight: 600;
   border: 1px solid rgba(216, 157, 55, 0.3);
@@ -670,7 +670,7 @@
 
 .gia-composer__input textarea:disabled {
   cursor: not-allowed;
-  background: #f1f5f3;
+  background: var(--clr-bg-table-header);
 }
 
 .gia-composer__actions {
@@ -743,7 +743,7 @@
 }
 
 .gia-send:disabled {
-  background: #94a3b8;
+  background: var(--clr-text-muted);
   cursor: not-allowed;
   box-shadow: none;
   transform: none;

@@ -1,9 +1,100 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f1f5f9;
+  background: var(--clr-bg-page);
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  transition: background 0.25s ease;
 }
+
+:host,
+:host * {
+  box-sizing: border-box;
+}
+
+.module-layout {
+  min-height: 100vh;
+}
+
+.module-container {
+  min-height: calc(100vh - 132px);
+  width: 100%;
+  margin: 0;
+  padding: 18px 14px;
+  display: grid;
+  place-items: center;
+}
+
+.wip-card {
+  width: min(860px, 100%);
+  background: var(--clr-bg-surface);
+  border-radius: 14px;
+  border: 1px solid var(--clr-border);
+  box-shadow: 0 10px 24px var(--clr-shadow-md);
+  padding: 26px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.25s ease;
+}
+
+.wip-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.13);
+  border-color: var(--clr-border-strong);
+}
+
+.wip-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.15;
+  color: var(--clr-text-primary);
+}
+
+.wip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 12px auto 14px;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--clr-info-bg);
+  border: 1px solid var(--clr-info-border);
+  color: var(--clr-info-text);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.wip-description {
+  margin: 0;
+  color: var(--clr-text-secondary);
+  font-size: 16px;
+}
+
+a {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--clr-info-text);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .wip-card {
+    padding: 20px;
+  }
+
+  .wip-title {
+    font-size: 28px;
+  }
+}
+
 
 :host,
 :host * {

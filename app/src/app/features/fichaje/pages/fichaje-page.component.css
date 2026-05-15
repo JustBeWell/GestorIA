@@ -570,3 +570,45 @@
 }
 .export-menu button:hover:not(:disabled) { background: #f8fafc; }
 .export-menu button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ═══════════════════════════════════════════════════════════════ */
+:host-context(html[data-theme="dark"]) {
+  .search-field { background: var(--clr-bg-surface); border-color: var(--clr-border); }
+  .search-field input { color: var(--clr-text-primary); }
+  .search-shortcut { background: var(--clr-bg-table-header); color: var(--clr-text-secondary); }
+  .stat-title { color: var(--clr-text-secondary); }
+  .stat-icon { background: var(--clr-bg-table-header); color: var(--clr-text-primary); }
+  .stat-icon.blue   { background: var(--clr-stat-blue-bg);   color: var(--clr-stat-blue-text); }
+  .stat-icon.green  { background: var(--clr-stat-green-bg);  color: var(--clr-stat-green-text); }
+  .stat-icon.yellow { background: var(--clr-stat-yellow-bg); color: var(--clr-stat-yellow-text); }
+  .stat-icon.orange { background: var(--clr-stat-orange-bg); color: var(--clr-stat-orange-text); }
+  .stat-unit { color: var(--clr-text-secondary); }
+  .stat-bar { background: var(--clr-bg-table-header); }
+  .stat-meta { color: var(--clr-text-muted); }
+  .muted { color: var(--clr-text-secondary); }
+  .action-alert { border-color: var(--clr-danger-border); background: var(--clr-danger-bg); color: var(--clr-danger-text); }
+  .action-hint { color: var(--clr-danger-text); }
+  .modal-card { background: var(--clr-bg-surface); border-color: var(--clr-border); }
+  .modal-card h2 { color: var(--clr-text-primary); }
+  .modal-card p  { color: var(--clr-text-secondary); }
+  .history-head { color: var(--clr-text-muted); border-bottom-color: var(--clr-border); }
+  .history-row { background: var(--clr-bg-surface); border-color: var(--clr-border); color: var(--clr-text-primary); }
+  .history-row.active-row { background: var(--clr-bg-surface-hover); }
+  .distribution-bar { background: var(--clr-bg-table-header); }
+  .status-pill { background: var(--clr-badge-neutral-bg); color: var(--clr-badge-neutral-text); }
+  .status-pill.complete { background: var(--clr-success-bg); color: var(--clr-success-text); }
+  .status-pill.active   { background: var(--clr-info-bg);    color: var(--clr-info-text); }
+  .status-pill.absent   { background: var(--clr-danger-bg);  color: var(--clr-danger-text); }
+  .empty-state { color: var(--clr-text-secondary); }
+  .ghost-button { border-color: var(--clr-border); background: var(--clr-bg-surface); color: var(--clr-text-secondary); }
+  .state-card { background: var(--clr-bg-surface); border-color: var(--clr-border); }
+  .state-card.error { border-color: var(--clr-danger-border); background: var(--clr-danger-bg); }
+  .event-note, .event-origin { color: var(--clr-text-secondary); }
+  .export-button { background: var(--clr-bg-surface); border-color: var(--clr-border); color: var(--clr-text-secondary); }
+  .export-button:hover:not(:disabled) { background: var(--clr-bg-surface-hover); }
+  .export-menu { background: var(--clr-bg-surface); border-color: var(--clr-border); }
+  .export-menu button { color: var(--clr-text-secondary); }
+  .export-menu button:hover { background: var(--clr-bg-surface-hover); }
+}
