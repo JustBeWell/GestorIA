@@ -504,12 +504,23 @@ class FichajeService:
     # ── End-of-day auto-close ──────────────────────────────────────────────────
 
     @staticmethod
-    def cerrar_fichajes_abiertos() -> dict:
+    def cerrar_fichajes_abiertos(
+        desde: date | None = None,
+        hasta: date | None = None,
+    ) -> dict:
         closed: list[dict] = []
+        extra: str = ""
+        params: list = []
+        if desde:
+            extra += "\n                      AND DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid') >= %s"
+            params.append(desde)
+        if hasta:
+            extra += "\n                      AND DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid') < %s"
+            params.append(hasta)
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
-                    """
+                    f"""
                     SELECT DISTINCT ON (f.empleado_id,
                                         DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid'))
                         f.empleado_id::text AS empleado_id,
@@ -525,11 +536,12 @@ class FichajeService:
                             AND f2.tipo_evento::text = 'salida'
                             AND DATE(f2.fecha_hora AT TIME ZONE 'Europe/Madrid')
                                 = DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid')
-                      )
+                      ){extra}
                     ORDER BY f.empleado_id,
                              DATE(f.fecha_hora AT TIME ZONE 'Europe/Madrid'),
                              f.fecha_hora ASC
                     """,
+                    params or None,
                 )
                 open_shifts = cursor.fetchall()
 

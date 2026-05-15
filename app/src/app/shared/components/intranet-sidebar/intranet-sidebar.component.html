@@ -5,6 +5,7 @@
       <div class="brand-title">GestorIA</div>
       <div class="brand-subtitle">Intranet</div>
     </div>
+    <app-notifications-bell />
   </div>
 
   <div class="nav-section">
@@ -62,12 +63,6 @@
         </span>
         <span>Calendario fiscal</span>
       </a>
-      <a class="tool-item" routerLink="/notificaciones" routerLinkActive="active">
-        <span class="tool-icon">
-          <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M10 18a2 2 0 0 0 1.9-1.37H8.1A2 2 0 0 0 10 18Zm5-5V9A5 5 0 0 0 5 9v4l-1.1 1.46A.8.8 0 0 0 4.54 15h10.92a.8.8 0 0 0 .64-1.28L15 13Z"/></svg>
-        </span>
-        <span>Notificaciones</span>
-      </a>
       <a class="tool-item" routerLink="/gia" routerLinkActive="active">
         <span class="tool-icon">
           <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M10 2a1 1 0 0 1 .894.553l1.246 2.493 2.754.4a1 1 0 0 1 .554 1.706l-1.993 1.943.471 2.743a1 1 0 0 1-1.451 1.054L10 11.59l-2.475 1.302a1 1 0 0 1-1.45-1.054l.47-2.743-1.993-1.943a1 1 0 0 1 .554-1.706l2.754-.4 1.246-2.493A1 1 0 0 1 10 2z"/><path d="M4 15a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1z"/></svg>
@@ -100,7 +95,6 @@
   }
 
   <div class="sidebar-footer">
-    <app-notifications-bell />
     <div class="avatar">{{ employeeInitials }}</div>
     <div class="meta">
       <strong>{{ employeeFirstName }}</strong>

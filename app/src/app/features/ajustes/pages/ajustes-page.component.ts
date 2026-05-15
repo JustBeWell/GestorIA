@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -7,7 +7,9 @@ import { IntranetSidebarComponent } from '../../../shared/components/intranet-si
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { AuthApiService } from '../../../core/services/auth-api.service';
 import { ThemeService, AppTheme } from '../../../core/services/theme.service';
+import { NotificationsService } from '../../../core/services/notifications.service';
 import { EmpleadoModel } from '../../../core/models/empleado.model';
+import { NotificationPreferenceItem, NotificationTipo } from '../../../core/models/notification.model';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -22,6 +24,7 @@ export class AjustesPageComponent implements OnInit {
   private readonly authApiService = inject(AuthApiService);
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
+  private readonly notifService = inject(NotificationsService);
   protected readonly themeService = inject(ThemeService);
 
   protected readonly empleado = signal<EmpleadoModel | null>(null);
@@ -32,6 +35,40 @@ export class AjustesPageComponent implements OnInit {
   protected readonly passwordSaving = signal(false);
   protected readonly passwordSuccess = signal(false);
   protected readonly passwordError = signal<string | null>(null);
+
+  protected readonly notifLoading = signal(false);
+  protected readonly notifPrefs = signal<NotificationPreferenceItem[]>([]);
+
+  private readonly FACTURAS_TYPES = ['INV_DUE_SOON', 'INV_DUE_TODAY', 'INV_OVERDUE_WEEKLY'];
+  private readonly TAREAS_TYPES = [
+    'TASK_DEADLINE_SOON', 'TASK_DEADLINE_TODAY', 'TASK_ASSIGNED',
+    'TASK_UNASSIGNED', 'TASK_STATE_CHANGED', 'TASK_CANCELLED',
+    'TASK_COMMENT_NEW', 'TASK_PRIORITY_CHANGED',
+  ];
+  private readonly NOTIF_LABELS: Record<string, string> = {
+    INV_DUE_SOON:           'Factura próxima a vencer (7 días)',
+    INV_DUE_TODAY:          'Factura vence hoy',
+    INV_OVERDUE_WEEKLY:     'Resumen semanal de impagos',
+    TASK_DEADLINE_SOON:     'Trabajo próximo al plazo',
+    TASK_DEADLINE_TODAY:    'Trabajo vence hoy',
+    TASK_ASSIGNED:          'Te asignan a un trabajo',
+    TASK_UNASSIGNED:        'Te retiran de un trabajo',
+    TASK_STATE_CHANGED:     'Cambio de estado de trabajo',
+    TASK_CANCELLED:         'Trabajo cancelado',
+    TASK_COMMENT_NEW:       'Nuevo comentario en trabajo',
+    TASK_PRIORITY_CHANGED:  'Cambio de prioridad de trabajo',
+  };
+
+  protected readonly notifPrefsFacturas = computed(() =>
+    this.notifPrefs().filter((p) => this.FACTURAS_TYPES.includes(p.tipo)),
+  );
+  protected readonly notifPrefsTareas = computed(() =>
+    this.notifPrefs().filter((p) => this.TAREAS_TYPES.includes(p.tipo)),
+  );
+
+  protected notifLabel(tipo: string): string {
+    return this.NOTIF_LABELS[tipo] ?? tipo;
+  }
 
   protected readonly profileForm = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(100)]],
@@ -56,6 +93,31 @@ export class AjustesPageComponent implements OnInit {
         });
       },
     });
+
+    // Mostrar defaults inmediatamente para que el usuario vea las filas
+    const allTypes = [...this.FACTURAS_TYPES, ...this.TAREAS_TYPES];
+    this.notifPrefs.set(
+      allTypes.map((tipo) => ({
+        tipo: tipo as NotificationTipo,
+        canal_in_app: true,
+        canal_web_push: false,
+        canal_email: false,
+        silencio_desde: null,
+        silencio_hasta: null,
+      }))
+    );
+    // API actualiza silenciosamente con los valores reales guardados
+    this.notifService.obtenerPreferencias().subscribe({
+      next: (res) => this.notifPrefs.set(res.preferencias),
+      error: () => { /* mantener defaults si el backend no responde */ },
+    });
+  }
+
+  protected toggleNotif(tipo: string, campo: 'canal_in_app' | 'canal_web_push', valor: boolean): void {
+    this.notifPrefs.update((prefs) =>
+      prefs.map((p) => (p.tipo === tipo ? { ...p, [campo]: valor } : p)),
+    );
+    this.notifService.actualizarPreferencia(tipo, { [campo]: valor }).subscribe();
   }
 
   protected startEdit(): void {

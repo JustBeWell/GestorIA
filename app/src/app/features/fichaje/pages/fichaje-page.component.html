@@ -107,15 +107,13 @@
           <p>Estamos sincronizando tus registros más recientes.</p>
         </section>
       } @else if (errorMessage()) {
-        <div class="modal-backdrop" role="alert" aria-live="assertive">
-          <section class="modal-card">
-            <h2>No se pudo cargar el fichaje</h2>
-            <p>{{ errorMessage() }}</p>
-            <div class="state-actions">
-              <button type="button" class="secondary-button" (click)="reload()">Reintentar</button>
-            </div>
-          </section>
-        </div>
+        <section class="state-card error" role="alert" aria-live="assertive">
+          <h2>No se pudo cargar el fichaje</h2>
+          <p>{{ errorMessage() }}</p>
+          <div class="state-actions">
+            <button type="button" class="secondary-button" (click)="reload()">Reintentar</button>
+          </div>
+        </section>
       } @else {
         <section class="stats-grid">
           @for (card of statsCards; track card.title) {

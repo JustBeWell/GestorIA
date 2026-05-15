@@ -33,6 +33,7 @@
   height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
+  z-index: 1;
 }
 
 .brand {
@@ -42,6 +43,10 @@
   padding: 6px 8px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 12px;
+}
+
+.brand app-notifications-bell {
+  margin-left: auto;
 }
 
 .brand-logo {

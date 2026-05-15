@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, FastAPI
@@ -34,6 +34,22 @@ async def _daily_fichaje_closer() -> None:
             _logger.exception("Error en el auto-cierre de fichajes")
 
 
+async def _startup_fichaje_closer() -> None:
+    """Cierra fichajes abiertos del mes en curso (días anteriores al de hoy)."""
+    desde = date.today().replace(day=1)
+    hasta = date.today()  # excluye el día actual (turno puede seguir abierto)
+    try:
+        result = await asyncio.to_thread(
+            FichajeService.cerrar_fichajes_abiertos, desde, hasta
+        )
+        _logger.info(
+            "Cierre inicial de fichajes: %d registros cerrados (desde %s hasta %s)",
+            result["cerrados"], desde, hasta,
+        )
+    except Exception:
+        _logger.exception("Error en el cierre inicial de fichajes al arranque")
+
+
 _intranet = APIRouter(prefix="/intranet")
 _intranet.include_router(fichaje_router)
 
@@ -44,3 +60,4 @@ app.include_router(_intranet)
 @app.on_event("startup")
 async def _start_scheduler() -> None:
     asyncio.create_task(_daily_fichaje_closer(), name="fichaje-auto-close")
+    asyncio.create_task(_startup_fichaje_closer(), name="fichaje-startup-close")

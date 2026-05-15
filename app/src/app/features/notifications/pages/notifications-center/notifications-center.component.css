@@ -1,7 +1,12 @@
 @import '../../../../shared/styles/intranet-pro-shell.css';
 
+:host .content {
+  align-content: start;
+}
+
 .notifications-page {
-  padding: 24px;
+  padding: 16px 24px 24px;
+  gap: 10px;
 }
 
 .preferences-link {
@@ -10,7 +15,7 @@
   text-decoration: none;
 }
 
-.header-actions button,
+.mark-all-btn,
 .row-actions button,
 .tabs button {
   border: 1px solid #dbe4ee;
@@ -21,29 +26,60 @@
   cursor: pointer;
 }
 
-.header-actions button {
-  padding: 10px 14px;
+.mark-all-btn {
+  padding: 8px 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.notifications-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 18px;
-}
-
-.filters,
-.notifications-panel,
-.empty-state {
+.notifications-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.filters {
-  display: grid;
-  align-content: start;
-  gap: 14px;
-  padding: 16px;
+.notifications-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  align-items: flex-end;
+}
+
+.filters-bar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.filters-bar input,
+.filters-bar select {
+  height: 34px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #0f172a;
+  font-size: 13px;
+  min-width: 130px;
+}
+
+.notifications-panel,
+.empty-state {
+  background: transparent;
 }
 
 .filters label {

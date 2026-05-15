@@ -155,6 +155,69 @@
           </div>
         </section>
 
+        <section class="settings-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Notificaciones</h2>
+              <p class="panel-description">Elige qué alertas quieres recibir y por qué canal.</p>
+            </div>
+          </div>
+
+          @if (notifLoading()) {
+            <p class="loading-text">Cargando preferencias…</p>
+          } @else {
+            <div class="notif-table">
+              <div class="notif-table-head">
+                <span></span>
+                <span class="notif-col-label">En app</span>
+                <span class="notif-col-label">Push</span>
+              </div>
+
+              <div class="notif-group-label">Facturas</div>
+              @for (pref of notifPrefsFacturas(); track pref.tipo) {
+                <div class="notif-row">
+                  <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
+                  <button type="button"
+                    class="notif-toggle"
+                    [class.on]="pref.canal_in_app"
+                    (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
+                    [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
+                    <span class="notif-toggle-thumb"></span>
+                  </button>
+                  <button type="button"
+                    class="notif-toggle"
+                    [class.on]="pref.canal_web_push"
+                    (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
+                    [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
+                    <span class="notif-toggle-thumb"></span>
+                  </button>
+                </div>
+              }
+
+              <div class="notif-group-label">Trabajos</div>
+              @for (pref of notifPrefsTareas(); track pref.tipo) {
+                <div class="notif-row">
+                  <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
+                  <button type="button"
+                    class="notif-toggle"
+                    [class.on]="pref.canal_in_app"
+                    (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
+                    [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
+                    <span class="notif-toggle-thumb"></span>
+                  </button>
+                  <button type="button"
+                    class="notif-toggle"
+                    [class.on]="pref.canal_web_push"
+                    (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
+                    [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
+                    <span class="notif-toggle-thumb"></span>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
       </section>
     </section>
   </section>

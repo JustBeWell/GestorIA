@@ -4,31 +4,28 @@
   <section class="content notifications-page">
     <header class="topbar">
       <div class="breadcrumbs">Inicio / <strong>Notificaciones</strong></div>
-      <a class="preferences-link" routerLink="/notificaciones/preferencias">Preferencias</a>
     </header>
 
-    <section class="page-header">
-      <div>
-        <h1 class="page-title">Notificaciones</h1>
-        <p class="page-subtitle">{{ notificationsService.noLeidas() }} sin leer</p>
+    <div class="notifications-card">
+      <div class="notifications-card-head">
+        <div>
+          <h1 class="page-title">Notificaciones</h1>
+          <p class="page-subtitle">{{ notificationsService.noLeidas() }} sin leer</p>
+        </div>
+        <button type="button" class="mark-all-btn" (click)="notificationsService.marcarTodasLeidas().subscribe()">Marcar todas</button>
       </div>
-      <div class="header-actions">
-        <button type="button" (click)="notificationsService.marcarTodasLeidas().subscribe()">Marcar todas</button>
-      </div>
-    </section>
 
-    <section class="notifications-layout">
-      <aside class="filters">
+      <div class="filters-bar">
         <label>
-          Desde
+          <span>Desde</span>
           <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); load()" />
         </label>
         <label>
-          Hasta
+          <span>Hasta</span>
           <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); load()" />
         </label>
         <label>
-          Tipo
+          <span>Tipo</span>
           <select [ngModel]="type()" (ngModelChange)="type.set($event); load()">
             <option value="">Todos</option>
             <option value="INV_DUE_SOON">Factura vence pronto</option>
@@ -40,7 +37,7 @@
           </select>
         </label>
         <label>
-          Prioridad
+          <span>Prioridad</span>
           <select [ngModel]="priority()" (ngModelChange)="priority.set($event)">
             <option value="">Todas</option>
             <option value="critica">Crítica</option>
@@ -49,7 +46,7 @@
             <option value="baja">Baja</option>
           </select>
         </label>
-      </aside>
+      </div>
 
       <section class="notifications-panel">
         <div class="tabs" role="tablist">
@@ -102,6 +99,6 @@
           </section>
         }
       </section>
-    </section>
+    </div>
   </section>
 </main>
