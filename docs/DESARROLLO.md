@@ -2,8 +2,8 @@
 
 Documento de seguimiento tecnico del MVP de GestorIA.
 
-**Ultima revision:** 2026-05-08  
-**Estado global:** MVP operativo avanzado. Sprints 1-4 completados; Sprint 5 en curso para herramientas, calidad y cierre de deuda tecnica.
+**Ultima revision:** 2026-05-15  
+**Estado global:** MVP operativo avanzado. Sprint de notificaciones completado (S-N1 a S-N5). Microservicio `backend-notifications` operativo con in-app, WebSocket y Web Push.
 
 ---
 
@@ -21,6 +21,7 @@ Documento de seguimiento tecnico del MVP de GestorIA.
 | M8 Exportaciones | Avanzado | Fichaje CSV/PDF, facturas CSV/PDF, trabajos CSV/PDF y PDF de cierre mensual. |
 | M9 Auditoria | Completo | Eventos en backend y UI de consulta para administradores. |
 | M10 Herramientas | En curso | Calendario fiscal/laboral ya esta conectado a microservicio y BD; GIA sustituye a Documentos con conversaciones/archivos reales; ajustes tiene UI alineada con prototipo y sigue pendiente de persistencia. |
+| M11 Notificaciones | Completo | Microservicio `backend-notifications` con in-app (WebSocket), Web Push (VAPID/Service Worker) y notificaciones Electron nativas. Scheduler APScheduler con 4 jobs cron. Transactional outbox con exponential backoff. Preferencias por usuario y tipo. Centro de notificaciones Angular con tabs, filtros y agrupacion por dia. |
 
 ---
 
@@ -52,6 +53,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 | `main_calendario.py` | Calendario fiscal. |
 | `main_admin.py` | Admin, auditoria y cierre. |
 | `main_ai.py` | Chat IA y portal GIA. |
+| `main_notifications.py` | Notificaciones, push y scheduler de vencimientos. |
 
 ### Gateway
 
@@ -66,6 +68,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - `/intranet/calendario-fiscal` -> `backend-calendario`
 - `/intranet/admin` -> `backend-admin`
 - `/ai` -> `backend-ai`
+- `/intranet/notifications` -> `backend-notifications`
+- `/internal/events` -> bloqueado 403 en gateway (acceso solo inter-servicio)
 
 ---
 
@@ -292,6 +296,14 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - CSS reducido de 529 a 279 lineas eliminando todos los estilos de componentes eliminados.
 - Verificacion: sin errores de compilacion Angular ni Python.
 
+### 2026-05-15 · Sprint notificaciones push in-app
+
+- Anadida migracion `V015__notifications.sql` con `notifications`, `notification_preferences`, `push_subscriptions`, `notification_outbox` y `notification_dedupe`.
+- Nuevo microservicio `backend-notifications` con endpoints `/intranet/notifications/*`, `/internal/events` firmado con HMAC, scheduler APScheduler y worker de outbox para Web Push VAPID.
+- Integrados eventos de trabajos desde `TrabajosService`: asignacion, desasignacion, comentario nuevo, cambio de estado, cancelacion y cambio de prioridad.
+- Frontend: servicio `NotificationsService`, registro de service worker, campana en la shell, centro `/notificaciones` y preferencias `/notificaciones/preferencias`.
+- Gateway y Docker actualizados para enrutar `/intranet/notifications` y bloquear `/internal/events` desde el exterior.
+
 ### 2026-05-11 · Calendario fiscal listado por empleado
 
 - Reordenada la pantalla para que el calendario ocupe todo el ancho y el listado de trabajos quede debajo como seccion plegable.
@@ -303,11 +315,11 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 
 ## Proximos pasos recomendados
 
-1. Toggle de 2FA en ajustes (mfa_habilitado en frontend).
-2. Ampliar tests de integracion de escritura.
-3. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
-4. Conectar `v_resumen_mensual` al Home o documentar por que no se usa.
-5. Limpiar artefactos generados del repositorio.
+1. Generar claves VAPID reales para produccion (`python -m pywebpush --gen-vapid`) y guardarlas en gestor de secretos.
+2. Toggle de 2FA en ajustes (mfa_habilitado en frontend).
+3. Job nocturno de limpieza de notificaciones antiguas (retention configurado en `NOTIFICATIONS_RETENTION_DAYS`, falta el job cron).
+4. Ampliar tests de integracion de escritura, especialmente endpoints de notificaciones con BD real.
+5. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
 6. Preparar configuracion productiva de secretos, backups y logs.
 
 ---

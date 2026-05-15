@@ -855,3 +855,103 @@ class AuditoriaEventoItem(BaseModel):
 class AuditoriaResponse(BaseModel):
 	eventos: list[AuditoriaEventoItem]
 	paginacion: PaginacionMeta
+
+
+# ── Notificaciones ───────────────────────────────────────────────────────────
+
+NotificationTipo = Literal[
+	"INV_DUE_SOON",
+	"INV_DUE_TODAY",
+	"INV_OVERDUE_WEEKLY",
+	"TASK_DEADLINE_SOON",
+	"TASK_DEADLINE_TODAY",
+	"TASK_ASSIGNED",
+	"TASK_UNASSIGNED",
+	"TASK_STATE_CHANGED",
+	"TASK_CANCELLED",
+	"TASK_COMMENT_NEW",
+	"TASK_PRIORITY_CHANGED",
+]
+
+
+class NotificationItem(BaseModel):
+	id: str
+	tipo: NotificationTipo
+	prioridad: Literal["baja", "media", "alta", "critica"]
+	titulo: str
+	mensaje: str
+	entidad: str
+	entidad_id: str
+	deep_link: str | None = None
+	metadata: dict = Field(default_factory=dict)
+	leida: bool = False
+	archivada: bool = False
+	created_at: datetime
+
+
+class NotificationsListResponse(BaseModel):
+	notificaciones: list[NotificationItem]
+	no_leidas: int
+	paginacion: PaginacionMeta
+
+
+class NotificationsCounterResponse(BaseModel):
+	no_leidas: int
+	criticas: int
+
+
+class PushSubscriptionCreate(BaseModel):
+	endpoint: str = Field(min_length=20, max_length=2000)
+	keys: dict = Field(..., description="{'p256dh': str, 'auth': str}")
+	user_agent: str | None = Field(default=None, max_length=255)
+	plataforma: Literal["web", "electron"] = "web"
+
+	@field_validator("keys")
+	@classmethod
+	def validate_keys(cls, value: dict) -> dict:
+		if not isinstance(value.get("p256dh"), str) or not isinstance(value.get("auth"), str):
+			raise ValueError("keys debe contener p256dh y auth")
+		return value
+
+
+class PushSubscriptionItem(BaseModel):
+	id: str
+	endpoint: str
+	user_agent: str | None = None
+	plataforma: str
+	activo: bool
+	last_seen_at: datetime
+	created_at: datetime
+
+
+class PushSubscriptionsResponse(BaseModel):
+	suscripciones: list[PushSubscriptionItem]
+
+
+class NotificationPreferenceItem(BaseModel):
+	tipo: NotificationTipo
+	canal_in_app: bool
+	canal_web_push: bool
+	canal_email: bool = False
+	silencio_desde: str | None = None
+	silencio_hasta: str | None = None
+
+
+class NotificationPreferencesResponse(BaseModel):
+	preferencias: list[NotificationPreferenceItem]
+
+
+class NotificationPreferenceUpdate(BaseModel):
+	canal_in_app: bool | None = None
+	canal_web_push: bool | None = None
+	canal_email: bool | None = None
+	silencio_desde: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+	silencio_hasta: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
+
+
+class InternalEventRequest(BaseModel):
+	tipo: NotificationTipo
+	entidad: str
+	entidad_id: str
+	actor_id: str | None = None
+	payload: dict = Field(default_factory=dict)

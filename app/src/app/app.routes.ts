@@ -60,6 +60,15 @@ export const routes: Routes = [
 		loadComponent: () => import('./features/calendario-fiscal/pages/calendario-fiscal-page.component').then((m) => m.CalendarioFiscalPageComponent),
 	},
 	{
+		path: 'notificaciones',
+		canActivate: [authGuard],
+		loadChildren: () => import('./features/notifications/notifications.routes').then((m) => m.NOTIFICATIONS_ROUTES),
+	},
+	{
+		path: 'intranet/notificaciones',
+		redirectTo: 'notificaciones',
+	},
+	{
 		path: 'admin',
 		canActivate: [authGuard],
 		loadComponent: () => import('./features/admin/pages/admin-page.component').then((m) => m.AdminPageComponent),

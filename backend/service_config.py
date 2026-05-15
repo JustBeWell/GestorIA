@@ -30,6 +30,15 @@ class ServiceSettings:
 	twilio_account_sid: str | None = os.getenv("TWILIO_ACCOUNT_SID")
 	twilio_auth_token: str | None = os.getenv("TWILIO_AUTH_TOKEN")
 	twilio_from_number: str | None = os.getenv("TWILIO_FROM_NUMBER")
+	push_vapid_public_key: str = os.getenv("PUSH_VAPID_PUBLIC_KEY", "")
+	push_vapid_private_key: str = os.getenv("PUSH_VAPID_PRIVATE_KEY", "")
+	push_vapid_subject: str = os.getenv("PUSH_VAPID_SUBJECT", "mailto:gestor@gestoria.es")
+	internal_events_hmac_secret: str = os.getenv("INTERNAL_EVENTS_HMAC_SECRET", "dev-internal-events-secret")
+	notifications_retention_days: int = int(os.getenv("NOTIFICATIONS_RETENTION_DAYS", "365"))
+	task_deadline_days_ahead: str = os.getenv("TASK_DEADLINE_DAYS_AHEAD", "3,1")
+	notif_outbox_batch_size: int = int(os.getenv("NOTIF_OUTBOX_BATCH_SIZE", "100"))
+	notif_outbox_max_retries: int = int(os.getenv("NOTIF_OUTBOX_MAX_RETRIES", "5"))
+	timezone: str = os.getenv("TIMEZONE", "Europe/Madrid")
 
 	@property
 	def effective_database_url(self) -> str:

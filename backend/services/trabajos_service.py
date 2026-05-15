@@ -3,6 +3,7 @@ from psycopg2.extras import RealDictCursor
 from database import db_connection
 from models import TrabajoCreate, TrabajoUpdate
 from services._shared import build_pagination_meta, get_usuario, map_usuario, normalize_pagination
+from services.notifications_service import NotificationsService
 
 
 class TrabajosService:
@@ -111,6 +112,11 @@ class TrabajosService:
         with db_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
+                    "SELECT estado::text, prioridad::text FROM trabajos WHERE id = %s",
+                    (trabajo_id,),
+                )
+                previous = cursor.fetchone()
+                cursor.execute(
                     f"""
                     UPDATE trabajos
                     SET {set_clause}, updated_at = NOW()
@@ -123,6 +129,22 @@ class TrabajosService:
                 if not row:
                     return None
                 connection.commit()
+
+        if previous:
+            previous_estado = previous["estado"]
+            previous_prioridad = previous["prioridad"]
+            if "estado" in updates and updates["estado"] != previous_estado:
+                TrabajosService._safe_emit_task_event(
+                    trabajo_id,
+                    "TASK_CANCELLED" if updates["estado"] == "cancelado" else "TASK_STATE_CHANGED",
+                    payload={"estado_anterior": previous_estado, "estado": updates["estado"]},
+                )
+            if "prioridad" in updates and updates["prioridad"] != previous_prioridad:
+                TrabajosService._safe_emit_task_event(
+                    trabajo_id,
+                    "TASK_PRIORITY_CHANGED",
+                    payload={"prioridad_anterior": previous_prioridad, "prioridad": updates["prioridad"]},
+                )
 
         return TrabajosService.get_trabajo_detail(trabajo_id)
 
@@ -225,7 +247,14 @@ class TrabajosService:
                     (trabajo_id, empleado_id),
                 )
                 connection.commit()
-                return TrabajosService._get_empleados_for_trabajo(cursor, trabajo_id)
+                empleados = TrabajosService._get_empleados_for_trabajo(cursor, trabajo_id)
+
+        TrabajosService._safe_emit_task_event(
+            trabajo_id,
+            "TASK_ASSIGNED",
+            payload={"empleado_id": empleado_id},
+        )
+        return empleados
 
     @staticmethod
     def unassign_empleado(trabajo_id: str, empleado_id: str) -> bool:
@@ -241,7 +270,15 @@ class TrabajosService:
                 )
                 affected = cursor.rowcount
                 connection.commit()
-                return affected > 0
+                removed = affected > 0
+
+        if removed:
+            TrabajosService._safe_emit_task_event(
+                trabajo_id,
+                "TASK_UNASSIGNED",
+                payload={"empleado_id": empleado_id},
+            )
+        return removed
 
     # ── Comentarios ──────────────────────────────────────────────────────────
 
@@ -304,9 +341,38 @@ class TrabajosService:
                 autor_row = cursor.fetchone()
                 result = dict(row)
                 result["autor_nombre"] = autor_row["autor_nombre"] if autor_row else ""
-                return result
+
+        TrabajosService._safe_emit_task_event(
+            trabajo_id,
+            "TASK_COMMENT_NEW",
+            actor_id=user_id,
+            payload={
+                "comentario_id": result["comentario_id"],
+                "autor_id": user_id,
+                "autor_nombre": result["autor_nombre"],
+                "texto": texto,
+            },
+        )
+        return result
 
     # ── Semi-public helper (used by HomeService) ───────────────────────────────
+
+    @staticmethod
+    def _safe_emit_task_event(
+        trabajo_id: str,
+        tipo: str,
+        actor_id: str | None = None,
+        payload: dict | None = None,
+    ) -> None:
+        try:
+            NotificationsService.emit_task_event(
+                trabajo_id=trabajo_id,
+                tipo=tipo,
+                actor_id=actor_id,
+                payload=payload,
+            )
+        except Exception:
+            return
 
     @staticmethod
     def get_trabajos_resumen(cursor: RealDictCursor, empleado_id: str, is_admin: bool = False) -> dict:

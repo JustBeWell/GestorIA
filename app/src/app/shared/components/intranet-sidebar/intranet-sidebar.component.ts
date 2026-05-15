@@ -5,11 +5,12 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthApiService } from '../../../core/services/auth-api.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { EmpleadoService } from '../../../core/services/empleado.service';
+import { NotificationsBellComponent } from '../notifications-bell/notifications-bell.component';
 
 @Component({
   selector: 'app-intranet-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, NotificationsBellComponent],
   templateUrl: './intranet-sidebar.component.html',
   styleUrl: './intranet-sidebar.component.css',
 })

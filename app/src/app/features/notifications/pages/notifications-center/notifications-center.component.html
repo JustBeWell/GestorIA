@@ -1,0 +1,107 @@
+<main class="intranet-shell">
+  <app-intranet-sidebar />
+
+  <section class="content notifications-page">
+    <header class="topbar">
+      <div class="breadcrumbs">Inicio / <strong>Notificaciones</strong></div>
+      <a class="preferences-link" routerLink="/notificaciones/preferencias">Preferencias</a>
+    </header>
+
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">Notificaciones</h1>
+        <p class="page-subtitle">{{ notificationsService.noLeidas() }} sin leer</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" (click)="notificationsService.marcarTodasLeidas().subscribe()">Marcar todas</button>
+      </div>
+    </section>
+
+    <section class="notifications-layout">
+      <aside class="filters">
+        <label>
+          Desde
+          <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event); load()" />
+        </label>
+        <label>
+          Hasta
+          <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event); load()" />
+        </label>
+        <label>
+          Tipo
+          <select [ngModel]="type()" (ngModelChange)="type.set($event); load()">
+            <option value="">Todos</option>
+            <option value="INV_DUE_SOON">Factura vence pronto</option>
+            <option value="INV_DUE_TODAY">Factura vence hoy</option>
+            <option value="INV_OVERDUE_WEEKLY">Facturas vencidas</option>
+            <option value="TASK_ASSIGNED">Trabajo asignado</option>
+            <option value="TASK_COMMENT_NEW">Comentario nuevo</option>
+            <option value="TASK_STATE_CHANGED">Cambio de estado</option>
+          </select>
+        </label>
+        <label>
+          Prioridad
+          <select [ngModel]="priority()" (ngModelChange)="priority.set($event)">
+            <option value="">Todas</option>
+            <option value="critica">Crítica</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+          </select>
+        </label>
+      </aside>
+
+      <section class="notifications-panel">
+        <div class="tabs" role="tablist">
+          <button type="button" [class.active]="activeTab() === 'todas'" (click)="setTab('todas')">Todas</button>
+          <button type="button" [class.active]="activeTab() === 'no_leidas'" (click)="setTab('no_leidas')">No leídas</button>
+          <button type="button" [class.active]="activeTab() === 'facturas'" (click)="setTab('facturas')">Facturas</button>
+          <button type="button" [class.active]="activeTab() === 'trabajos'" (click)="setTab('trabajos')">Trabajos</button>
+          <button type="button" [class.active]="activeTab() === 'archivadas'" (click)="setTab('archivadas')">Archivadas</button>
+        </div>
+
+        @for (group of groupedNotifications(); track group.day) {
+          <section class="day-group">
+            <h2>{{ group.day }}</h2>
+            @for (item of group.items; track item.id) {
+              <article class="notification-card" [class.unread]="!item.leida">
+                <span class="priority" [class]="item.prioridad"></span>
+                <div class="notification-main">
+                  <header>
+                    <strong>{{ item.titulo }}</strong>
+                    <small>{{ formatDate(item.created_at) }}</small>
+                  </header>
+                  <p>{{ item.mensaje }}</p>
+                  <dl>
+                    <div>
+                      <dt>Tipo</dt>
+                      <dd>{{ item.tipo }}</dd>
+                    </div>
+                    <div>
+                      <dt>Entidad</dt>
+                      <dd>{{ item.entidad }}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="row-actions">
+                  @if (!item.leida) {
+                    <button type="button" (click)="markRead(item)">Marcar leída</button>
+                  }
+                  @if (item.deep_link) {
+                    <button type="button" (click)="openLink(item)">Abrir</button>
+                  }
+                  <button type="button" class="secondary" (click)="archive(item)">Archivar</button>
+                </div>
+              </article>
+            }
+          </section>
+        } @empty {
+          <section class="empty-state">
+            <h2>No hay notificaciones</h2>
+            <p>No se encontraron avisos para los filtros seleccionados.</p>
+          </section>
+        }
+      </section>
+    </section>
+  </section>
+</main>

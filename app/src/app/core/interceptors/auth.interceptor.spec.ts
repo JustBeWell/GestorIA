@@ -3,8 +3,9 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { authInterceptor } from './auth.interceptor';
 import { SessionStorageService } from '../services/session-storage.service';
@@ -12,20 +13,28 @@ import { AuthStateService } from '../services/auth-state.service';
 
 describe('authInterceptor', () => {
   let http: HttpTestingController;
-  let sessionSpy: jasmine.SpyObj<SessionStorageService>;
-  let authStateSpy: jasmine.SpyObj<AuthStateService>;
+  let sessionSpy: Partial<Record<keyof SessionStorageService, ReturnType<typeof vi.fn>>>;
+  let authStateSpy: Partial<Record<keyof AuthStateService, ReturnType<typeof vi.fn>>>;
 
   beforeEach(() => {
-    sessionSpy = jasmine.createSpyObj('SessionStorageService', ['getToken', 'getUser', 'setSession', 'clearSession']);
-    authStateSpy = jasmine.createSpyObj('AuthStateService', ['logout', 'login', 'currentUser', 'isAuthenticated']);
-    sessionSpy.getToken.and.returnValue('test-jwt');
-    sessionSpy.getUser.and.returnValue(null);
+    sessionSpy = {
+      getToken: vi.fn().mockReturnValue('test-jwt'),
+      getUser: vi.fn().mockReturnValue(null),
+      setSession: vi.fn(),
+      clearSession: vi.fn(),
+    };
+    authStateSpy = {
+      logout: vi.fn(),
+      login: vi.fn(),
+      currentUser: vi.fn(),
+      isAuthenticated: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'auth', children: [] }, { path: 'home', children: [] }]),
         { provide: SessionStorageService, useValue: sessionSpy },
         { provide: AuthStateService, useValue: authStateSpy },
       ],
@@ -37,9 +46,7 @@ describe('authInterceptor', () => {
   afterEach(() => http.verify());
 
   it('should attach Authorization header when token exists', () => {
-    const httpClient = TestBed.inject(
-      (await import('@angular/common/http')).HttpClient
-    );
+    const httpClient = TestBed.inject(HttpClient);
     httpClient.get('/api/test').subscribe();
 
     const req = http.expectOne('/api/test');
@@ -47,10 +54,8 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  it('should call authState.logout() on 401 response', async () => {
-    const httpClient = TestBed.inject(
-      (await import('@angular/common/http')).HttpClient
-    );
+  it('should call authState.logout() on 401 response', () => {
+    const httpClient = TestBed.inject(HttpClient);
     httpClient.get('/api/protected').subscribe({ error: () => {} });
 
     const req = http.expectOne('/api/protected');

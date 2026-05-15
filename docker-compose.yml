@@ -21,6 +21,15 @@ x-backend-common: &backend-common
     TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
     TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
     GIA_STORAGE_DIR: /data/gia
+    PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
+    PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
+    PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:gestor@gestoria.es}
+    INTERNAL_EVENTS_HMAC_SECRET: ${INTERNAL_EVENTS_HMAC_SECRET:-dev-internal-events-secret}
+    NOTIFICATIONS_RETENTION_DAYS: ${NOTIFICATIONS_RETENTION_DAYS:-365}
+    TASK_DEADLINE_DAYS_AHEAD: ${TASK_DEADLINE_DAYS_AHEAD:-3,1}
+    NOTIF_OUTBOX_BATCH_SIZE: ${NOTIF_OUTBOX_BATCH_SIZE:-100}
+    NOTIF_OUTBOX_MAX_RETRIES: ${NOTIF_OUTBOX_MAX_RETRIES:-5}
+    TIMEZONE: ${TIMEZONE:-Europe/Madrid}
 
 services:
   db:
@@ -38,6 +47,7 @@ services:
       - ./db/migrations/V011__calendario_fiscal.sql:/docker-entrypoint-initdb.d/011_calendario_fiscal.sql:ro
       - ./db/migrations/V012__gia_portal.sql:/docker-entrypoint-initdb.d/012_gia_portal.sql:ro
       - ./db/migrations/V013__calendario_asesoria_fiscal_laboral.sql:/docker-entrypoint-initdb.d/013_calendario_asesoria_fiscal_laboral.sql:ro
+      - ./db/migrations/V015__notifications.sql:/docker-entrypoint-initdb.d/015_notifications.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gestoria -d GestorIA"]
       interval: 5s
@@ -93,6 +103,11 @@ services:
     volumes:
       - gia_data:/data/gia
 
+  backend-notifications:
+    <<: *backend-common
+    container_name: gestoria-backend-notifications
+    command: ["uvicorn", "main_notifications:app", "--host", "0.0.0.0", "--port", "8008"]
+
   # ── API Gateway ────────────────────────────────────────────────────────────
 
   gateway:
@@ -108,6 +123,7 @@ services:
       - backend-calendario
       - backend-admin
       - backend-ai
+      - backend-notifications
     ports:
       - "8008:8008"
     volumes:

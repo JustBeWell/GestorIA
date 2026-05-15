@@ -4,6 +4,7 @@ fpdf2==2.8.3
 reportlab>=4.0.0
 annotated-types==0.7.0
 anyio==4.11.0
+APScheduler==3.10.4
 arrow==1.4.0
 attrs==25.4.0
 backoff==2.2.1
@@ -53,6 +54,7 @@ pydantic==2.12.3
 pydantic_core==2.41.4
 psycopg2-binary==2.9.10
 pymongo==4.6.1
+pywebpush==2.0.0
 pypdf>=5.0.0
 python-docx>=1.1.0
 openpyxl>=3.1.0

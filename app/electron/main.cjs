@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol } = require('electron');
+const { app, BrowserWindow, Notification, ipcMain, protocol } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
@@ -27,6 +27,7 @@ app.name = 'GestorIA';
 
 const isDev = process.env.NODE_ENV === 'development';
 const DIST = path.join(__dirname, '..', 'dist', 'login-desktop', 'browser');
+let mainWindow = null;
 
 const MIME = {
   '.html': 'text/html', '.js': 'application/javascript', '.mjs': 'application/javascript',
@@ -95,8 +96,22 @@ function createWindow(options = {}) {
     win.loadURL('app://localhost/');
   }
 
+  mainWindow = win;
   return win;
 }
+
+ipcMain.on('notify', (_, payload = {}) => {
+  const notification = new Notification({
+    title: payload.title || 'GestorIA',
+    body: payload.body || '',
+  });
+  notification.on('click', () => {
+    if (mainWindow && payload.url) {
+      mainWindow.webContents.send('navigate', payload.url);
+    }
+  });
+  notification.show();
+});
 
 // ════════════════════════════════════════════════════════════
 //  LAUNCHER — splash window + build steps

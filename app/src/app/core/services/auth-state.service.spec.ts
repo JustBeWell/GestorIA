@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 
 import { AuthUser } from '../models/auth.models';
 import { AuthStateService } from './auth-state.service';
-import { SessionStorageService } from './session-storage.service';
 
 const MOCK_USER: AuthUser = {
   id: 'user-1',
@@ -12,21 +11,12 @@ const MOCK_USER: AuthUser = {
 
 describe('AuthStateService', () => {
   let service: AuthStateService;
-  let sessionSpy: jasmine.SpyObj<SessionStorageService>;
 
   beforeEach(() => {
-    sessionSpy = jasmine.createSpyObj('SessionStorageService', [
-      'getUser',
-      'setSession',
-      'clearSession',
-    ]);
-    sessionSpy.getUser.and.returnValue(null);
+    localStorage.clear();
 
     TestBed.configureTestingModule({
-      providers: [
-        AuthStateService,
-        { provide: SessionStorageService, useValue: sessionSpy },
-      ],
+      providers: [AuthStateService],
     });
 
     service = TestBed.inject(AuthStateService);
@@ -37,13 +27,10 @@ describe('AuthStateService', () => {
   });
 
   it('should initialise currentUser from session storage', () => {
-    sessionSpy.getUser.and.returnValue(MOCK_USER);
+    localStorage.setItem('auth_user', JSON.stringify(MOCK_USER));
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        AuthStateService,
-        { provide: SessionStorageService, useValue: sessionSpy },
-      ],
+      providers: [AuthStateService],
     });
     const s = TestBed.inject(AuthStateService);
     expect(s.currentUser()).toEqual(MOCK_USER);
@@ -54,15 +41,15 @@ describe('AuthStateService', () => {
   });
 
   it('isAuthenticated() should be false when no user', () => {
-    expect(service.isAuthenticated()).toBeFalse();
+    expect(service.isAuthenticated()).toBe(false);
   });
 
   it('login() should update currentUser signal and persist session', () => {
     service.login('token-abc', MOCK_USER);
 
     expect(service.currentUser()).toEqual(MOCK_USER);
-    expect(service.isAuthenticated()).toBeTrue();
-    expect(sessionSpy.setSession).toHaveBeenCalledWith('token-abc', MOCK_USER);
+    expect(service.isAuthenticated()).toBe(true);
+    expect(localStorage.getItem('auth_token')).toBe('token-abc');
   });
 
   it('logout() should clear currentUser signal and session', () => {
@@ -70,7 +57,7 @@ describe('AuthStateService', () => {
     service.logout();
 
     expect(service.currentUser()).toBeNull();
-    expect(service.isAuthenticated()).toBeFalse();
-    expect(sessionSpy.clearSession).toHaveBeenCalled();
+    expect(service.isAuthenticated()).toBe(false);
+    expect(localStorage.getItem('auth_token')).toBeNull();
   });
 });

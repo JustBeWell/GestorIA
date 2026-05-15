@@ -621,7 +621,25 @@ class PagosService:
                 )
                 pago_row = cur.fetchone()
 
+        PagosService._safe_clear_invoice_notification_dedupe(factura_id)
         return {**dict(pago_row), "importe": float(pago_row["importe"] or 0)}
+
+    @staticmethod
+    def _safe_clear_invoice_notification_dedupe(factura_id: str) -> None:
+        try:
+            with db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        DELETE FROM notification_dedupe
+                        WHERE entidad_id = %s
+                          AND tipo IN ('INV_DUE_SOON', 'INV_DUE_TODAY', 'INV_OVERDUE_WEEKLY')
+                        """,
+                        (factura_id,),
+                    )
+                    conn.commit()
+        except Exception:
+            return
 
     # ── Deuda viva ─────────────────────────────────────────────────────────────
 

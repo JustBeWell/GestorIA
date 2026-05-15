@@ -1,0 +1,215 @@
+@import '../../../../shared/styles/intranet-pro-shell.css';
+
+.notifications-page {
+  padding: 24px;
+}
+
+.preferences-link {
+  color: #2563eb;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.header-actions button,
+.row-actions button,
+.tabs button {
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.header-actions button {
+  padding: 10px 14px;
+}
+
+.notifications-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.filters,
+.notifications-panel,
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.filters {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 16px;
+}
+
+.filters label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.filters input,
+.filters select {
+  min-height: 38px;
+  border: 1px solid #dbe4ee;
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #0f172a;
+}
+
+.notifications-panel {
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid #e2e8f0;
+  overflow-x: auto;
+}
+
+.tabs button {
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+
+.tabs button.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.day-group {
+  padding: 16px;
+}
+
+.day-group + .day-group {
+  border-top: 1px solid #e2e8f0;
+}
+
+.day-group h2 {
+  margin: 0 0 12px;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.notification-card {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.notification-card:first-of-type {
+  border-top: 0;
+}
+
+.notification-card.unread .notification-main strong {
+  color: #0f172a;
+}
+
+.priority {
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 50%;
+}
+
+.baja { background: #6b7280; }
+.media { background: #2563eb; }
+.alta { background: #ea580c; }
+.critica { background: #dc2626; }
+
+.notification-main {
+  min-width: 0;
+}
+
+.notification-main header {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.notification-main strong {
+  color: #334155;
+}
+
+.notification-main small,
+.notification-main p,
+.notification-main dd,
+.empty-state p {
+  color: #64748b;
+}
+
+.notification-main p {
+  margin: 6px 0 10px;
+}
+
+.notification-main dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.notification-main dl div {
+  display: flex;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.notification-main dt {
+  color: #94a3b8;
+  font-weight: 800;
+}
+
+.notification-main dd {
+  margin: 0;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-content: start;
+}
+
+.row-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.row-actions .secondary {
+  color: #64748b;
+}
+
+.empty-state {
+  margin: 16px;
+  padding: 38px;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .notifications-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-card {
+    grid-template-columns: 10px minmax(0, 1fr);
+  }
+
+  .row-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}

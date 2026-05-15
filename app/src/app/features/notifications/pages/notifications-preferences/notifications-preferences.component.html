@@ -1,0 +1,65 @@
+<main class="intranet-shell">
+  <app-intranet-sidebar />
+
+  <section class="content preferences-page">
+    <header class="topbar">
+      <div class="breadcrumbs">Notificaciones / <strong>Preferencias</strong></div>
+      <a routerLink="/notificaciones">Volver al centro</a>
+    </header>
+
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">Preferencias</h1>
+        <p class="page-subtitle">Canales por tipo de aviso y dispositivos suscritos.</p>
+      </div>
+      <button type="button" class="test-button" (click)="sendTest()">Enviar prueba</button>
+    </section>
+
+    <section class="table-panel">
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>In-app</th>
+            <th>Web push</th>
+            <th>Email</th>
+            <th>Silencio</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pref of preferences(); track pref.tipo) {
+            <tr>
+              <td>
+                <strong>{{ pref.tipo }}</strong>
+                @if (saving() === pref.tipo) {
+                  <span>Guardando</span>
+                }
+              </td>
+              <td><input type="checkbox" [checked]="pref.canal_in_app" (change)="toggle(pref, 'canal_in_app')" /></td>
+              <td><input type="checkbox" [checked]="pref.canal_web_push" (change)="toggle(pref, 'canal_web_push')" /></td>
+              <td><input type="checkbox" [checked]="pref.canal_email" (change)="toggle(pref, 'canal_email')" /></td>
+              <td>{{ pref.silencio_desde || '—' }} {{ pref.silencio_hasta ? '– ' + pref.silencio_hasta : '' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+
+    <section class="devices-panel">
+      <header>
+        <h2>Dispositivos suscritos</h2>
+      </header>
+      @for (sub of subscriptions(); track sub.id) {
+        <article class="device-row">
+          <div>
+            <strong>{{ sub.plataforma }}</strong>
+            <span>{{ sub.user_agent || sub.endpoint }}</span>
+          </div>
+          <button type="button" (click)="unsubscribeDevice(sub.id)">Desuscribir</button>
+        </article>
+      } @empty {
+        <p class="empty">No hay dispositivos suscritos.</p>
+      }
+    </section>
+  </section>
+</main>

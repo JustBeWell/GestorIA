@@ -52,6 +52,7 @@ El estado actual del proyecto, segun la documentacion y el historial de commits,
 | M8 Exportaciones | Parcial/avanzado | CSV/PDF para fichaje, trabajos, facturas y cierre mensual. |
 | M9 Auditoria | Completo | Tabla de auditoria, escritura de eventos y UI de consulta para administradores. |
 | M10 Herramientas | Parcial | Calendario fiscal conectado a microservicio; GIA reemplaza Documentos; Ajustes con perfil editable y cambio de contrasena real. Pendiente: toggle 2FA y configuracion de empresa. |
+| M11 Notificaciones | Completo | Microservicio `backend-notifications` independiente. Canales in-app (WebSocket), Web Push (VAPID + Service Worker) y Electron nativo. Scheduler APScheduler (4 jobs: vencimientos facturas y deadlines trabajos). Transactional outbox con exponential backoff hasta 5 reintentos. Preferencias por usuario/tipo. Centro Angular con tabs, filtros, agrupacion por dia y badge en campana del header. |
 
 ### 3.2 Actores del sistema
 
@@ -1017,3 +1018,11 @@ La pantalla de ajustes era un mockup estatico completo: dos pestanas (Seguridad 
 
 - Toggle de `mfa_habilitado` en frontend (el campo existe en base de datos y el admin ya puede modificarlo via `PUT /users/{id}/admin`).
 - Configuracion de empresa (nombre, logo, jornada estandar, IVA) requiere modelo y endpoints nuevos.
+
+### 20.5 Sprint notificaciones push in-app (2026-05-15)
+
+Se implemento el modulo de notificaciones definido en `docs/Notifications.md` como microservicio dedicado `backend-notifications`. Incluye persistencia en PostgreSQL, preferencias por usuario/tipo, suscripciones Web Push, outbox transaccional, endpoint interno firmado con HMAC, scheduler de vencimientos y dispatcher VAPID.
+
+En frontend se anadio el modelo y servicio de notificaciones, el service worker de push, la campana persistente en la intranet, el centro completo `/notificaciones` y la pantalla de preferencias/dispositivos `/notificaciones/preferencias`. El gateway Docker enruta `/intranet/notifications` al nuevo servicio y bloquea `/internal/events` desde el exterior.
+
+Los eventos inmediatos de trabajos se emiten desde `TrabajosService` tras confirmar la operacion de negocio: asignacion, desasignacion, nuevo comentario, cambio de estado, cancelacion y cambio de prioridad.
