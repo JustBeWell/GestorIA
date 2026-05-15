@@ -14,211 +14,229 @@
         </div>
       </section>
 
-      <section class="settings-content">
+      <nav class="ajustes-tabs">
+        <button type="button" class="ajustes-tab" [class.active]="activeTab() === 'cuenta'" (click)="activeTab.set('cuenta')">
+          Cuenta
+        </button>
+        <button type="button" class="ajustes-tab" [class.active]="activeTab() === 'notificaciones'" (click)="activeTab.set('notificaciones')">
+          Notificaciones
+        </button>
+      </nav>
 
-        <section class="settings-panel">
-          <div class="panel-header">
-            <h2>Mi perfil</h2>
-            @if (!editMode()) {
-              <button type="button" class="secondary-button settings-button" (click)="startEdit()">Editar</button>
+      @if (activeTab() === 'cuenta') {
+        <section class="settings-content">
+
+          <section class="settings-panel">
+            <div class="panel-header">
+              <h2>Mi perfil</h2>
+              @if (!editMode()) {
+                <button type="button" class="secondary-button settings-button" (click)="startEdit()">Editar</button>
+              }
+            </div>
+
+            @if (profileSuccess()) {
+              <p class="feedback feedback--success">Datos guardados correctamente.</p>
             }
-          </div>
+            @if (profileError()) {
+              <p class="feedback feedback--error">{{ profileError() }}</p>
+            }
 
-          @if (profileSuccess()) {
-            <p class="feedback feedback--success">Datos guardados correctamente.</p>
-          }
-          @if (profileError()) {
-            <p class="feedback feedback--error">{{ profileError() }}</p>
-          }
-
-          @if (empleado(); as emp) {
-            @if (!editMode()) {
-              <dl class="profile-grid">
-                <dt>Nombre</dt>
-                <dd>{{ emp.nombre }} {{ emp.apellidos }}</dd>
-                <dt>NIF / NIE</dt>
-                <dd>{{ emp.nif }}</dd>
-                <dt>Teléfono</dt>
-                <dd>{{ emp.telefono ?? '—' }}</dd>
-                <dt>Rol</dt>
-                <dd><span class="role-badge">{{ emp.rol }}</span></dd>
-              </dl>
+            @if (empleado(); as emp) {
+              @if (!editMode()) {
+                <dl class="profile-grid">
+                  <dt>Nombre</dt>
+                  <dd>{{ emp.nombre }} {{ emp.apellidos }}</dd>
+                  <dt>NIF / NIE</dt>
+                  <dd>{{ emp.nif }}</dd>
+                  <dt>Teléfono</dt>
+                  <dd>{{ emp.telefono ?? '—' }}</dd>
+                  <dt>Rol</dt>
+                  <dd><span class="role-badge">{{ emp.rol }}</span></dd>
+                </dl>
+              } @else {
+                <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
+                  <div class="form-row">
+                    <label for="nombre">Nombre</label>
+                    <input id="nombre" type="text" formControlName="nombre" autocomplete="given-name" />
+                  </div>
+                  <div class="form-row">
+                    <label for="apellidos">Apellidos</label>
+                    <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
+                  </div>
+                  <div class="form-row">
+                    <label for="telefono">Teléfono</label>
+                    <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="Opcional" />
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="secondary-button settings-button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
+                    <button type="submit" class="primary-button settings-button" [disabled]="profileForm.invalid || saving()">
+                      {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+                    </button>
+                  </div>
+                </form>
+              }
             } @else {
-              <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="profile-form">
-                <div class="form-row">
-                  <label for="nombre">Nombre</label>
-                  <input id="nombre" type="text" formControlName="nombre" autocomplete="given-name" />
-                </div>
-                <div class="form-row">
-                  <label for="apellidos">Apellidos</label>
-                  <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
-                </div>
-                <div class="form-row">
-                  <label for="telefono">Teléfono</label>
-                  <input id="telefono" type="tel" formControlName="telefono" autocomplete="tel" placeholder="Opcional" />
-                </div>
-                <div class="form-actions">
-                  <button type="button" class="secondary-button settings-button" (click)="cancelEdit()" [disabled]="saving()">Cancelar</button>
-                  <button type="submit" class="primary-button settings-button" [disabled]="profileForm.invalid || saving()">
-                    {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
-                  </button>
-                </div>
-              </form>
+              <p class="loading-text">Cargando datos…</p>
             }
-          } @else {
-            <p class="loading-text">Cargando datos…</p>
-          }
-        </section>
+          </section>
 
-        <section class="settings-panel">
-          <h2>Cambiar contraseña</h2>
-          <p class="panel-description">Introduce tu contraseña actual para establecer una nueva.</p>
+          <section class="settings-panel">
+            <h2>Cambiar contraseña</h2>
+            <p class="panel-description">Introduce tu contraseña actual para establecer una nueva.</p>
 
-          @if (passwordSuccess()) {
-            <p class="feedback feedback--success">Contraseña actualizada correctamente.</p>
-          }
-          @if (passwordError()) {
-            <p class="feedback feedback--error">{{ passwordError() }}</p>
-          }
+            @if (passwordSuccess()) {
+              <p class="feedback feedback--success">Contraseña actualizada correctamente.</p>
+            }
+            @if (passwordError()) {
+              <p class="feedback feedback--error">{{ passwordError() }}</p>
+            }
 
-          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
-            <div class="form-row">
-              <label for="current_password">Contraseña actual</label>
-              <input id="current_password" type="password" formControlName="current_password" autocomplete="current-password" />
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="password-form">
+              <div class="form-row">
+                <label for="current_password">Contraseña actual</label>
+                <input id="current_password" type="password" formControlName="current_password" autocomplete="current-password" />
+              </div>
+              <div class="form-row">
+                <label for="new_password">Nueva contraseña</label>
+                <input id="new_password" type="password" formControlName="new_password" autocomplete="new-password" />
+              </div>
+              <div class="form-row">
+                <label for="confirm_password">Confirmar nueva contraseña</label>
+                <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
+              </div>
+              <div class="form-actions form-actions--right">
+                <button type="submit" class="primary-button settings-button" [disabled]="passwordForm.invalid || passwordSaving()">
+                  {{ passwordSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="settings-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Apariencia</h2>
+                <p class="panel-description">Elige el tema visual de la aplicación.</p>
+              </div>
             </div>
-            <div class="form-row">
-              <label for="new_password">Nueva contraseña</label>
-              <input id="new_password" type="password" formControlName="new_password" autocomplete="new-password" />
-            </div>
-            <div class="form-row">
-              <label for="confirm_password">Confirmar nueva contraseña</label>
-              <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
-            </div>
-            <div class="form-actions form-actions--right">
-              <button type="submit" class="primary-button settings-button" [disabled]="passwordForm.invalid || passwordSaving()">
-                {{ passwordSaving() ? 'Guardando…' : 'Actualizar contraseña' }}
+
+            <div class="theme-options">
+              <button
+                type="button"
+                class="theme-card theme-card--light"
+                [class.active]="themeService.theme() === 'light'"
+                (click)="setTheme('light')"
+              >
+                <div class="theme-preview">
+                  <div class="theme-preview__sidebar"></div>
+                  <div class="theme-preview__content"></div>
+                </div>
+                <span>Modo claro</span>
+                @if (themeService.theme() === 'light') {
+                  <span class="theme-check">✓</span>
+                }
+              </button>
+
+              <button
+                type="button"
+                class="theme-card theme-card--dark"
+                [class.active]="themeService.theme() === 'dark'"
+                (click)="setTheme('dark')"
+              >
+                <div class="theme-preview">
+                  <div class="theme-preview__sidebar"></div>
+                  <div class="theme-preview__content"></div>
+                </div>
+                <span>Modo oscuro</span>
+                @if (themeService.theme() === 'dark') {
+                  <span class="theme-check">✓</span>
+                }
               </button>
             </div>
-          </form>
-        </section>
+          </section>
 
-        <section class="settings-panel danger-panel">
-          <div class="panel-header panel-header--center">
-            <div>
-              <h2>Cerrar sesión</h2>
-              <p class="panel-description">Salir de la aplicación y volver al acceso.</p>
-            </div>
-            <button type="button" class="danger-button settings-button" (click)="logout()">Cerrar sesión</button>
-          </div>
-        </section>
-
-        <section class="settings-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Apariencia</h2>
-              <p class="panel-description">Elige el tema visual de la aplicación.</p>
-            </div>
-          </div>
-
-          <div class="theme-options">
-            <button
-              type="button"
-              class="theme-card theme-card--light"
-              [class.active]="themeService.theme() === 'light'"
-              (click)="setTheme('light')"
-            >
-              <div class="theme-preview">
-                <div class="theme-preview__sidebar"></div>
-                <div class="theme-preview__content"></div>
+          <section class="settings-panel danger-panel">
+            <div class="panel-header panel-header--center">
+              <div>
+                <h2>Cerrar sesión</h2>
+                <p class="panel-description">Salir de la aplicación y volver al acceso.</p>
               </div>
-              <span>Modo claro</span>
-              @if (themeService.theme() === 'light') {
-                <span class="theme-check">✓</span>
-              }
-            </button>
-
-            <button
-              type="button"
-              class="theme-card theme-card--dark"
-              [class.active]="themeService.theme() === 'dark'"
-              (click)="setTheme('dark')"
-            >
-              <div class="theme-preview">
-                <div class="theme-preview__sidebar"></div>
-                <div class="theme-preview__content"></div>
-              </div>
-              <span>Modo oscuro</span>
-              @if (themeService.theme() === 'dark') {
-                <span class="theme-check">✓</span>
-              }
-            </button>
-          </div>
-        </section>
-
-        <section class="settings-panel">
-          <div class="panel-header">
-            <div>
-              <h2>Notificaciones</h2>
-              <p class="panel-description">Elige qué alertas quieres recibir y por qué canal.</p>
+              <button type="button" class="danger-button settings-button" (click)="logout()">Cerrar sesión</button>
             </div>
-          </div>
+          </section>
 
-          @if (notifLoading()) {
-            <p class="loading-text">Cargando preferencias…</p>
-          } @else {
-            <div class="notif-table">
-              <div class="notif-table-head">
-                <span></span>
-                <span class="notif-col-label">En app</span>
-                <span class="notif-col-label">Push</span>
+        </section>
+      }
+
+      @if (activeTab() === 'notificaciones') {
+        <section class="settings-content">
+
+          <section class="settings-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Preferencias de notificaciones</h2>
+                <p class="panel-description">Elige qué alertas quieres recibir y por qué canal.</p>
               </div>
+            </div>
 
-              <div class="notif-group-label">Facturas</div>
-              @for (pref of notifPrefsFacturas(); track pref.tipo) {
-                <div class="notif-row">
-                  <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
-                  <button type="button"
-                    class="notif-toggle"
-                    [class.on]="pref.canal_in_app"
-                    (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
-                    [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
-                    <span class="notif-toggle-thumb"></span>
-                  </button>
-                  <button type="button"
-                    class="notif-toggle"
-                    [class.on]="pref.canal_web_push"
-                    (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
-                    [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
-                    <span class="notif-toggle-thumb"></span>
-                  </button>
+            @if (notifLoading()) {
+              <p class="loading-text">Cargando preferencias…</p>
+            } @else {
+              <div class="notif-table">
+                <div class="notif-table-head">
+                  <span></span>
+                  <span class="notif-col-label">En app</span>
+                  <span class="notif-col-label">Push</span>
                 </div>
-              }
 
-              <div class="notif-group-label">Trabajos</div>
-              @for (pref of notifPrefsTareas(); track pref.tipo) {
-                <div class="notif-row">
-                  <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
-                  <button type="button"
-                    class="notif-toggle"
-                    [class.on]="pref.canal_in_app"
-                    (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
-                    [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
-                    <span class="notif-toggle-thumb"></span>
-                  </button>
-                  <button type="button"
-                    class="notif-toggle"
-                    [class.on]="pref.canal_web_push"
-                    (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
-                    [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
-                    <span class="notif-toggle-thumb"></span>
-                  </button>
-                </div>
-              }
-            </div>
-          }
+                <div class="notif-group-label">Facturas</div>
+                @for (pref of notifPrefsFacturas(); track pref.tipo) {
+                  <div class="notif-row">
+                    <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
+                    <button type="button"
+                      class="notif-toggle"
+                      [class.on]="pref.canal_in_app"
+                      (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
+                      [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
+                      <span class="notif-toggle-thumb"></span>
+                    </button>
+                    <button type="button"
+                      class="notif-toggle"
+                      [class.on]="pref.canal_web_push"
+                      (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
+                      [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
+                      <span class="notif-toggle-thumb"></span>
+                    </button>
+                  </div>
+                }
+
+                <div class="notif-group-label">Trabajos</div>
+                @for (pref of notifPrefsTareas(); track pref.tipo) {
+                  <div class="notif-row">
+                    <span class="notif-name">{{ notifLabel(pref.tipo) }}</span>
+                    <button type="button"
+                      class="notif-toggle"
+                      [class.on]="pref.canal_in_app"
+                      (click)="toggleNotif(pref.tipo, 'canal_in_app', !pref.canal_in_app)"
+                      [attr.aria-label]="(pref.canal_in_app ? 'Desactivar' : 'Activar') + ' notificación en app para ' + notifLabel(pref.tipo)">
+                      <span class="notif-toggle-thumb"></span>
+                    </button>
+                    <button type="button"
+                      class="notif-toggle"
+                      [class.on]="pref.canal_web_push"
+                      (click)="toggleNotif(pref.tipo, 'canal_web_push', !pref.canal_web_push)"
+                      [attr.aria-label]="(pref.canal_web_push ? 'Desactivar' : 'Activar') + ' push para ' + notifLabel(pref.tipo)">
+                      <span class="notif-toggle-thumb"></span>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
         </section>
+      }
 
-      </section>
     </section>
   </section>
 </main>

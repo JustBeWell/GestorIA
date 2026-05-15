@@ -249,3 +249,104 @@
     justify-content: flex-start;
   }
 }
+
+/* ── Dark mode overrides ────────────────────────────────────── */
+
+html[data-theme="dark"] .notifications-card {
+  background: #172419;
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .notifications-card-head {
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .notifications-card-head h1 {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .notifications-card-head p {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .preferences-link {
+  color: #6fb8f0;
+}
+
+html[data-theme="dark"] .mark-all-btn,
+html[data-theme="dark"] .row-actions button,
+html[data-theme="dark"] .tabs button {
+  background: #1c3022;
+  color: #eaf2ec;
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .tabs button.active {
+  background: #2a4838;
+  border-color: #5a9a78;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .row-actions .secondary {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .filters-bar {
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .filters-bar label {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .filters-bar input,
+html[data-theme="dark"] .filters-bar select,
+html[data-theme="dark"] .filters input,
+html[data-theme="dark"] .filters select {
+  background: #1a2c21;
+  color: #eaf2ec;
+  border-color: #324e3e;
+}
+
+html[data-theme="dark"] .filters label {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .tabs {
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .day-group + .day-group {
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .day-group h2 {
+  color: #78a08e;
+}
+
+html[data-theme="dark"] .notification-card {
+  border-color: #223830;
+}
+
+html[data-theme="dark"] .notification-card.unread .notification-main strong {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .notification-main strong {
+  color: #eaf2ec;
+}
+
+html[data-theme="dark"] .notification-main small,
+html[data-theme="dark"] .notification-main p,
+html[data-theme="dark"] .notification-main dd,
+html[data-theme="dark"] .empty-state p {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .notification-main dt {
+  color: #78a08e;
+}
+
+html[data-theme="dark"] .empty-state h2 {
+  color: #eaf2ec;
+}

@@ -169,3 +169,63 @@
   text-decoration: none;
   border-top: 1px solid #e2e8f0;
 }
+
+/* ── Dark mode overrides ────────────────────────────────────── */
+
+html[data-theme="dark"] .notification-popover {
+  background: #172419;
+  color: #eaf2ec;
+  border-color: #2a4838;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] .popover-header {
+  border-color: #2a4838;
+}
+
+html[data-theme="dark"] .popover-header h3 {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .popover-header button,
+html[data-theme="dark"] .push-banner button {
+  color: #6fb8f0;
+}
+
+html[data-theme="dark"] .push-banner {
+  background: #142130;
+  color: #93c5fd;
+  border-color: #1e3a5f;
+}
+
+html[data-theme="dark"] .push-banner.muted {
+  background: #1c3022;
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .notification-row {
+  background: #172419;
+  border-color: #223830;
+}
+
+html[data-theme="dark"] .notification-row.unread {
+  background: #1c3022;
+}
+
+html[data-theme="dark"] .notification-copy strong {
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .notification-copy span,
+html[data-theme="dark"] .notification-row small {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .empty-state {
+  color: #9ec4b0;
+}
+
+html[data-theme="dark"] .all-link {
+  color: #6fb8f0;
+  border-color: #2a4838;
+}

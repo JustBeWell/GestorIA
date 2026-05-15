@@ -6,6 +6,40 @@
   align-content: start;
 }
 
+/* ── Tabs de módulo ───────────────────────────────────────────── */
+
+.ajustes-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 2px 0;
+  border-bottom: 2px solid var(--clr-border);
+}
+
+.ajustes-tab {
+  padding: 9px 18px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--clr-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: -2px;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ajustes-tab:hover {
+  color: var(--clr-text-primary);
+}
+
+.ajustes-tab.active {
+  color: var(--clr-accent-primary, #2d6a4f);
+  border-bottom-color: var(--clr-accent-primary, #2d6a4f);
+}
+
+/* ── Contenido de ajustes ─────────────────────────────────────── */
+
 .settings-content {
   display: grid;
   gap: 16px;
@@ -171,13 +205,13 @@
 }
 
 .feedback--success {
-  background: #dcf7e7;
-  color: #2d7c4e;
+  background: var(--clr-feedback-success-bg);
+  color: var(--clr-feedback-success-text);
 }
 
 .feedback--error {
-  background: #fde8e8;
-  color: #c64d46;
+  background: var(--clr-feedback-error-bg);
+  color: var(--clr-feedback-error-text);
 }
 
 .loading-text {
@@ -189,17 +223,17 @@
 /* ── Danger panel ─────────────────────────────────────────── */
 
 .danger-panel {
-  border-color: #f5d0ce;
+  border-color: var(--clr-danger-border);
 }
 
 .danger-button {
-  border: 1px solid #c64d46;
+  border: 1px solid var(--clr-danger-text);
   background: var(--clr-bg-panel);
-  color: #c64d46;
+  color: var(--clr-danger-text);
 }
 
 .danger-button:hover {
-  background: #fde8e8;
+  background: var(--clr-danger-bg);
 }
 
 /* ── Notification preferences ─────────────────────────────── */
@@ -546,17 +580,17 @@ html[data-theme="dark"] .theme-card.active {
 }
 
 .feedback--success {
-  background: #dcf7e7;
-  color: #2d7c4e;
+  background: var(--clr-feedback-success-bg);
+  color: var(--clr-feedback-success-text);
 }
 
 .feedback--error {
-  background: #fde8e8;
-  color: #c64d46;
+  background: var(--clr-feedback-error-bg);
+  color: var(--clr-feedback-error-text);
 }
 
 .loading-text {
-  color: #9aa6b8;
+  color: var(--clr-text-muted);
   font-size: 15px;
   margin: 0;
 }
@@ -564,17 +598,17 @@ html[data-theme="dark"] .theme-card.active {
 /* ── Danger panel ─────────────────────────────────────────── */
 
 .danger-panel {
-  border-color: #f5d0ce;
+  border-color: var(--clr-danger-border);
 }
 
 .danger-button {
-  border: 1px solid #c64d46;
-  background: #ffffff;
-  color: #c64d46;
+  border: 1px solid var(--clr-danger-text);
+  background: var(--clr-bg-panel);
+  color: var(--clr-danger-text);
 }
 
 .danger-button:hover {
-  background: #fde8e8;
+  background: var(--clr-danger-bg);
 }
 
 /* ── Responsive ───────────────────────────────────────────── */

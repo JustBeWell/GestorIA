@@ -36,6 +36,8 @@ export class AjustesPageComponent implements OnInit {
   protected readonly passwordSuccess = signal(false);
   protected readonly passwordError = signal<string | null>(null);
 
+  protected readonly activeTab = signal<'cuenta' | 'notificaciones'>('cuenta');
+
   protected readonly notifLoading = signal(false);
   protected readonly notifPrefs = signal<NotificationPreferenceItem[]>([]);
 
