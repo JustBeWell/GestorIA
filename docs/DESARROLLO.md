@@ -177,7 +177,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Calendario fiscal: microservicio `backend-calendario`, tabla `calendario_fiscal_vencimientos`, consulta mensual y exportacion ICS.
 - [x] Calendario fiscal/laboral: datos reales servidos desde backend, con semillas 2026 para AEAT y TGSS.
 - [x] Calendario fiscal: alta manual de vencimientos extra y cambio de estado pendiente/realizado.
-- [ ] Calendario fiscal: edicion y borrado administrativo de vencimientos.
+- [x] Calendario fiscal: edicion y borrado administrativo de vencimientos con baja logica.
 - [x] GIA: sustituye al antiguo modulo Documentos.
 - [x] GIA: conversaciones persistidas, mensajes, adjuntos, descargas y generacion de PDF/imagenes.
 - [x] GIA: frontend conectado al microservicio `backend-ai`.
@@ -310,6 +310,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Anadido `trabajos_por_empleado` al endpoint mensual, leyendo trabajos reales con `fecha_objetivo` desde `trabajos` y `trabajo_empleado`.
 - El listado inferior separa vencimientos fiscales y trabajos por empleado, respetando permisos de administrador/empleado.
 - Verificacion: `pytest tests/test_intranet_tabs.py -q` en `backend/` correcto y `npm run build` en `app/` correcto. Se mantiene warning previo de presupuesto en `shared/styles/intranet-module-base.css`.
+
+### 2026-05-18 · HU-M10-01 CRUD administrativo de vencimientos
+
+- Anadidos `PUT /intranet/calendario-fiscal/{vencimiento_id}` y `DELETE /intranet/calendario-fiscal/{vencimiento_id}`.
+- El borrado es logico mediante `deleted_at` para evitar que el seed idempotente reactive vencimientos eliminados.
+- La UI permite editar y eliminar vencimientos desde el listado mensual.
 
 ---
 

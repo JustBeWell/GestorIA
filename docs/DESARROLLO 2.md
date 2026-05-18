@@ -168,8 +168,8 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 
 ---
 
-### M10 · Modulos de herramientas — PLACEHOLDER
-- [ ] **Calendario fiscal** — actualmente muestra datos estaticos hardcodeados; no hay backend ni modelo de datos
+### M10 · Modulos de herramientas
+- [x] **Calendario fiscal** — backend, BD, consulta mensual, alta manual, edicion y borrado administrativo
 - [ ] **Documentos** — pagina placeholder sin funcionalidad; no hay backend, ni almacenamiento, ni modelo
 - [ ] **Ajustes** — pagina con UI estatica; sin persistencia ni endpoints de configuracion
 

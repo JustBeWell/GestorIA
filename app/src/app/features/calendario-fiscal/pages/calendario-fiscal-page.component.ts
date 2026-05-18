@@ -34,6 +34,8 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly showWorkList = signal(true);
   protected readonly saving = signal(false);
   protected readonly updatingId = signal<string | null>(null);
+  protected readonly deletingId = signal<string | null>(null);
+  protected readonly editingVencimiento = signal<CalendarioFiscalVencimiento | null>(null);
   protected readonly hoveredDay = signal<string | null>(null);
 
   protected readonly periodo = computed(() => this.data()?.periodo ?? {
@@ -80,7 +82,9 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected readonly realizados = computed(() =>
     this.vencimientos().filter((item) => item.estado === 'presentado' || item.estado === 'no_aplica'),
   );
-  protected readonly busy = computed(() => this.loading() || this.saving() || this.updatingId() !== null);
+  protected readonly busy = computed(() =>
+    this.loading() || this.saving() || this.updatingId() !== null || this.deletingId() !== null
+  );
 
   ngOnInit(): void {
     this.load();
@@ -170,12 +174,31 @@ export class CalendarioFiscalPageComponent implements OnInit {
   protected openCreate(): void {
     if (this.busy()) return;
     this.createForm = this.emptyCreateForm();
+    this.editingVencimiento.set(null);
+    this.showCreateModal.set(true);
+  }
+
+  protected openEdit(item: CalendarioFiscalVencimiento): void {
+    if (this.busy()) return;
+    this.createForm = {
+      fecha: item.fecha,
+      modelo: item.modelo,
+      titulo: item.titulo,
+      descripcion: item.descripcion ?? '',
+      categoria: item.categoria,
+      periodo: item.periodo,
+      prioridad: item.prioridad,
+      estado: item.estado,
+      fuente_url: item.fuente_url ?? '',
+    };
+    this.editingVencimiento.set(item);
     this.showCreateModal.set(true);
   }
 
   protected closeCreate(): void {
     if (this.saving()) return;
     this.showCreateModal.set(false);
+    this.editingVencimiento.set(null);
   }
 
   protected createVencimiento(): void {
@@ -192,17 +215,43 @@ export class CalendarioFiscalPageComponent implements OnInit {
       periodo: this.createForm.periodo.trim() || this.periodo().month_label,
       descripcion: this.createForm.descripcion?.trim() || null,
       fuente_url: this.createForm.fuente_url?.trim() || null,
-    }).subscribe({
+    };
+    const editing = this.editingVencimiento();
+    const request$ = editing
+      ? this.intranetService.updateCalendarioFiscalVencimiento(editing.id, payload)
+      : this.intranetService.createCalendarioFiscalVencimiento(payload);
+
+    request$.subscribe({
       next: (item) => {
         this.selectedYear.set(this.parseDate(item.fecha).getFullYear());
         this.selectedMonth.set(this.parseDate(item.fecha).getMonth() + 1);
         this.showCreateModal.set(false);
+        this.editingVencimiento.set(null);
         this.saving.set(false);
         this.load();
       },
       error: () => {
-        this.error.set('No se pudo crear el vencimiento.');
+        this.error.set(editing ? 'No se pudo actualizar el vencimiento.' : 'No se pudo crear el vencimiento.');
         this.saving.set(false);
+      },
+    });
+  }
+
+  protected deleteVencimiento(item: CalendarioFiscalVencimiento): void {
+    if (this.busy()) return;
+    const confirmed = window.confirm(`Eliminar vencimiento ${item.modelo} - ${item.titulo}?`);
+    if (!confirmed) return;
+
+    this.deletingId.set(item.id);
+    this.error.set(null);
+    this.intranetService.deleteCalendarioFiscalVencimiento(item.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.load();
+      },
+      error: () => {
+        this.error.set('No se pudo eliminar el vencimiento.');
+        this.deletingId.set(null);
       },
     });
   }

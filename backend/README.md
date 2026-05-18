@@ -208,6 +208,8 @@ Rutas publicas principales:
 
 - `GET /intranet/calendario-fiscal?year=&month=`
 - `POST /intranet/calendario-fiscal`
+- `PUT /intranet/calendario-fiscal/{vencimiento_id}`
+- `DELETE /intranet/calendario-fiscal/{vencimiento_id}`
 - `PATCH /intranet/calendario-fiscal/{vencimiento_id}/estado`
 - `GET /intranet/calendario-fiscal/export/ics?year=&month=`
 

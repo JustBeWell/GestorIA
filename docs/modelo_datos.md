@@ -71,7 +71,7 @@ gia_conversaciones 1:N gia_archivos
 3. **Estado automatico de factura:** `trg_actualizar_estado_factura` actualiza la factura a `pagada_parcial` o `pagada`.
 4. **Timestamps de actualizacion:** triggers de `updated_at` en entidades principales.
 5. **Campos calculados:** `importe_iva` y `total` se calculan como columnas generadas en `facturas`.
-6. **Calendario fiscal:** cada vencimiento es unico por `fecha`, `modelo`, `periodo` y `titulo`; `aplica_tipo_cliente` permite calcular clientes afectados sin duplicar vencimientos por cliente.
+6. **Calendario fiscal:** cada vencimiento es unico por `fecha`, `modelo`, `periodo` y `titulo`; `aplica_tipo_cliente` permite calcular clientes afectados sin duplicar vencimientos por cliente y `deleted_at` soporta borrado logico.
 
 ---
 
@@ -104,6 +104,7 @@ gia_conversaciones 1:N gia_archivos
 | `V011__calendario_fiscal.sql` | Tabla y semillas iniciales AEAT 2026 para calendario fiscal. |
 | `V012__gia_portal.sql` | Conversaciones, mensajes y archivos generados/subidos del portal GIA. |
 | `V013__calendario_asesoria_fiscal_laboral.sql` | Ampliacion 2026 con Renta, IVA, IRPF, Sociedades, informativas y Seguridad Social. |
+| `V017__calendario_fiscal_admin_delete.sql` | Baja logica de vencimientos fiscales eliminados desde administracion. |
 
 > Nota: existen dos migraciones con prefijo `V003`. Si se adopta una herramienta estricta de migraciones, conviene renumerarlas o consolidarlas.
 

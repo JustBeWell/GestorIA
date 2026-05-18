@@ -139,6 +139,8 @@ export interface CalendarioFiscalVencimientoCreate {
   fuente_url?: string | null;
 }
 
+export type CalendarioFiscalVencimientoUpdate = CalendarioFiscalVencimientoCreate;
+
 export interface CalendarioFiscalDia {
   fecha: string;
   dia: number;

@@ -7,6 +7,7 @@ from models import (
     CalendarioFiscalResponse,
     CalendarioFiscalVencimientoCreate,
     CalendarioFiscalVencimientoItem,
+    CalendarioFiscalVencimientoUpdate,
 )
 from services.auth_service import get_current_user
 from services.calendario_fiscal_service import CalendarioFiscalService
@@ -51,6 +52,29 @@ def intranet_calendario_fiscal_create(
     current_user=Depends(get_current_user),
 ):
     return CalendarioFiscalService.create_vencimiento(payload)
+
+
+@router.put("/calendario-fiscal/{vencimiento_id}", response_model=CalendarioFiscalVencimientoItem)
+def intranet_calendario_fiscal_update(
+    vencimiento_id: str,
+    payload: CalendarioFiscalVencimientoUpdate,
+    current_user=Depends(get_current_user),
+):
+    result = CalendarioFiscalService.update_vencimiento(vencimiento_id, payload)
+    if not result:
+        raise HTTPException(status_code=404, detail="Vencimiento no encontrado")
+    return result
+
+
+@router.delete("/calendario-fiscal/{vencimiento_id}", status_code=204)
+def intranet_calendario_fiscal_delete(
+    vencimiento_id: str,
+    current_user=Depends(get_current_user),
+):
+    deleted = CalendarioFiscalService.delete_vencimiento(vencimiento_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Vencimiento no encontrado")
+    return Response(status_code=204)
 
 
 @router.patch("/calendario-fiscal/{vencimiento_id}/estado", response_model=CalendarioFiscalVencimientoItem)

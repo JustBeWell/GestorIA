@@ -713,6 +713,16 @@
   border-color: #cbd5e1;
 }
 
+.mini-action--danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.mini-action--danger:hover:not(:disabled) {
+  background: #fff7f7;
+  border-color: #fca5a5;
+}
+
 .mini-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;

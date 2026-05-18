@@ -367,6 +367,56 @@ class TestIntranetTabs:
         assert response.json()["estado"] == "presentado"
 
     @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.update_vencimiento")
+    def test_calendario_fiscal_update_vencimiento(self, mock_service, mock_decode):
+        mock_decode.return_value = _token_data()
+        mock_service.return_value = {
+            "id": "99999999-9999-9999-9999-999999999999",
+            "fecha": "2026-05-25",
+            "modelo": "INT",
+            "titulo": "Revisión interna actualizada",
+            "descripcion": None,
+            "categoria": "Extra",
+            "periodo": "Mayo 2026",
+            "prioridad": "alta",
+            "estado": "en_preparacion",
+            "clientes_afectados": 0,
+            "fuente": "Manual",
+            "fuente_url": None,
+        }
+
+        response = client.put(
+            "/intranet/calendario-fiscal/99999999-9999-9999-9999-999999999999",
+            headers=_auth_headers(),
+            json={
+                "fecha": "2026-05-25",
+                "modelo": "INT",
+                "titulo": "Revisión interna actualizada",
+                "categoria": "Extra",
+                "periodo": "Mayo 2026",
+                "prioridad": "alta",
+                "estado": "en_preparacion",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["titulo"] == "Revisión interna actualizada"
+
+    @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.calendario_fiscal.CalendarioFiscalService.delete_vencimiento")
+    def test_calendario_fiscal_delete_vencimiento(self, mock_service, mock_decode):
+        mock_decode.return_value = _token_data()
+        mock_service.return_value = True
+
+        response = client.delete(
+            "/intranet/calendario-fiscal/99999999-9999-9999-9999-999999999999",
+            headers=_auth_headers(),
+        )
+
+        assert response.status_code == 204
+        assert response.content == b""
+
+    @patch("services.auth_service.TokenService.decode_token")
     @patch("routes.intranet.PagosService.get_pagos_tab_filtered")
     def test_tab_returns_404_when_user_not_found(self, mock_service, mock_decode):
         mock_decode.return_value = _token_data()

@@ -690,9 +690,9 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Gestión admin de entradas del calendario.
 
 **Definición de hecho:**
-- [ ] Datos reales del año cargados desde BD.
-- [ ] Vista de calendario o listado filtrable por mes.
-- [ ] Admin puede añadir/editar/eliminar entradas.
+- [x] Datos reales del año cargados desde BD.
+- [x] Vista de calendario o listado filtrable por mes.
+- [x] Admin puede añadir/editar/eliminar entradas.
 
 ---
 

@@ -13,6 +13,7 @@ import {
   CalendarioFiscalResponse,
   CalendarioFiscalVencimiento,
   CalendarioFiscalVencimientoCreate,
+  CalendarioFiscalVencimientoUpdate,
   ClienteCreate,
   ClienteDetailItem,
   ClientesTabResponse,
@@ -386,6 +387,17 @@ export class IntranetService {
 
   createCalendarioFiscalVencimiento(payload: CalendarioFiscalVencimientoCreate): Observable<CalendarioFiscalVencimiento> {
     return this.http.post<CalendarioFiscalVencimiento>(`${this.apiUrl}/intranet/calendario-fiscal`, payload);
+  }
+
+  updateCalendarioFiscalVencimiento(
+    id: string,
+    payload: CalendarioFiscalVencimientoUpdate,
+  ): Observable<CalendarioFiscalVencimiento> {
+    return this.http.put<CalendarioFiscalVencimiento>(`${this.apiUrl}/intranet/calendario-fiscal/${id}`, payload);
+  }
+
+  deleteCalendarioFiscalVencimiento(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/intranet/calendario-fiscal/${id}`);
   }
 
   updateCalendarioFiscalEstado(

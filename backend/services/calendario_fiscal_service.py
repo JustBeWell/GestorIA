@@ -217,7 +217,7 @@ class CalendarioFiscalService:
                         payload.periodo.strip(),
                         payload.prioridad,
                         payload.estado,
-                        payload.fuente_url,
+                        payload.fuente_url.strip() if payload.fuente_url else None,
                     ),
                 )
                 row = dict(cursor.fetchone())
@@ -234,6 +234,7 @@ class CalendarioFiscalService:
                     UPDATE calendario_fiscal_vencimientos
                     SET estado = %s, updated_at = NOW()
                     WHERE id = %s
+                    AND deleted_at IS NULL
                     RETURNING
                         id::text, fecha, modelo, titulo, descripcion, categoria,
                         periodo, prioridad, estado, fuente, fuente_url,
@@ -244,6 +245,67 @@ class CalendarioFiscalService:
                 row = cursor.fetchone()
                 connection.commit()
         return CalendarioFiscalService._vencimiento_item(row) if row else None
+
+    @staticmethod
+    def update_vencimiento(vencimiento_id: str, payload) -> dict | None:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                CalendarioFiscalService._ensure_schema(cursor)
+                cursor.execute(
+                    """
+                    UPDATE calendario_fiscal_vencimientos
+                    SET
+                        fecha = %s,
+                        modelo = %s,
+                        titulo = %s,
+                        descripcion = %s,
+                        categoria = %s,
+                        periodo = %s,
+                        prioridad = %s,
+                        estado = %s,
+                        fuente_url = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    AND deleted_at IS NULL
+                    RETURNING
+                        id::text, fecha, modelo, titulo, descripcion, categoria,
+                        periodo, prioridad, estado, fuente, fuente_url,
+                        0 AS clientes_afectados
+                    """,
+                    (
+                        payload.fecha,
+                        payload.modelo.strip(),
+                        payload.titulo.strip(),
+                        payload.descripcion.strip() if payload.descripcion else None,
+                        payload.categoria.strip(),
+                        payload.periodo.strip(),
+                        payload.prioridad,
+                        payload.estado,
+                        payload.fuente_url.strip() if payload.fuente_url else None,
+                        vencimiento_id,
+                    ),
+                )
+                row = cursor.fetchone()
+                connection.commit()
+        return CalendarioFiscalService._vencimiento_item(row) if row else None
+
+    @staticmethod
+    def delete_vencimiento(vencimiento_id: str) -> bool:
+        with db_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                CalendarioFiscalService._ensure_schema(cursor)
+                cursor.execute(
+                    """
+                    UPDATE calendario_fiscal_vencimientos
+                    SET deleted_at = NOW(), updated_at = NOW()
+                    WHERE id = %s
+                    AND deleted_at IS NULL
+                    """,
+                    (vencimiento_id,),
+                )
+                deleted = cursor.rowcount > 0
+                connection.commit()
+        return deleted
 
     @staticmethod
     def _get_vencimientos(cursor: RealDictCursor, start: date, end: date) -> list[dict]:
@@ -267,6 +329,7 @@ class CalendarioFiscalService:
                 ON v.aplica_tipo_cliente IS NULL
                 OR COALESCE(to_jsonb(c)->>'tipo_cliente', 'Sociedad') = ANY(v.aplica_tipo_cliente)
             WHERE v.fecha BETWEEN %s AND %s
+            AND v.deleted_at IS NULL
             GROUP BY v.id
             ORDER BY v.fecha ASC,
                 CASE v.prioridad WHEN 'alta' THEN 1 WHEN 'media' THEN 2 ELSE 3 END,
@@ -405,6 +468,7 @@ class CalendarioFiscalService:
                 fuente_url          TEXT,
                 created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                deleted_at          TIMESTAMPTZ,
                 CONSTRAINT chk_calendario_prioridad
                     CHECK (prioridad IN ('alta', 'media', 'baja')),
                 CONSTRAINT chk_calendario_estado
@@ -416,8 +480,20 @@ class CalendarioFiscalService:
         )
         cursor.execute(
             """
+            ALTER TABLE calendario_fiscal_vencimientos
+                ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ
+            """
+        )
+        cursor.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_calendario_fecha
                 ON calendario_fiscal_vencimientos (fecha)
+            """
+        )
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_calendario_deleted_at
+                ON calendario_fiscal_vencimientos (deleted_at)
             """
         )
         CalendarioFiscalService._seed_default_vencimientos(cursor)

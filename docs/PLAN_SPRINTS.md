@@ -175,7 +175,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 - [x] UI rediseñada segun prototipo visual y conectada a datos reales AEAT/TGSS.
 - [x] Navegacion por mes/ano, alta manual de vencimientos extra y seguimiento pendiente/realizado.
 - [x] Listado inferior plegable con trabajos reales agrupados por empleado.
-- [ ] Edicion y borrado administrativo de vencimientos fiscales.
+- [x] Edicion y borrado administrativo de vencimientos fiscales.
 
 ### HU-M10-02 - GIA
 
@@ -245,6 +245,6 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 | Sprint 4 | 2026-05-07 | Completado | Auditoria y exportaciones. |
 | Refactor microservicios | 2026-05-07 | Completado | Docker + nginx gateway + launcher adaptado. |
 | Sprint 5 · limpieza repo | 2026-05-08 | Completado | `.gitignore` ampliado y outputs `landing/.next`/`landing/out` fuera del indice. |
-| Sprint 5 · calendario fiscal end-to-end | 2026-05-08 | Completado | Microservicio, migraciones `V011`/`V013`, gateway, endpoint mensual, exportacion ICS y UI conectada a backend. Pendiente CRUD administrativo. |
+| Sprint 5 · calendario fiscal end-to-end | 2026-05-08 | Completado | Microservicio, migraciones `V011`/`V013`, gateway, endpoint mensual, exportacion ICS, UI conectada a backend y CRUD administrativo. |
 | Sprint 5 · ajustes funcionales (HU-M10-03) | 2026-05-13 | Completado | Perfil editable, cambio de contrasena real y cierre de sesion. Eliminados todos los ajustes sin backend. |
 | Sprint 5 | 2026-05-08 | En curso | M10, tests y despliegue productivo. |

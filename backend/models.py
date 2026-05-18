@@ -783,6 +783,10 @@ class CalendarioFiscalVencimientoCreate(BaseModel):
 	fuente_url: str | None = Field(default=None, max_length=500)
 
 
+class CalendarioFiscalVencimientoUpdate(CalendarioFiscalVencimientoCreate):
+	pass
+
+
 class CalendarioFiscalEstadoUpdate(BaseModel):
 	estado: Literal["pendiente", "presentado", "en_preparacion", "no_aplica"]
 

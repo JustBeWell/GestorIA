@@ -240,6 +240,12 @@
                     <button type="button" class="mini-action" (click)="updateEstado(item, 'presentado')" [disabled]="busy()">
                       Marcar realizado
                     </button>
+                    <button type="button" class="mini-action" (click)="openEdit(item)" [disabled]="busy()">
+                      Editar
+                    </button>
+                    <button type="button" class="mini-action mini-action--danger" (click)="deleteVencimiento(item)" [disabled]="busy()">
+                      Eliminar
+                    </button>
                   </div>
                 </article>
               } @empty {
@@ -268,6 +274,12 @@
                     <span class="done-chip">Realizado</span>
                     <button type="button" class="mini-action" (click)="updateEstado(item, 'pendiente')" [disabled]="busy()">
                       Reabrir
+                    </button>
+                    <button type="button" class="mini-action" (click)="openEdit(item)" [disabled]="busy()">
+                      Editar
+                    </button>
+                    <button type="button" class="mini-action mini-action--danger" (click)="deleteVencimiento(item)" [disabled]="busy()">
+                      Eliminar
                     </button>
                   </div>
                 </article>
@@ -322,12 +334,12 @@
   </section>
 
   @if (showCreateModal()) {
-    <section class="modal-backdrop" role="dialog" aria-modal="true" aria-label="Añadir vencimiento">
+    <section class="modal-backdrop" role="dialog" aria-modal="true" [attr.aria-label]="editingVencimiento() ? 'Editar vencimiento' : 'Añadir vencimiento'">
       <form class="calendar-modal" (ngSubmit)="createVencimiento()">
         <header>
           <div>
-            <h2>Añadir vencimiento</h2>
-            <p>Registra una obligación extra en el calendario fiscal/laboral.</p>
+            <h2>{{ editingVencimiento() ? 'Editar vencimiento' : 'Añadir vencimiento' }}</h2>
+            <p>{{ editingVencimiento() ? 'Actualiza la obligación registrada.' : 'Registra una obligación extra en el calendario fiscal/laboral.' }}</p>
           </div>
           <button type="button" class="modal-close" aria-label="Cerrar" (click)="closeCreate()" [disabled]="saving()">×</button>
         </header>
@@ -383,7 +395,7 @@
         <footer>
           <button type="button" class="secondary-button" (click)="closeCreate()" [disabled]="saving()">Cancelar</button>
           <button type="submit" class="primary-button" [disabled]="saving() || !createForm.fecha || !createForm.modelo || !createForm.titulo">
-            {{ saving() ? 'Guardando...' : 'Guardar vencimiento' }}
+            {{ saving() ? 'Guardando...' : (editingVencimiento() ? 'Guardar cambios' : 'Guardar vencimiento') }}
           </button>
         </footer>
       </form>
