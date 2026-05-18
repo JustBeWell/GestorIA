@@ -152,7 +152,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Calendario visual de fichajes.
 - [x] Panel admin con KPIs y graficas historicas.
 - [x] Grafica combinada con tooltip y toggles.
-- [ ] `v_resumen_mensual` existe en BD, pero no esta integrada como fuente unica del Home.
+- [x] `v_resumen_mensual` integrada como fuente unica de KPIs del Home mediante `GET /intranet/resumen/mensual?year=&month=`.
 
 ### M8 - Exportaciones
 

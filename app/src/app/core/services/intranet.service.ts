@@ -31,6 +31,7 @@ import {
   PagoDetailItem,
   PagosTabResponse,
   QuarterSeriesResponse,
+  ResumenMensualResponse,
   TrabajoComentario,
   TrabajoCreate,
   TrabajoDetailItem,
@@ -46,6 +47,15 @@ export class IntranetService {
 
   getHome(): Observable<IntranetHomeResponse> {
     return this.http.get<IntranetHomeResponse>(`${this.apiUrl}/intranet/home`);
+  }
+
+  getResumenMensual(params: { year: number; month: number }): Observable<ResumenMensualResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('year', String(params.year));
+    searchParams.set('month', String(params.month));
+    return this.http.get<ResumenMensualResponse>(
+      `${this.apiUrl}/intranet/resumen/mensual?${searchParams.toString()}`
+    );
   }
 
   getFichajeQuarterSeries(): Observable<QuarterSeriesResponse> {

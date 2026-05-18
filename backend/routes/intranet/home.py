@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date
 
-from models import PortalIntranetHomeResponse, QuarterSeriesResponse
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from models import PortalIntranetHomeResponse, QuarterSeriesResponse, ResumenMensualResponse
 from services.auth_service import get_current_user
 from services.home_service import HomeService
 from services.series_service import SeriesService
@@ -14,6 +16,18 @@ def intranet_home(current_user=Depends(get_current_user)):
     if not data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return data
+
+
+@router.get("/resumen/mensual", response_model=ResumenMensualResponse)
+def intranet_resumen_mensual(
+    year: int | None = Query(default=None, ge=2000, le=2100),
+    month: int | None = Query(default=None, ge=1, le=12),
+    current_user=Depends(get_current_user),
+):
+    today = date.today()
+    year = year or today.year
+    month = month or today.month
+    return HomeService.get_resumen_mensual(year, month)
 
 
 @router.get("/series/fichaje", response_model=QuarterSeriesResponse)

@@ -660,8 +660,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Verificar que los KPIs del Home coinciden con los de `v_resumen_mensual`.
 
 **Definición de hecho:**
-- [ ] KPIs del Home alimentados por la vista de BD.
-- [ ] Sin divergencias entre Home y documento de cierre.
+- [x] KPIs del Home alimentados por la vista de BD.
+- [x] Sin divergencias entre Home y documento de cierre.
 
 ---
 

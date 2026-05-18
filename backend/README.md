@@ -158,6 +158,7 @@ Rutas publicas principales:
 ### Home
 
 - `GET /intranet/home`
+- `GET /intranet/resumen/mensual?year=&month=`
 - `GET /intranet/series/fichaje`
 - `GET /intranet/series/clientes`
 - `GET /intranet/series/trabajos`

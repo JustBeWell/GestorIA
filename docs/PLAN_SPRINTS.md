@@ -132,7 +132,7 @@ Antes de este plan ya estaban completados M1 Auth, M2 Empleados, M3 Fichaje y M7
 - [x] HU-M9-04 - Consulta de auditoria para admin.
 - [x] HU-M9-05 - UI de auditoria en panel admin.
 - [x] HU-M8-01 - PDF mensual de cierre.
-- [ ] HU-M8-02 - Conectar `v_resumen_mensual` como fuente unica del Home.
+- [x] HU-M8-02 - Conectar `v_resumen_mensual` como fuente unica del Home.
 
 ### Endpoints resultantes
 
@@ -142,7 +142,7 @@ Antes de este plan ya estaban completados M1 Auth, M2 Empleados, M3 Fichaje y M7
 
 ### Observacion
 
-La vista `v_resumen_mensual` existe en base de datos, pero el Home aun no depende de ella como unica fuente de verdad.
+La vista `v_resumen_mensual` queda ampliada e integrada en el Home. El endpoint `GET /intranet/resumen/mensual?year=&month=` y `/intranet/home` comparten esa fuente para los KPIs mensuales.
 
 ---
 

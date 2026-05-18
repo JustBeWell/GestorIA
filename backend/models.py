@@ -148,9 +148,35 @@ class PagosResumen(BaseModel):
 	vencido_total: float = 0
 
 
+class ResumenMensualResponse(BaseModel):
+	periodo: str
+	anio: int
+	mes_num: int
+	total_facturado: float
+	total_cobrado: float
+	trabajos_nuevos: int
+	trabajos_cerrados: int
+	clientes_nuevos: int
+	horas_trabajadas: float
+	clientes_total: int = 0
+	clientes_activos: int = 0
+	trabajos_total: int = 0
+	trabajos_pendientes: int = 0
+	trabajos_en_curso: int = 0
+	trabajos_bloqueados: int = 0
+	trabajos_finalizados: int = 0
+	trabajos_cancelados: int = 0
+	facturas_emitidas_mes: int = 0
+	pendiente_total: float = 0
+	pendiente_count: int = 0
+	facturas_vencidas: int = 0
+	vencido_total: float = 0
+
+
 class PortalIntranetHomeResponse(BaseModel):
 	usuario: dict
 	funcionalidades: list[FeatureCard]
+	resumen_mensual: ResumenMensualResponse
 	fichaje: FichajeResumen
 	clientes: ClientesResumen
 	trabajos: TrabajosResumen

@@ -432,12 +432,13 @@ El Home actua como panel de control:
 - clientes activos,
 - trabajos en curso,
 - cobrado del mes,
+- KPIs mensuales desde `v_resumen_mensual` como fuente comun con el cierre,
 - graficas mensuales,
 - calendario de fichajes,
 - panel admin con KPIs historicos,
 - grafica combinada con hover y toggles.
 
-El commit history muestra una mejora progresiva de este dashboard, tanto funcional como visual.
+El commit history muestra una mejora progresiva de este dashboard, tanto funcional como visual. En HU-M8-02 se anade el endpoint `GET /intranet/resumen/mensual?year=&month=` y el Home deja de componer KPIs desde servicios paralelos.
 
 ### 9.8 M8 - Exportaciones
 

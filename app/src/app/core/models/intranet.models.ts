@@ -44,6 +44,31 @@ export interface PagosResumen {
   vencido_total: number;
 }
 
+export interface ResumenMensualResponse {
+  periodo: string;
+  anio: number;
+  mes_num: number;
+  total_facturado: number;
+  total_cobrado: number;
+  trabajos_nuevos: number;
+  trabajos_cerrados: number;
+  clientes_nuevos: number;
+  horas_trabajadas: number;
+  clientes_total: number;
+  clientes_activos: number;
+  trabajos_total: number;
+  trabajos_pendientes: number;
+  trabajos_en_curso: number;
+  trabajos_bloqueados: number;
+  trabajos_finalizados: number;
+  trabajos_cancelados: number;
+  facturas_emitidas_mes: number;
+  pendiente_total: number;
+  pendiente_count: number;
+  facturas_vencidas: number;
+  vencido_total: number;
+}
+
 export interface QuarterSeriesPoint {
   label: string;
   value: number;
@@ -59,6 +84,7 @@ export interface QuarterSeriesResponse {
 export interface IntranetHomeResponse {
   usuario: IntranetUsuarioResumen;
   funcionalidades: IntranetFeatureCard[];
+  resumen_mensual: ResumenMensualResponse;
   fichaje: FichajeResumen;
   clientes: ClientesResumen;
   trabajos: TrabajosResumen;

@@ -145,7 +145,7 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 - [x] Panel de administracion con KPIs, graficas historicas 12 meses y gestion de empleados y fichajes
 - [x] Graficas del panel admin reactivas con signals (cargan sin necesidad de refrescar)
 - [x] Grafica combinada historica: 6 series normalizadas, hover con tooltip, toggle de series y toggle Combinada/Individual
-- [ ] Vista `v_resumen_mensual` de BD no conectada al Home (disponible en BD, no usada)
+- [x] Vista `v_resumen_mensual` conectada al Home como fuente comun de KPIs mensuales
 
 ---
 

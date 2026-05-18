@@ -38,6 +38,30 @@ class TestIntranetHome:
                     "ruta": "/fichaje",
                 }
             ],
+            "resumen_mensual": {
+                "periodo": "2026-03",
+                "anio": 2026,
+                "mes_num": 3,
+                "total_facturado": 3200.0,
+                "total_cobrado": 2400.5,
+                "trabajos_nuevos": 6,
+                "trabajos_cerrados": 4,
+                "clientes_nuevos": 2,
+                "horas_trabajadas": 118.5,
+                "clientes_total": 12,
+                "clientes_activos": 10,
+                "trabajos_total": 20,
+                "trabajos_pendientes": 8,
+                "trabajos_en_curso": 6,
+                "trabajos_bloqueados": 1,
+                "trabajos_finalizados": 4,
+                "trabajos_cancelados": 1,
+                "facturas_emitidas_mes": 3,
+                "pendiente_total": 1200.0,
+                "pendiente_count": 2,
+                "facturas_vencidas": 2,
+                "vencido_total": 700.0,
+            },
             "fichaje": {
                 "eventos_hoy": 2,
                 "ultimo_evento_tipo": "salida",
@@ -75,6 +99,51 @@ class TestIntranetHome:
         assert body["clientes"]["activos"] == 10
         assert body["trabajos"]["en_curso"] == 6
         assert body["pagos"]["facturas_vencidas"] == 2
+        assert body["resumen_mensual"]["total_facturado"] == 3200.0
+
+    @patch("services.auth_service.TokenService.decode_token")
+    @patch("routes.intranet.IntranetService.get_resumen_mensual")
+    def test_returns_resumen_mensual_payload(self, mock_get_resumen, mock_decode):
+        mock_decode.return_value = TokenData(
+            user_id="11111111-1111-1111-1111-111111111111",
+            nombre_usuario="empleado@gestoria.local",
+            role="empleado",
+        )
+        mock_get_resumen.return_value = {
+            "periodo": "2026-03",
+            "anio": 2026,
+            "mes_num": 3,
+            "total_facturado": 3200.0,
+            "total_cobrado": 2400.5,
+            "trabajos_nuevos": 6,
+            "trabajos_cerrados": 4,
+            "clientes_nuevos": 2,
+            "horas_trabajadas": 118.5,
+            "clientes_total": 12,
+            "clientes_activos": 10,
+            "trabajos_total": 20,
+            "trabajos_pendientes": 8,
+            "trabajos_en_curso": 6,
+            "trabajos_bloqueados": 1,
+            "trabajos_finalizados": 4,
+            "trabajos_cancelados": 1,
+            "facturas_emitidas_mes": 3,
+            "pendiente_total": 1200.0,
+            "pendiente_count": 2,
+            "facturas_vencidas": 2,
+            "vencido_total": 700.0,
+        }
+
+        response = client.get(
+            "/intranet/resumen/mensual?year=2026&month=3",
+            headers={"Authorization": "Bearer valid-token"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["periodo"] == "2026-03"
+        assert body["total_cobrado"] == 2400.5
+        mock_get_resumen.assert_called_once_with(2026, 3)
 
     @patch("services.auth_service.TokenService.decode_token")
     @patch("routes.intranet.IntranetService.get_home")

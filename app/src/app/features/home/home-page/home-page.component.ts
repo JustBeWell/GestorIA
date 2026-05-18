@@ -10,6 +10,7 @@ import {
   IntranetHomeResponse,
   QuarterSeriesPoint,
   QuarterSeriesResponse,
+  ResumenMensualResponse,
 } from '../../../core/models/intranet.models';
 import { EmpleadoService } from '../../../core/services/empleado.service';
 import { IntranetService } from '../../../core/services/intranet.service';
@@ -45,6 +46,7 @@ interface DayMetrics {
 
 interface HomeSnapshot {
   home: IntranetHomeResponse;
+  resumenMensual: ResumenMensualResponse | null;
   fichajeEventos: FichajeEventoItem[];
   empleado: EmpleadoModel | null;
   series: {
@@ -80,6 +82,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   protected empleado: EmpleadoModel | null = null;
   protected homeData: IntranetHomeResponse | null = null;
+  protected resumenMensual: ResumenMensualResponse | null = null;
   protected calendarDays: CalendarDay[] = [];
   protected monthLabel = '';
   protected todayLabel = '';
@@ -112,7 +115,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
       ? of(empleadoCacheado)
       : this.empleadoService.me().pipe(retry({ count: 1, delay: 150 }));
 
-    const { start, end } = this.getMonthRange();
+    const { start, end, year, month } = this.getMonthRange();
 
     if (!hasSnapshot && !pendingReloadAt) {
       this.loading.set(true);
@@ -121,6 +124,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     forkJoin({
       empleado: empleado$,
       home: this.intranetService.getHome(),
+      resumenMensual: this.intranetService.getResumenMensual({ year, month }),
       fichaje: this.intranetService.getFichajeTab({
         page: 1,
         page_size: 100,
@@ -141,9 +145,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe({
-        next: ({ empleado, home, fichaje, fichajeSeries, clientesSeries, trabajosSeries, pagosSeries }) => {
+        next: ({ empleado, home, resumenMensual, fichaje, fichajeSeries, clientesSeries, trabajosSeries, pagosSeries }) => {
           this.empleado = empleado;
           this.homeData = home;
+          this.resumenMensual = resumenMensual;
           this.latestFichajeEvents = fichaje.eventos_recientes;
           this.buildCalendar(fichaje.eventos_recientes);
           this.activityItems = this.buildActivityItems();
@@ -154,6 +159,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
           this.updateSparklines();
           this.saveSnapshot({
             home,
+            resumenMensual,
             fichajeEventos: fichaje.eventos_recientes,
             empleado,
             series: {
@@ -263,7 +269,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   protected get fichajeMonthTotalHoursLabel(): string {
-    return this.formatHours(this.getMonthTotalHours());
+    return this.formatHours(this.resumenMensual?.horas_trabajadas ?? this.getMonthTotalHours());
   }
 
   protected get fichajeDayDeltaLabel(): string {
@@ -408,7 +414,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return `${this.selectedDay} de ${this.monthLabel}`;
   }
 
-  private getMonthRange(): { start: string; end: string } {
+  private getMonthRange(): { start: string; end: string; year: number; month: number } {
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth();
@@ -419,6 +425,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     return {
       start: this.toIsoDate(first),
       end: this.toIsoDate(last),
+      year,
+      month: month + 1,
     };
   }
 
@@ -746,6 +754,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   private applySnapshot(snapshot: HomeSnapshot): void {
     this.homeData = snapshot.home;
+    this.resumenMensual = snapshot.resumenMensual ?? snapshot.home?.resumen_mensual ?? null;
     this.empleado = snapshot.empleado ?? null;
     this.latestFichajeEvents = snapshot.fichajeEventos ?? [];
     this.buildCalendar(snapshot.fichajeEventos);
