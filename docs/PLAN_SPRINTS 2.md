@@ -673,6 +673,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 
 **Criterio de aceptación del sprint:** el MVP cumple la "Definición de hecho" del estudio de caso (sección 20), con cobertura de tests básica y sin deuda técnica bloqueante.
 
+**Despliegue:** la guia productiva queda documentada en `docs/DESPLIEGUE_PRODUCCION.md` con secretos, backups, logs, migraciones y checklist previa a publicacion.
+
 ---
 
 ### HU-M10-01 · Calendario fiscal (backend + UI)

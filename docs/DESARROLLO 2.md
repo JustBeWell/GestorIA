@@ -206,6 +206,7 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 - [x] Tests de integracion para escritura en clientes, trabajos, facturas, pagos y auditoria
 - [x] Cobertura de tests en rutas de escritura de clientes, trabajos y pagos
 - [x] Revision de `__pycache__`, caches y artefactos generados: no hay ficheros versionados y `.gitignore` los cubre
+- [x] Guia de despliegue productivo con secretos, backups y logs en `docs/DESPLIEGUE_PRODUCCION.md`
 
 ### Base de datos
 - [x] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — ya presentes en V001

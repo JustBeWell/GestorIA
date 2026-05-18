@@ -210,7 +210,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 - [x] Actualizar README principal a presentacion de producto.
 - [x] Actualizar README frontend/backend a arquitectura actual.
-- [ ] Documentar una guia de despliegue productivo con secretos, backups y logs.
+- [x] Documentar una guia de despliegue productivo con secretos, backups y logs.
 
 ---
 

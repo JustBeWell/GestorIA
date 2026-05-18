@@ -759,7 +759,7 @@ El MVP actual puede considerarse funcionalmente muy avanzado. Estan resueltos lo
 - panel admin,
 - app de escritorio macOS.
 
-Pendiente queda completar herramientas auxiliares, ampliar test coverage, limpiar artefactos generados y preparar una estrategia de despliegue mas formal si el producto va a salir de entorno local.
+Pendiente queda completar herramientas auxiliares y ampliar cobertura en servicios internos. La estrategia base de despliegue productivo queda documentada en `docs/DESPLIEGUE_PRODUCCION.md`.
 
 ---
 
@@ -770,7 +770,7 @@ Pendiente queda completar herramientas auxiliares, ampliar test coverage, limpia
 3. **Limpiar repositorio:** mantener fuera del control de versiones caches, `__pycache__` y artefactos generados ya ignorados.
 4. **Completar M10:** decidir si calendario fiscal, documentos y ajustes entran en el alcance real de la siguiente version.
 5. **Revisar permisos de empleados:** algunos commits ajustan que empleados puedan gestionar trabajos, clientes y facturas; conviene dejar la politica exacta documentada y probada.
-6. **Preparar despliegue productivo:** separar secretos, cambiar `JWT_SECRET_KEY`, revisar Twilio/OpenAI, backups de PostgreSQL y logs.
+6. **Preparar despliegue productivo:** ejecutar la checklist de `docs/DESPLIEGUE_PRODUCCION.md` antes de publicar.
 
 ---
 

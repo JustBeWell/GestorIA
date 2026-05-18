@@ -90,6 +90,8 @@ Definidas en `service_config.py`:
 
 ## Ejecucion
 
+Para despliegue productivo, ver [`docs/DESPLIEGUE_PRODUCCION.md`](../docs/DESPLIEGUE_PRODUCCION.md). El `docker-compose.yml` de raiz usa valores de desarrollo salvo que se sobreescriban con secretos reales.
+
 ### Via Docker Compose
 
 Desde la raiz del repositorio:

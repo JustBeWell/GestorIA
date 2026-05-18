@@ -114,3 +114,4 @@ Para profundizar en arquitectura, backend, frontend, modelo de datos y flujo de 
 - [`docs/DESARROLLO.md`](docs/DESARROLLO.md)
 - [`docs/PLAN_SPRINTS.md`](docs/PLAN_SPRINTS.md)
 - [`docs/modelo_datos.md`](docs/modelo_datos.md)
+- [`docs/DESPLIEGUE_PRODUCCION.md`](docs/DESPLIEGUE_PRODUCCION.md)

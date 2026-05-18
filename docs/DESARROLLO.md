@@ -330,16 +330,21 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - `git status --ignored` muestra caches locales ignoradas: `.venv/`, `app/node_modules/`, `landing/node_modules/`, `app/.angular/`, `app/dist/`, `landing/.next/`, `backend/__pycache__/`, `backend/.pytest_cache/` y `.DS_Store`.
 - `.gitignore` ya cubre esos patrones; no se requieren cambios adicionales.
 
+### 2026-05-18 · HU-DT-03 Guia de despliegue productivo
+
+- Anadida `docs/DESPLIEGUE_PRODUCCION.md` con checklist de secretos, migraciones, backups, logs y health checks.
+- Enlazada la guia desde `README.md` y `backend/README.md`.
+- Documentado que el `docker-compose.yml` actual requiere secretos reales y aplicacion controlada de migraciones para produccion.
+
 ---
 
 ## Proximos pasos recomendados
 
 1. Generar claves VAPID reales para produccion (`python -m pywebpush --gen-vapid`) y guardarlas en gestor de secretos.
-2. Toggle de 2FA en ajustes (mfa_habilitado en frontend).
-3. Job nocturno de limpieza de notificaciones antiguas (retention configurado en `NOTIFICATIONS_RETENTION_DAYS`, falta el job cron).
-4. Ampliar tests de integracion de escritura, especialmente endpoints de notificaciones con BD real.
-5. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
-6. Preparar configuracion productiva de secretos, backups y logs.
+2. Job nocturno de limpieza de notificaciones antiguas (retention configurado en `NOTIFICATIONS_RETENTION_DAYS`, falta el job cron).
+3. Ampliar tests de integracion de notificaciones con BD real.
+4. Revisar politica exacta de permisos de empleados en clientes, trabajos y facturas.
+5. Ejecutar la checklist de despliegue productivo antes de publicar.
 
 ---
 
