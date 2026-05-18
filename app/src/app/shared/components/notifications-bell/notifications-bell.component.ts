@@ -58,9 +58,7 @@ export class NotificationsBellComponent implements OnInit, OnDestroy {
   protected openNotification(item: NotificationItem): void {
     this.notificationsService.marcarLeida(item.id).pipe(takeUntil(this.destroy$)).subscribe();
     this.open.set(false);
-    if (item.deep_link) {
-      void this.router.navigateByUrl(item.deep_link);
-    }
+    void this.router.navigateByUrl('/notificaciones');
   }
 
   protected priorityClass(item: NotificationItem): string {

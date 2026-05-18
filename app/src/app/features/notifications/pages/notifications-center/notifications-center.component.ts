@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
 import { NotificationItem } from '../../../../core/models/notification.model';
@@ -12,7 +12,7 @@ type NotificationTab = 'todas' | 'no_leidas' | 'facturas' | 'trabajos' | 'archiv
 @Component({
   selector: 'app-notifications-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, IntranetSidebarComponent],
+  imports: [CommonModule, FormsModule, IntranetSidebarComponent],
   templateUrl: './notifications-center.component.html',
   styleUrl: './notifications-center.component.css',
 })
@@ -82,8 +82,26 @@ export class NotificationsCenterComponent implements OnInit {
 
   protected openLink(item: NotificationItem): void {
     if (item.deep_link) {
-      void this.router.navigateByUrl(item.deep_link);
+      void this.router.navigateByUrl(this.resolveDeepLink(item.deep_link));
     }
+  }
+
+  /**
+   * Normalizes a deep_link to a valid app route.
+   * e.g. /trabajos/some-uuid → /trabajos  (no detail route exists yet)
+   *      /pagos?vencidas_solo=true  → kept as-is (query params OK)
+   */
+  private resolveDeepLink(link: string): string {
+    const SINGLE_SEGMENT_ROUTES = new Set([
+      'trabajos', 'pagos', 'clientes', 'fichaje', 'gia',
+      'home', 'ajustes', 'calendario-fiscal', 'notificaciones', 'admin',
+    ]);
+    const [path, qs] = link.split('?');
+    const segments = path.split('/').filter(Boolean);
+    if (segments.length >= 2 && SINGLE_SEGMENT_ROUTES.has(segments[0])) {
+      return '/' + segments[0] + (qs ? '?' + qs : '');
+    }
+    return link;
   }
 
   protected formatDate(value: string): string {
