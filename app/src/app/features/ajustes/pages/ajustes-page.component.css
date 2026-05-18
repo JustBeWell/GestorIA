@@ -144,7 +144,8 @@
 /* ── Forms ────────────────────────────────────────────────── */
 
 .profile-form,
-.password-form {
+.password-form,
+.company-form {
   display: grid;
   gap: 18px;
   margin-top: 4px;
@@ -157,6 +158,16 @@
 .form-row {
   display: grid;
   gap: 6px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.form-row--wide {
+  grid-column: 1 / -1;
 }
 
 .form-row label {
@@ -181,6 +192,11 @@
 .form-row input:focus {
   border-color: var(--clr-border-input-focus);
   background: var(--clr-bg-input-focus);
+}
+
+.form-row input[readonly] {
+  color: var(--clr-text-secondary);
+  background: var(--clr-bg-page);
 }
 
 .form-actions {
@@ -325,6 +341,21 @@
   transform: translateX(16px);
 }
 
+.settings-toggle {
+  width: 46px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+
+.settings-toggle .notif-toggle-thumb {
+  width: 22px;
+  height: 22px;
+}
+
+.settings-toggle.on .notif-toggle-thumb {
+  transform: translateX(20px);
+}
+
 /* ── Theme panel ──────────────────────────────────────────── */
 
 .theme-options {
@@ -427,6 +458,10 @@ html[data-theme="dark"] .theme-card.active {
 
   .theme-options {
     flex-direction: row;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

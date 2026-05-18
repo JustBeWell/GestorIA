@@ -730,9 +730,9 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - UI: formulario de ajustes con los campos configurables, guardado con feedback.
 
 **Definición de hecho:**
-- [ ] Valores persistidos en BD (no hardcodeados).
-- [ ] Solo admin puede modificar.
-- [ ] Cambio de nombre de empresa refleja en cabecera de la app (si aplica).
+- [x] Valores persistidos en BD (no hardcodeados).
+- [x] Solo admin puede modificar.
+- [x] Cambio de nombre de empresa disponible desde Ajustes.
 
 ---
 

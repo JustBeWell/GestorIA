@@ -105,6 +105,7 @@ gia_conversaciones 1:N gia_archivos
 | `V012__gia_portal.sql` | Conversaciones, mensajes y archivos generados/subidos del portal GIA. |
 | `V013__calendario_asesoria_fiscal_laboral.sql` | Ampliacion 2026 con Renta, IVA, IRPF, Sociedades, informativas y Seguridad Social. |
 | `V017__calendario_fiscal_admin_delete.sql` | Baja logica de vencimientos fiscales eliminados desde administracion. |
+| `V018__empresa_configuracion.sql` | Configuracion singleton de datos fiscales y contacto de empresa. |
 
 > Nota: existen dos migraciones con prefijo `V003`. Si se adopta una herramienta estricta de migraciones, conviene renumerarlas o consolidarlas.
 

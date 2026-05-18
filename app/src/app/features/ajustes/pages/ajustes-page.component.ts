@@ -8,7 +8,7 @@ import { EmpleadoService } from '../../../core/services/empleado.service';
 import { AuthApiService } from '../../../core/services/auth-api.service';
 import { ThemeService, AppTheme } from '../../../core/services/theme.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
-import { EmpleadoModel } from '../../../core/models/empleado.model';
+import { EmpleadoModel, EmpresaConfig } from '../../../core/models/empleado.model';
 import { NotificationPreferenceItem, NotificationTipo } from '../../../core/models/notification.model';
 import { environment } from '../../../../environments/environment';
 
@@ -35,8 +35,15 @@ export class AjustesPageComponent implements OnInit {
   protected readonly passwordSaving = signal(false);
   protected readonly passwordSuccess = signal(false);
   protected readonly passwordError = signal<string | null>(null);
+  protected readonly mfaSaving = signal(false);
+  protected readonly mfaError = signal<string | null>(null);
+  protected readonly companyLoading = signal(false);
+  protected readonly companySaving = signal(false);
+  protected readonly companySuccess = signal(false);
+  protected readonly companyError = signal<string | null>(null);
+  protected readonly companyConfig = signal<EmpresaConfig | null>(null);
 
-  protected readonly activeTab = signal<'cuenta' | 'notificaciones'>('cuenta');
+  protected readonly activeTab = signal<'cuenta' | 'empresa' | 'notificaciones'>('cuenta');
 
   protected readonly notifLoading = signal(false);
   protected readonly notifPrefs = signal<NotificationPreferenceItem[]>([]);
@@ -67,6 +74,7 @@ export class AjustesPageComponent implements OnInit {
   protected readonly notifPrefsTareas = computed(() =>
     this.notifPrefs().filter((p) => this.TAREAS_TYPES.includes(p.tipo)),
   );
+  protected readonly isAdmin = computed(() => this.empleado()?.rol === 'administrador');
 
   protected notifLabel(tipo: string): string {
     return this.NOTIF_LABELS[tipo] ?? tipo;
@@ -82,6 +90,18 @@ export class AjustesPageComponent implements OnInit {
     current_password: ['', [Validators.required, Validators.minLength(8)]],
     new_password: ['', [Validators.required, Validators.minLength(8)]],
     confirm_password: ['', [Validators.required]],
+  });
+
+  protected readonly companyForm = this.fb.group({
+    nombre_fiscal: ['', [Validators.required, Validators.maxLength(255)]],
+    cif_nif: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(20)]],
+    email: ['', [Validators.email, Validators.maxLength(255)]],
+    telefono: ['', [Validators.maxLength(20)]],
+    direccion: ['', [Validators.maxLength(255)]],
+    codigo_postal: ['', [Validators.maxLength(10)]],
+    ciudad: ['', [Validators.maxLength(100)]],
+    provincia: ['', [Validators.maxLength(100)]],
+    web: ['', [Validators.maxLength(255)]],
   });
 
   ngOnInit(): void {
@@ -112,6 +132,34 @@ export class AjustesPageComponent implements OnInit {
     this.notifService.obtenerPreferencias().subscribe({
       next: (res) => this.notifPrefs.set(res.preferencias),
       error: () => { /* mantener defaults si el backend no responde */ },
+    });
+
+    this.loadCompanyConfig();
+  }
+
+  protected loadCompanyConfig(): void {
+    this.companyLoading.set(true);
+    this.companyError.set(null);
+    this.empleadoService.getCompanyConfig().subscribe({
+      next: (config) => {
+        this.companyConfig.set(config);
+        this.companyForm.patchValue({
+          nombre_fiscal: config.nombre_fiscal,
+          cif_nif: config.cif_nif,
+          email: config.email ?? '',
+          telefono: config.telefono ?? '',
+          direccion: config.direccion ?? '',
+          codigo_postal: config.codigo_postal ?? '',
+          ciudad: config.ciudad ?? '',
+          provincia: config.provincia ?? '',
+          web: config.web ?? '',
+        });
+        this.companyLoading.set(false);
+      },
+      error: (err) => {
+        this.companyError.set(err?.error?.detail ?? 'No se pudo cargar la configuración de empresa.');
+        this.companyLoading.set(false);
+      },
     });
   }
 
@@ -187,6 +235,55 @@ export class AjustesPageComponent implements OnInit {
       error: (err) => {
         this.passwordSaving.set(false);
         this.passwordError.set(err?.error?.detail ?? 'Error al cambiar la contraseña');
+      },
+    });
+  }
+
+  protected toggleMfa(enabled: boolean): void {
+    if (this.mfaSaving()) return;
+    this.mfaSaving.set(true);
+    this.mfaError.set(null);
+    this.empleadoService.updateMfa(enabled).subscribe({
+      next: (updated) => {
+        this.empleado.set(updated);
+        this.mfaSaving.set(false);
+      },
+      error: (err) => {
+        this.mfaError.set(err?.error?.detail ?? 'No se pudo actualizar la verificación en dos pasos.');
+        this.mfaSaving.set(false);
+      },
+    });
+  }
+
+  protected saveCompanyConfig(): void {
+    if (this.companyForm.invalid || this.companySaving() || !this.isAdmin()) return;
+
+    const raw = this.companyForm.getRawValue();
+    const payload: EmpresaConfig = {
+      nombre_fiscal: raw.nombre_fiscal?.trim() ?? '',
+      cif_nif: raw.cif_nif?.trim().toUpperCase() ?? '',
+      email: raw.email?.trim() || null,
+      telefono: raw.telefono?.trim() || null,
+      direccion: raw.direccion?.trim() || null,
+      codigo_postal: raw.codigo_postal?.trim() || null,
+      ciudad: raw.ciudad?.trim() || null,
+      provincia: raw.provincia?.trim() || null,
+      web: raw.web?.trim() || null,
+      updated_at: this.companyConfig()?.updated_at ?? null,
+    };
+
+    this.companySaving.set(true);
+    this.companyError.set(null);
+    this.empleadoService.updateCompanyConfig(payload).subscribe({
+      next: (config) => {
+        this.companyConfig.set(config);
+        this.companySaving.set(false);
+        this.companySuccess.set(true);
+        setTimeout(() => this.companySuccess.set(false), 3000);
+      },
+      error: (err) => {
+        this.companyError.set(err?.error?.detail ?? 'No se pudo guardar la configuración de empresa.');
+        this.companySaving.set(false);
       },
     });
   }

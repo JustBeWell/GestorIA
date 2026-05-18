@@ -18,6 +18,9 @@
         <button type="button" class="ajustes-tab" [class.active]="activeTab() === 'cuenta'" (click)="activeTab.set('cuenta')">
           Cuenta
         </button>
+        <button type="button" class="ajustes-tab" [class.active]="activeTab() === 'empresa'" (click)="activeTab.set('empresa')">
+          Empresa
+        </button>
         <button type="button" class="ajustes-tab" [class.active]="activeTab() === 'notificaciones'" (click)="activeTab.set('notificaciones')">
           Notificaciones
         </button>
@@ -113,6 +116,27 @@
           </section>
 
           <section class="settings-panel">
+            <div class="panel-header panel-header--center">
+              <div>
+                <h2>Verificación en dos pasos</h2>
+                <p class="panel-description">Protege el acceso con un código SMS al iniciar sesión.</p>
+              </div>
+              <button
+                type="button"
+                class="notif-toggle settings-toggle"
+                [class.on]="empleado()?.mfa_habilitado"
+                (click)="toggleMfa(!(empleado()?.mfa_habilitado ?? false))"
+                [disabled]="mfaSaving()"
+                [attr.aria-label]="(empleado()?.mfa_habilitado ? 'Desactivar' : 'Activar') + ' verificación en dos pasos'">
+                <span class="notif-toggle-thumb"></span>
+              </button>
+            </div>
+            @if (mfaError()) {
+              <p class="feedback feedback--error">{{ mfaError() }}</p>
+            }
+          </section>
+
+          <section class="settings-panel">
             <div class="panel-header">
               <div>
                 <h2>Apariencia</h2>
@@ -165,6 +189,78 @@
             </div>
           </section>
 
+        </section>
+      }
+
+      @if (activeTab() === 'empresa') {
+        <section class="settings-content">
+          <section class="settings-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Configuración de empresa</h2>
+                <p class="panel-description">Datos fiscales y de contacto usados por la aplicación.</p>
+              </div>
+            </div>
+
+            @if (companySuccess()) {
+              <p class="feedback feedback--success">Configuración guardada correctamente.</p>
+            }
+            @if (companyError()) {
+              <p class="feedback feedback--error">{{ companyError() }}</p>
+            }
+
+            @if (companyLoading()) {
+              <p class="loading-text">Cargando configuración…</p>
+            } @else {
+              <form [formGroup]="companyForm" (ngSubmit)="saveCompanyConfig()" class="company-form">
+                <div class="form-grid">
+                  <div class="form-row form-row--wide">
+                    <label for="nombre_fiscal">Nombre fiscal</label>
+                    <input id="nombre_fiscal" type="text" formControlName="nombre_fiscal" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="cif_nif">CIF / NIF</label>
+                    <input id="cif_nif" type="text" formControlName="cif_nif" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="empresa_email">Email</label>
+                    <input id="empresa_email" type="email" formControlName="email" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="empresa_telefono">Teléfono</label>
+                    <input id="empresa_telefono" type="tel" formControlName="telefono" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="empresa_web">Web</label>
+                    <input id="empresa_web" type="url" formControlName="web" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row form-row--wide">
+                    <label for="direccion">Dirección</label>
+                    <input id="direccion" type="text" formControlName="direccion" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="codigo_postal">Código postal</label>
+                    <input id="codigo_postal" type="text" formControlName="codigo_postal" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="ciudad">Ciudad</label>
+                    <input id="ciudad" type="text" formControlName="ciudad" [readonly]="!isAdmin()" />
+                  </div>
+                  <div class="form-row">
+                    <label for="provincia">Provincia</label>
+                    <input id="provincia" type="text" formControlName="provincia" [readonly]="!isAdmin()" />
+                  </div>
+                </div>
+                @if (isAdmin()) {
+                  <div class="form-actions form-actions--right">
+                    <button type="submit" class="primary-button settings-button" [disabled]="companyForm.invalid || companySaving()">
+                      {{ companySaving() ? 'Guardando…' : 'Guardar empresa' }}
+                    </button>
+                  </div>
+                }
+              </form>
+            }
+          </section>
         </section>
       }
 

@@ -171,7 +171,7 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 ### M10 · Modulos de herramientas
 - [x] **Calendario fiscal** — backend, BD, consulta mensual, alta manual, edicion y borrado administrativo
 - [ ] **Documentos** — pagina placeholder sin funcionalidad; no hay backend, ni almacenamiento, ni modelo
-- [ ] **Ajustes** — pagina con UI estatica; sin persistencia ni endpoints de configuracion
+- [x] **Ajustes** — perfil, contrasena, 2FA y configuracion de empresa con persistencia real
 
 ---
 

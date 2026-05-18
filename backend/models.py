@@ -79,6 +79,31 @@ class UserAdminUpdateRequest(BaseModel):
 	mfa_habilitado: bool | None = None
 
 
+class UserMfaUpdateRequest(BaseModel):
+	mfa_habilitado: bool
+
+
+class EmpresaConfigUpdateRequest(BaseModel):
+	nombre_fiscal: str = Field(min_length=1, max_length=255)
+	cif_nif: str = Field(min_length=5, max_length=20)
+	email: EmailStr | None = None
+	telefono: str | None = Field(default=None, max_length=20)
+	direccion: str | None = Field(default=None, max_length=255)
+	codigo_postal: str | None = Field(default=None, max_length=10)
+	ciudad: str | None = Field(default=None, max_length=100)
+	provincia: str | None = Field(default=None, max_length=100)
+	web: str | None = Field(default=None, max_length=255)
+
+	@field_validator("cif_nif")
+	@classmethod
+	def validate_cif_nif(cls, v: str) -> str:
+		return _validate_nif_cif(v)
+
+
+class EmpresaConfigResponse(EmpresaConfigUpdateRequest):
+	updated_at: datetime | None = None
+
+
 class GoogleTokenRequest(BaseModel):
 	code: str
 

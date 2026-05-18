@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { EmpleadoModel } from '../models/empleado.model';
+import { EmpleadoModel, EmpresaConfig } from '../models/empleado.model';
 @Injectable({
   providedIn: 'root',
 })
@@ -30,6 +30,23 @@ export class EmpleadoService {
         localStorage.setItem(this.empleadoKey, JSON.stringify(empleado));
       }),
     );
+  }
+
+  updateMfa(enabled: boolean): Observable<EmpleadoModel> {
+    return this.http.patch<EmpleadoModel>(`${this.apiUrl}/users/me/mfa`, { mfa_habilitado: enabled }).pipe(
+      tap((empleado) => {
+        this.empleadoSubject.next(empleado);
+        localStorage.setItem(this.empleadoKey, JSON.stringify(empleado));
+      }),
+    );
+  }
+
+  getCompanyConfig(): Observable<EmpresaConfig> {
+    return this.http.get<EmpresaConfig>(`${this.apiUrl}/users/company-config`);
+  }
+
+  updateCompanyConfig(payload: EmpresaConfig): Observable<EmpresaConfig> {
+    return this.http.put<EmpresaConfig>(`${this.apiUrl}/users/company-config`, payload);
   }
 
   getCachedEmpleado(): EmpleadoModel | null {

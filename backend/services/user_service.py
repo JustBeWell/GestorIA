@@ -4,7 +4,7 @@ import psycopg2
 from passlib.context import CryptContext
 
 from database import db_connection
-from models import UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
+from models import EmpresaConfigUpdateRequest, UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -51,7 +51,8 @@ class UserService:
                         e.fecha_alta,
                         e.fecha_baja,
                         u.created_at,
-                        u.updated_at
+                        u.updated_at,
+                        u.mfa_habilitado
                     FROM usuarios u
                     JOIN empleados e ON e.usuario_id = u.id
                     ORDER BY u.created_at DESC
@@ -82,7 +83,8 @@ class UserService:
                         e.fecha_alta,
                         e.fecha_baja,
                         u.created_at,
-                        u.updated_at
+                        u.updated_at,
+                        u.mfa_habilitado
                     FROM usuarios u
                     JOIN empleados e ON e.usuario_id = u.id
                     WHERE u.id = %s
@@ -199,6 +201,82 @@ class UserService:
         return UserService.get(user_id)
 
     @staticmethod
+    def update_mfa(user_id: str, enabled: bool) -> dict | None:
+        if not UserService.is_valid_user_id(user_id):
+            return None
+
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE usuarios
+                    SET mfa_habilitado = %s, updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (enabled, user_id),
+                )
+                updated = cursor.rowcount
+            connection.commit()
+
+        return UserService.get(user_id) if updated else None
+
+    @staticmethod
+    def get_company_config() -> dict:
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                UserService._ensure_company_config(cursor)
+                cursor.execute(
+                    """
+                    SELECT nombre_fiscal, cif_nif, email, telefono, direccion,
+                           codigo_postal, ciudad, provincia, web, updated_at
+                    FROM empresa_configuracion
+                    WHERE id = 1
+                    """
+                )
+                row = cursor.fetchone()
+                connection.commit()
+        return UserService._map_company_config(row)
+
+    @staticmethod
+    def update_company_config(payload: EmpresaConfigUpdateRequest) -> dict:
+        with db_connection() as connection:
+            with connection.cursor() as cursor:
+                UserService._ensure_company_config(cursor)
+                cursor.execute(
+                    """
+                    UPDATE empresa_configuracion
+                    SET
+                        nombre_fiscal = %s,
+                        cif_nif = %s,
+                        email = %s,
+                        telefono = %s,
+                        direccion = %s,
+                        codigo_postal = %s,
+                        ciudad = %s,
+                        provincia = %s,
+                        web = %s,
+                        updated_at = NOW()
+                    WHERE id = 1
+                    RETURNING nombre_fiscal, cif_nif, email, telefono, direccion,
+                              codigo_postal, ciudad, provincia, web, updated_at
+                    """,
+                    (
+                        payload.nombre_fiscal.strip(),
+                        payload.cif_nif,
+                        payload.email,
+                        payload.telefono.strip() if payload.telefono else None,
+                        payload.direccion.strip() if payload.direccion else None,
+                        payload.codigo_postal.strip() if payload.codigo_postal else None,
+                        payload.ciudad.strip() if payload.ciudad else None,
+                        payload.provincia.strip() if payload.provincia else None,
+                        payload.web.strip() if payload.web else None,
+                    ),
+                )
+                row = cursor.fetchone()
+                connection.commit()
+        return UserService._map_company_config(row)
+
+    @staticmethod
     def admin_update(user_id: str, payload: UserAdminUpdateRequest) -> dict | None:
         if not UserService.is_valid_user_id(user_id):
             return None
@@ -276,4 +354,60 @@ class UserService:
             "fecha_baja": row[10],
             "created_at": row[11],
             "updated_at": row[12],
+            "mfa_habilitado": bool(row[13]) if len(row) > 13 else False,
+        }
+
+    @staticmethod
+    def _ensure_company_config(cursor) -> None:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS empresa_configuracion (
+                id            SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+                nombre_fiscal VARCHAR(255) NOT NULL DEFAULT 'GestorIA',
+                cif_nif       VARCHAR(20) NOT NULL DEFAULT 'B00000000',
+                email         VARCHAR(255),
+                telefono      VARCHAR(20),
+                direccion     VARCHAR(255),
+                codigo_postal VARCHAR(10),
+                ciudad        VARCHAR(100),
+                provincia     VARCHAR(100),
+                web           VARCHAR(255),
+                updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        cursor.execute(
+            """
+            INSERT INTO empresa_configuracion (id, nombre_fiscal, cif_nif)
+            VALUES (1, 'GestorIA', 'B00000000')
+            ON CONFLICT (id) DO NOTHING
+            """
+        )
+
+    @staticmethod
+    def _map_company_config(row: tuple | None) -> dict:
+        if not row:
+            return {
+                "nombre_fiscal": "GestorIA",
+                "cif_nif": "B00000000",
+                "email": None,
+                "telefono": None,
+                "direccion": None,
+                "codigo_postal": None,
+                "ciudad": None,
+                "provincia": None,
+                "web": None,
+                "updated_at": None,
+            }
+        return {
+            "nombre_fiscal": row[0],
+            "cif_nif": row[1],
+            "email": row[2],
+            "telefono": row[3],
+            "direccion": row[4],
+            "codigo_postal": row[5],
+            "ciudad": row[6],
+            "provincia": row[7],
+            "web": row[8],
+            "updated_at": row[9],
         }

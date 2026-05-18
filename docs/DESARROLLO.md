@@ -185,8 +185,8 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Ajustes: cambio de contrasena real via `POST /users/me/password` con verificacion bcrypt.
 - [x] Ajustes: boton de cierre de sesion activo.
 - [x] Ajustes: eliminados todos los ajustes sin backend (tema, acento, idioma, densidad, 2FA app, codigos de recuperacion, lista de sesiones, indicador de fortaleza de contrasena).
-- [ ] Ajustes: toggle de 2FA (`mfa_habilitado`) pendiente en frontend.
-- [ ] Ajustes: configuracion de empresa (nombre, logo, jornada, IVA) sin modelo ni endpoints.
+- [x] Ajustes: toggle de 2FA (`mfa_habilitado`) conectado a `PATCH /users/me/mfa`.
+- [x] Ajustes: configuracion de empresa persistida en `empresa_configuracion` con `GET/PUT /users/company-config`.
 
 ---
 

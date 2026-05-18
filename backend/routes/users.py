@@ -1,7 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2 import Error as PsycopgError
 
-from models import ChangePasswordRequest, UserAdminUpdateRequest, UserCreateRequest, UserUpdateRequest
+from models import (
+    ChangePasswordRequest,
+    EmpresaConfigResponse,
+    EmpresaConfigUpdateRequest,
+    UserAdminUpdateRequest,
+    UserCreateRequest,
+    UserMfaUpdateRequest,
+    UserUpdateRequest,
+)
 from services.auth_service import get_current_user
 from services.auditoria_service import registrar_evento
 from services.user_service import UserService
@@ -59,9 +67,29 @@ def change_password(payload: ChangePasswordRequest, current_user=Depends(get_cur
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 
+@router.patch("/me/mfa")
+def update_my_mfa(payload: UserMfaUpdateRequest, current_user=Depends(get_current_user)):
+    updated = UserService.update_mfa(current_user.user_id, payload.mfa_habilitado)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return updated
+
+
 @router.delete("/me")
 def delete_me(current_user=Depends(get_current_user)):
     return {"deleted": UserService.delete(current_user.user_id)}
+
+
+@router.get("/company-config", response_model=EmpresaConfigResponse)
+def get_company_config(_current_user=Depends(get_current_user)):
+    return UserService.get_company_config()
+
+
+@router.put("/company-config", response_model=EmpresaConfigResponse)
+def update_company_config(payload: EmpresaConfigUpdateRequest, current_user=Depends(get_current_user)):
+    if current_user.role != "administrador":
+        raise HTTPException(status_code=403, detail="Se requiere rol administrador")
+    return UserService.update_company_config(payload)
 
 
 @router.get("/{user_id}")

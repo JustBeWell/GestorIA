@@ -51,7 +51,7 @@ El estado actual del proyecto, segun la documentacion y el historial de commits,
 | M7 Resumen operativo | Completo | Home con KPIs, calendario, series trimestrales, graficas y panel admin historico. |
 | M8 Exportaciones | Parcial/avanzado | CSV/PDF para fichaje, trabajos, facturas y cierre mensual. |
 | M9 Auditoria | Completo | Tabla de auditoria, escritura de eventos y UI de consulta para administradores. |
-| M10 Herramientas | Parcial | Calendario fiscal con CRUD administrativo; GIA reemplaza Documentos; Ajustes con perfil editable y cambio de contrasena real. Pendiente: toggle 2FA y configuracion de empresa. |
+| M10 Herramientas | Parcial | Calendario fiscal con CRUD administrativo; GIA reemplaza Documentos; Ajustes con perfil, contrasena, 2FA y configuracion de empresa persistente. |
 | M11 Notificaciones | Completo | Microservicio `backend-notifications` independiente. Canales in-app (WebSocket), Web Push (VAPID + Service Worker) y Electron nativo. Scheduler APScheduler (4 jobs: vencimientos facturas y deadlines trabajos). Transactional outbox con exponential backoff hasta 5 reintentos. Preferencias por usuario/tipo. Centro Angular con tabs, filtros, agrupacion por dia y badge en campana del header. |
 
 ### 3.2 Actores del sistema
@@ -473,7 +473,7 @@ El modulo M10 agrupa tres herramientas auxiliares que han avanzado durante el Sp
 
 - **Calendario fiscal:** pantalla conectada al microservicio `backend-calendario`. Datos reales AEAT/TGSS, navegacion mensual, alta manual de vencimientos, edicion, borrado logico y marcado de presentados.
 - **GIA:** portal de IA conversacional que reemplaza el antiguo modulo Documentos. Conversaciones, mensajes, adjuntos, generacion de PDF e imagenes via OpenAI.
-- **Ajustes:** pantalla funcional con dos secciones reales. "Mi perfil" permite editar nombre, apellidos y telefono via `PUT /users/me`. "Seguridad" permite cambiar contrasena via `POST /users/me/password` con verificacion bcrypt. Boton de cierre de sesion activo. Todos los ajustes sin backend (tema, acento, idioma, densidad, 2FA app, sesiones activas) han sido eliminados.
+- **Ajustes:** pantalla funcional con perfil editable via `PUT /users/me`, cambio de contrasena via `POST /users/me/password`, toggle 2FA via `PATCH /users/me/mfa`, cierre de sesion y configuracion de empresa persistida en `empresa_configuracion`.
 
 ---
 

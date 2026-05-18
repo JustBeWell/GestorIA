@@ -214,3 +214,123 @@ class TestUsersRoutes:
 		)
 		assert response.status_code == 201
 		assert response.json()["email"] == "nuevo@gestoria.com"
+
+	@patch("services.auth_service.TokenService.decode_token")
+	@patch("routes.users.UserService.update_mfa")
+	def test_update_my_mfa(self, mock_update_mfa, mock_decode):
+		mock_decode.return_value = TokenData(
+			user_id="11111111-1111-1111-1111-111111111111",
+			nombre_usuario="empleado@gestoria.local",
+			role="empleado",
+		)
+		mock_update_mfa.return_value = {
+			"id": "emp-1",
+			"usuario_id": "11111111-1111-1111-1111-111111111111",
+			"email": "empleado@gestoria.local",
+			"nombre": "Empleado",
+			"apellidos": "Prueba",
+			"nif": "12345678A",
+			"rol": "empleado",
+			"activo": True,
+			"mfa_habilitado": True,
+		}
+
+		response = client.patch(
+			"/users/me/mfa",
+			json={"mfa_habilitado": True},
+			headers={"Authorization": "Bearer valid-token"},
+		)
+
+		assert response.status_code == 200
+		assert response.json()["mfa_habilitado"] is True
+		mock_update_mfa.assert_called_once_with("11111111-1111-1111-1111-111111111111", True)
+
+	@patch("services.auth_service.TokenService.decode_token")
+	@patch("routes.users.UserService.get_company_config")
+	def test_get_company_config(self, mock_get_config, mock_decode):
+		mock_decode.return_value = TokenData(
+			user_id="local-user",
+			nombre_usuario="empleado@gestoria.local",
+			role="empleado",
+		)
+		mock_get_config.return_value = {
+			"nombre_fiscal": "GestorIA",
+			"cif_nif": "B00000000",
+			"email": "info@gestoria.example",
+			"telefono": None,
+			"direccion": None,
+			"codigo_postal": None,
+			"ciudad": None,
+			"provincia": None,
+			"web": None,
+			"updated_at": None,
+		}
+
+		response = client.get(
+			"/users/company-config",
+			headers={"Authorization": "Bearer valid-token"},
+		)
+
+		assert response.status_code == 200
+		assert response.json()["cif_nif"] == "B00000000"
+
+	@patch("services.auth_service.TokenService.decode_token")
+	@patch("routes.users.UserService.update_company_config")
+	def test_update_company_config_requires_admin(self, mock_update_config, mock_decode):
+		mock_decode.return_value = TokenData(
+			user_id="local-user",
+			nombre_usuario="empleado@gestoria.local",
+			role="empleado",
+		)
+
+		response = client.put(
+			"/users/company-config",
+			headers={"Authorization": "Bearer valid-token"},
+			json={
+				"nombre_fiscal": "GestorIA",
+				"cif_nif": "B00000000",
+			},
+		)
+
+		assert response.status_code == 403
+		mock_update_config.assert_not_called()
+
+	@patch("services.auth_service.TokenService.decode_token")
+	@patch("routes.users.UserService.update_company_config")
+	def test_update_company_config_as_admin(self, mock_update_config, mock_decode):
+		mock_decode.return_value = TokenData(
+			user_id="local-user",
+			nombre_usuario="admin@gestoria.local",
+			role="administrador",
+		)
+		mock_update_config.return_value = {
+			"nombre_fiscal": "GestorIA Actualizada",
+			"cif_nif": "B00000000",
+			"email": "info@gestoria.example",
+			"telefono": "600000000",
+			"direccion": "Calle Mayor 1",
+			"codigo_postal": "28001",
+			"ciudad": "Madrid",
+			"provincia": "Madrid",
+			"web": "https://gestoria.local",
+			"updated_at": None,
+		}
+
+		response = client.put(
+			"/users/company-config",
+			headers={"Authorization": "Bearer valid-token"},
+			json={
+				"nombre_fiscal": "GestorIA Actualizada",
+				"cif_nif": "B00000000",
+				"email": "info@gestoria.example",
+				"telefono": "600000000",
+				"direccion": "Calle Mayor 1",
+				"codigo_postal": "28001",
+				"ciudad": "Madrid",
+				"provincia": "Madrid",
+				"web": "https://gestoria.local",
+			},
+		)
+
+		assert response.status_code == 200
+		assert response.json()["nombre_fiscal"] == "GestorIA Actualizada"

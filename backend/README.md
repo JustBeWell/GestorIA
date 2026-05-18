@@ -149,7 +149,10 @@ Rutas publicas principales:
 - `POST /users/`
 - `GET /users/me`
 - `PUT /users/me`
+- `PATCH /users/me/mfa`
 - `DELETE /users/me`
+- `GET /users/company-config`
+- `PUT /users/company-config`
 - `GET /users/{user_id}`
 - `GET /users/{user_id}/exists`
 - `PUT /users/{user_id}/admin`
