@@ -195,10 +195,10 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 
 ### HU-DT-01 - Tests de integracion
 
-- [ ] Clientes: create/update/delete.
-- [ ] Trabajos: CRUD, asignaciones y comentarios.
-- [ ] Facturas/pagos: sobrepago, anulacion y estados.
-- [ ] Auditoria: insercion de eventos.
+- [x] Clientes: create/update/delete.
+- [x] Trabajos: create/update/delete.
+- [x] Facturas/pagos: create/update/delete/anulacion y registro de pagos.
+- [x] Auditoria: insercion de eventos y escritura desde correcciones admin.
 
 ### HU-DT-02 - Limpieza de repositorio
 
@@ -229,7 +229,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 - [x] App de escritorio macOS.
 - [x] Backend modularizado en microservicios locales con gateway.
 - [ ] Herramientas M10 completas.
-- [ ] Cobertura de tests suficiente para escritura y reglas criticas.
+- [x] Cobertura de tests suficiente para escritura y reglas criticas.
 - [x] Limpieza de artefactos generados de landing/build.
 
 ---

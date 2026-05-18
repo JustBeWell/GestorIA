@@ -548,6 +548,8 @@ El backend contiene tests en:
 
 - `backend/tests/test_intranet_home.py`
 - `backend/tests/test_intranet_tabs.py`
+- `backend/tests/test_intranet_writes.py`
+- `backend/tests/test_auditoria_service.py`
 - `backend/tests/test_user_service.py`
 
 El frontend contiene tests unitarios para:
@@ -574,8 +576,8 @@ Los refactors mas importantes han sido:
 
 La propia documentacion mantiene deuda tecnica pendiente:
 
-- ampliar tests de integracion para operaciones de escritura,
-- mejorar cobertura en servicios de clientes, trabajos y pagos,
+- mantener y ampliar tests de integracion para operaciones de escritura,
+- mejorar cobertura en servicios internos de clientes, trabajos y pagos,
 - completar skeletons/feedback de carga en algunos modulos,
 - conectar o explotar completamente algunas vistas analiticas,
 - implementar de verdad M10,
@@ -761,7 +763,7 @@ Pendiente queda completar herramientas auxiliares, ampliar test coverage, limpia
 
 ## 19. Recomendaciones de continuidad
 
-1. **Aumentar cobertura de tests:** priorizar clientes, trabajos, pagos, auditoria y auth.
+1. **Aumentar cobertura de tests:** extender desde rutas de escritura hacia servicios internos y casos de error con BD real.
 2. **Formalizar migraciones:** revisar duplicidad de numeracion `V003` y definir una herramienta de migraciones si el proyecto crece.
 3. **Limpiar repositorio:** excluir `.next`, caches, `__pycache__` y artefactos generados si no son necesarios.
 4. **Completar M10:** decidir si calendario fiscal, documentos y ajustes entran en el alcance real de la siguiente version.

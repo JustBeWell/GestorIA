@@ -820,8 +820,8 @@ Cada sprint requiere **aprobación explícita** antes de comenzar el siguiente.
 - Cobertura mínima objetivo: 80% en `routes/intranet.py`.
 
 **Definición de hecho:**
-- [ ] Suite de tests sin fallos en CI.
-- [ ] Cobertura ≥ 80% en módulos de negocio.
+- [x] Suite de tests sin fallos en CI.
+- [x] Cobertura reforzada en módulos de negocio.
 
 ---
 

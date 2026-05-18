@@ -212,7 +212,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Gateway nginx.
 - [x] Rate limiting en auth.
 - [x] Validacion NIF/CIF.
-- [ ] Ampliar tests de escritura en clientes, trabajos, facturas, pagos y auditoria.
+- [x] Ampliar tests de escritura en clientes, trabajos, facturas, pagos y auditoria.
 - [ ] Revisar cobertura tras microservicios.
 
 ### Base de datos
@@ -316,6 +316,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Anadidos `PUT /intranet/calendario-fiscal/{vencimiento_id}` y `DELETE /intranet/calendario-fiscal/{vencimiento_id}`.
 - El borrado es logico mediante `deleted_at` para evitar que el seed idempotente reactive vencimientos eliminados.
 - La UI permite editar y eliminar vencimientos desde el listado mensual.
+
+### 2026-05-18 · HU-DT-01 Tests de escritura
+
+- Anadida suite `backend/tests/test_intranet_writes.py` para create/update/delete de clientes, trabajos y facturas, mas registro de pagos.
+- Anadido `backend/tests/test_auditoria_service.py` para verificar el INSERT en `auditoria_eventos`.
+- Verificacion: `pytest tests/test_intranet_writes.py tests/test_auditoria_service.py -q` y `pytest tests/test_intranet_tabs.py -q`.
 
 ---
 

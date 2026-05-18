@@ -203,8 +203,8 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 - [x] Route handlers convertidos de `async def` a `def` en todos los routers (intranet, auth, users, ai) — psycopg2 sincrono bloqueaba el event loop; FastAPI ahora los ejecuta en thread pool concurrente
 - [x] Validacion de formato NIF/CIF en backend (Pydantic field_validator con regex)
 - [ ] Rate limiting en endpoints de autenticacion
-- [ ] Tests de integracion para escritura (los tests existentes cubren solo lectura)
-- [ ] Cobertura de tests en services de clientes, trabajos y pagos
+- [x] Tests de integracion para escritura en clientes, trabajos, facturas, pagos y auditoria
+- [x] Cobertura de tests en rutas de escritura de clientes, trabajos y pagos
 
 ### Base de datos
 - [x] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — ya presentes en V001
