@@ -213,6 +213,7 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - [x] Rate limiting en auth.
 - [x] Validacion NIF/CIF.
 - [x] Ampliar tests de escritura en clientes, trabajos, facturas, pagos y auditoria.
+- [x] Revisar caches y artefactos generados: no hay `__pycache__`, `.pyc`, `.pytest_cache`, `.next`, `dist`, `node_modules` ni `.DS_Store` versionados; quedan ignorados por `.gitignore`.
 - [ ] Revisar cobertura tras microservicios.
 
 ### Base de datos
@@ -322,6 +323,12 @@ El backend usa una factoria comun (`backend/app_factory.py`) y varios entry-poin
 - Anadida suite `backend/tests/test_intranet_writes.py` para create/update/delete de clientes, trabajos y facturas, mas registro de pagos.
 - Anadido `backend/tests/test_auditoria_service.py` para verificar el INSERT en `auditoria_eventos`.
 - Verificacion: `pytest tests/test_intranet_writes.py tests/test_auditoria_service.py -q` y `pytest tests/test_intranet_tabs.py -q`.
+
+### 2026-05-18 · HU-DT-02 Revision de caches y artefactos
+
+- `git ls-files` no devuelve caches ni artefactos generados versionados.
+- `git status --ignored` muestra caches locales ignoradas: `.venv/`, `app/node_modules/`, `landing/node_modules/`, `app/.angular/`, `app/dist/`, `landing/.next/`, `backend/__pycache__/`, `backend/.pytest_cache/` y `.DS_Store`.
+- `.gitignore` ya cubre esos patrones; no se requieren cambios adicionales.
 
 ---
 

@@ -205,6 +205,7 @@ Ultima revision: 2026-05-07 (Sprint 3 COMPLETO — M6 Facturacion y pagos finali
 - [ ] Rate limiting en endpoints de autenticacion
 - [x] Tests de integracion para escritura en clientes, trabajos, facturas, pagos y auditoria
 - [x] Cobertura de tests en rutas de escritura de clientes, trabajos y pagos
+- [x] Revision de `__pycache__`, caches y artefactos generados: no hay ficheros versionados y `.gitignore` los cubre
 
 ### Base de datos
 - [x] Aplicar triggers definidos en modelo (`trg_validar_fichaje`, `trg_validar_pago`, `trg_actualizar_estado_factura`) — ya presentes en V001

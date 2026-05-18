@@ -203,7 +203,7 @@ Tras completar los sprints funcionales se realizo un refactor arquitectonico:
 ### HU-DT-02 - Limpieza de repositorio
 
 - [x] Revisar `landing/.next`.
-- [ ] Revisar `__pycache__`, caches y artefactos generados.
+- [x] Revisar `__pycache__`, caches y artefactos generados.
 - [x] Ajustar `.gitignore` si procede.
 
 ### HU-DT-03 - Documentacion y despliegue

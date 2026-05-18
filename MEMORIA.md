@@ -582,6 +582,8 @@ La propia documentacion mantiene deuda tecnica pendiente:
 - conectar o explotar completamente algunas vistas analiticas,
 - implementar de verdad M10,
 - revisar documentacion de backend tras la migracion final a microservicios,
+
+La revision HU-DT-02 confirma que caches y artefactos generados (`__pycache__`, `.pyc`, `.pytest_cache`, `.next`, `dist`, `node_modules`, `.DS_Store`) no estan versionados y quedan cubiertos por `.gitignore`.
 - limpiar artefactos generados versionados o modificados en `landing/.next` si no deben formar parte del repositorio.
 
 ---
@@ -765,7 +767,7 @@ Pendiente queda completar herramientas auxiliares, ampliar test coverage, limpia
 
 1. **Aumentar cobertura de tests:** extender desde rutas de escritura hacia servicios internos y casos de error con BD real.
 2. **Formalizar migraciones:** revisar duplicidad de numeracion `V003` y definir una herramienta de migraciones si el proyecto crece.
-3. **Limpiar repositorio:** excluir `.next`, caches, `__pycache__` y artefactos generados si no son necesarios.
+3. **Limpiar repositorio:** mantener fuera del control de versiones caches, `__pycache__` y artefactos generados ya ignorados.
 4. **Completar M10:** decidir si calendario fiscal, documentos y ajustes entran en el alcance real de la siguiente version.
 5. **Revisar permisos de empleados:** algunos commits ajustan que empleados puedan gestionar trabajos, clientes y facturas; conviene dejar la politica exacta documentada y probada.
 6. **Preparar despliegue productivo:** separar secretos, cambiar `JWT_SECRET_KEY`, revisar Twilio/OpenAI, backups de PostgreSQL y logs.
